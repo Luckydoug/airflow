@@ -1,0 +1,99 @@
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <title>Google Reviews Dashboard</title>
+
+        <!-- font awesome -->
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
+    </head>
+
+    <body>
+        <br>
+        <div class="headerdiv">
+            Google Reviews Analysis
+        </div>
+        <br>
+        <div class="sixgrid-container">
+            <div class="grid-item smallh2blue">Date Range</div>
+        </div>
+        <div class="sixgrid-container">
+            <div class="grid-item" id="select_date"></div>
+        </div>
+        <br>
+        <div class="tabordion">
+        <section id="section1">
+            <input type="radio" name="sections" id="option1" checked>
+            <label for="option1">Summary</label>
+            <article>
+                <div class="threegrid-container">
+                    <div class="grid-item">
+                        <div class="column" style="background-color:#0a5b54;">
+                            <h6>Total Reviews</h6>
+                        </div>
+                        <div class="column" style="background-color:#e5a46e;">
+                            <h6>500</h6>
+                        </div>
+                    </div>
+
+                    <div class="grid-item">
+                        <div class="column" style="background-color:#0a5b54;">
+                            <h6>Total Reviewers</h6>
+                        </div>
+                        <div class="column" style="background-color:#e5a46e;">
+                            <h6>450</h6>
+                        </div>
+                    </div>
+
+                    <div class="grid-item">
+                        <div class="column" style="background-color:#0a5b54;">
+                            <h6>Avg Rating</h6>
+                        </div>
+                        <div class="column" style="background-color:#e5a46e;">
+                            <h6>4</h6>
+                        </div>
+                    </div>
+                </div>
+                <br>
+                <br>
+                <div class="smallh2blue">Google Reviews SRM Summary (Click to Drill Down to RM)</div>
+                <br>
+                <div>
+                    <div class="summary_table" id="tbl_srm_summary"></div>
+                </div>
+            </article>
+        </section>
+
+        <section id="section2">
+            <input type="radio" name="sections" id="option2">
+            <label for="option2">Detailed</label>
+            <article>
+                <br>
+                <div class="smallh2blue">Google Reviews Branch details (Click to Drill Down to Days)</div>
+                <br>
+                <div>
+                    <div class="summary_table" id="tbl_branch_details"></div>
+                </div>
+                <br>
+                <div class="sixgrid-container">
+                    <div class="grid-item smallh2blue">Report By</div>
+                    <div class="grid-item"></div>
+                    <div class="grid-item"></div>
+                    <div class="grid-item"></div>
+                    <div class="grid-item"></div>
+                    <div class="grid-item"></div>
+                </div>
+                <div class="sixgrid-container">
+                    <div class="grid-item" id="select_reportby"></div>
+                    <div class="grid-item"></div>
+                    <div class="grid-item"></div>
+                    <div class="grid-item"></div>
+                    <div class="grid-item"></div>
+                    <div class="grid-item"></div>
+                </div>
+            </article>
+        </section>
+        </div>
+    </body>
+</html> 

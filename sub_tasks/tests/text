@@ -1,0 +1,57 @@
+
+cust code:  10041976
+tests: 425844, 425488
+date: 2022-06-04
+
+
+Hi Wairimu,
+
+I have started looking into the above mentioned feedback:
+
+Registrations - EyeTests/Orders
+1. The exported data is missing 2472 registrations. The data consists of duplicated registrations. (Kindly see the attached file for your reference, "Missing Registration records")
+
+Some registrations will be duplicated when customer has placed more than one order in the days specified in the filter.
+e.g. for period June 1st to June 30th, cust_code 10369088 registered on 6/1/2022 and placed two orders 221002134,221002135
+on 6/1/2022
+
+I am currently working to resolve the missing registrations (will be done by EoD)
+
+2. Canceled EyeTests
+
+Removed all EyeTest with statuses Canceled  and CanceledEyeTest
+
+3. The orders captured are for May, yet the registrations are for June.
+
+Kindly provide an example for this. I have tried to recreate this but am getting order dates for June
+
+Eye test - Orders
+1) The orders are for the month of May yet the eye tests are for June
+
+Kindly provide an example for this. I have tried to recreate this but am getting order dates for June
+
+2) Some eye tests id (Test Code) consist of canceled eye tests. Remove any eye test with the status  "CanceledEyeTest" and
+ "Cancel"
+ 
+ Removed all EyeTest with statuses Canceled  and CanceledEyeTest
+
+3) Missing eye test records
+
+Working on the missing EyeTests (will be done by EoD)
+
+Kindly see the attached file with different sheet names for reference. (Eye test - Order Check)
+
+Some of the duplicates on EyeTests are also because if you look at the export, there is more than one order placed in the 
+specified period after the date of the tests.
+e.g. on custcode 10108995 Testcode 424121 orders 224503979 and 22111698
+
+
+View RX - Orders
+1) There exists missing records. Kindly see attached file (View RX Conversion Check)
+Working on the missing Views (will be done by EoD)
+2) Add the Eye test ID on the data that is exported.
+Will add this by today (EoD)
+
+NonView RX - Orders
+## The export button is missing, kindly add it
+Added the NoViewRX export in summary tab

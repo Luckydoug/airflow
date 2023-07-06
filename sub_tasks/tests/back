@@ -1,0 +1,182 @@
+import sys, os
+sys.path.insert(0,os.path.abspath(os.path.dirname(__file__)))
+
+from airflow import DAG
+from airflow.contrib.sensors.file_sensor import FileSensor
+from airflow.operators.python_operator import PythonOperator
+from airflow.operators.bash_operator import BashOperator
+from airflow.operators.dummy_operator import DummyOperator
+from airflow.example_dags.subdags.subdag import subdag
+from airflow.utils.task_group import TaskGroup
+from datetime import datetime
+
+"""
+from sub_tasks.dimensionsETLs.technicians import (fetch_sap_technicians)
+from sub_tasks.dimensionsETLs.users import (fetch_sap_users)
+from sub_tasks.dimensionsETLs.customers import (fetch_sap_customers)
+from sub_tasks.ordersETLs.ordersscreendetails import (fetch_sap_orderscreendetails, update_to_source_orderscreen,
+create_source_orderscreen_staging, create_fact_orderscreen)
+from sub_tasks.ordersETLs.orderscreendetailsc1 import (fetch_sap_orderscreendetailsc1, update_to_source_orderscreenc1,
+create_source_orderscreenc1_staging, create_source_orderscreenc1_staging2, create_source_orderscreenc1_staging3,
+index_staging3, create_fact_orderscreenc1, index_fact_c1)
+from sub_tasks.gsheets.orders_issues import (fetch_orders_with_issues, update_orders_with_issues, orders_with_issues_live)
+from sub_tasks.gsheets.time_issues import (fetch_time_with_issues, update_time_with_issues, time_with_issues_live)
+from sub_tasks.gsheets.cutoff import (fetch_cutoffs, update_cutoffs, create_cutoffs_live)
+from sub_tasks.ordersETLs.dropped_orders import (get_source_dropped_orders, get_source_dropped_orders_staging,
+update_source_dropped_orders_staging, create_fact_dropped_orders)
+"""
+
+# from tmp.python_test
+DAG_ID = 'Main_ETLs_Pipeline'
+
+default_args = {
+    'owner': 'Iconia ETLs',
+    # 'depends_on_past': False,
+    'start_date': datetime(2021, 12, 13)
+    
+}
+
+with DAG(
+    DAG_ID, 
+    default_args=default_args,
+    tags=['Live'], 
+    schedule_interval='00 17 * * 1-7',
+    catchup=False
+    ) as dag:
+    
+    start = DummyOperator(
+        task_id = "start"
+    )
+
+    """
+    FETCH GSHEETS
+    """
+    """
+    with TaskGroup('gsheets_data') as gsheets_data:
+
+        with TaskGroup('order_iisues') as order_iisues:
+
+            fetch_orders_with_issues = PythonOperator(
+                task_id = 'fetch_orders_with_issues',
+                python_callable=fetch_orders_with_issues,
+                provide_context=True
+            )
+
+            update_orders_with_issues = PythonOperator(
+                task_id = 'update_orders_with_issues',
+                python_callable=update_orders_with_issues,
+                provide_context=True
+            )
+
+            orders_with_issues_live = PythonOperator(
+                task_id = 'orders_with_issues_live',
+                python_callable=orders_with_issues_live,
+                provide_context=True
+            )
+
+            fetch_orders_with_issues >> update_orders_with_issues >> orders_with_issues_live
+
+        with TaskGroup('time_iisues') as time_iisues:
+
+            fetch_time_with_issues = PythonOperator(
+                task_id = 'fetch_time_with_issues',
+                python_callable=fetch_time_with_issues,
+                provide_context=True
+            )
+            
+            update_time_with_issues = PythonOperator(
+                task_id = 'update_time_with_issues',
+                python_callable=update_time_with_issues,
+                provide_context=True
+            )
+
+            time_with_issues_live = PythonOperator(
+                task_id = 'time_with_issues_live',
+                python_callable=time_with_issues_live,
+                provide_context=True
+            )
+
+            fetch_time_with_issues >> update_time_with_issues >> time_with_issues_live
+
+        with TaskGroup('cutoffs') as cutoffs:
+
+            fetch_cutoffs = PythonOperator(
+                task_id = 'fetch_cutoffs',
+                python_callable=fetch_cutoffs,
+                provide_context=True
+            )
+
+            update_cutoffs = PythonOperator(
+                task_id = 'update_cutoffs',
+                python_callable=update_cutoffs,
+                provide_context=True
+            )
+
+            create_cutoffs_live = PythonOperator(
+                task_id = 'create_cutoffs_live',
+                python_callable=create_cutoffs_live,
+                provide_context=True
+            )
+
+            fetch_cutoffs >> update_cutoffs >> create_cutoffs_live
+    """
+
+    """
+    FETCH DIMENSIONS
+    """
+    """
+    with TaskGroup('dimensions_etls') as dimensions_etls:
+        
+        fetch_sap_technicians = PythonOperator(
+            task_id = 'fetch_sap_technicians',
+            python_callable=fetch_sap_technicians,
+            provide_context=True
+        )
+
+        fetch_sap_customers = PythonOperator(
+            task_id = 'fetch_sap_customers',
+            python_callable=fetch_sap_customers,
+            provide_context=True
+        )
+    """
+
+    """
+    FETCH DROPPED ORDERS
+    """
+    """
+    with TaskGroup('dropped_etls') as dropped_etls:
+
+        get_source_dropped_orders = PythonOperator(
+            task_id = 'get_source_dropped_orders',
+            python_callable=get_source_dropped_orders,
+            provide_context=True
+        )
+
+        get_source_dropped_orders_staging = PythonOperator(
+            task_id = 'get_source_dropped_orders_staging',
+            python_callable=get_source_dropped_orders_staging,
+            provide_context=True
+        )
+
+        update_source_dropped_orders_staging = PythonOperator(
+            task_id = 'update_source_dropped_orders_staging',
+            python_callable=update_source_dropped_orders_staging,
+            provide_context=True
+        )
+
+        create_fact_dropped_orders = PythonOperator(
+            task_id = 'create_fact_dropped_orders',
+            python_callable=create_fact_dropped_orders,
+            provide_context=True
+        )
+
+        get_source_dropped_orders >> get_source_dropped_orders_staging >> update_source_dropped_orders_staging >> create_fact_dropped_orders
+    """
+        
+    finish = DummyOperator(
+        task_id = "finish"
+    ) 
+
+    #start >> gsheets_data >> dropped_etls >> dimensions_etls >> orderscreen_etls >> finish
+    start >> finish
+    #start >> gsheets_data >> dropped_etls >> finish

@@ -1,0 +1,66 @@
+visitid =  176894
+
+SELECT doc_entry, doc_no, user_sign, create_date, create_time, creator, update_date, update_time, cust_loyalty_code, visit_id, order_entry, order_no, branch, view_date, status
+FROM mabawa_dw.fact_order_checking_details
+where visit_id = '176894'
+order by create_date desc
+
+
+which to use for referalls?
+"Ophthalmologist" or "OphthName"
+
+
+users?
+can't find some user signs in users table
+
+
+# sorted
+removed canceled eyetests
+
+missing columns for high rx:
+"U_VSPSPCBP"
+
+#RX BNotes
+U_VSPPFRX  PF RX
+has Y  and null values
+query has numbers
+
+missing:
+U_VSPSRNV Subject VA
+U_VSPSRNC NV In Cyl
+U_VSPLSTPG LastRx Prsc Prog
+U_VSPLSTBF LastRx Prsc BF
+
+
+# customers table only has field sales employee code.
+e.g. 10379332 with sales employee code 291
+
+on users, there are 3 users with se optom as 291
+
+# views
+doc entry 1005540 has other views for the same visit id 450105
+docentry 1017699 " " " 45333 there is an earlier view 1015410 with order as well
+doc entry 981676 """ 441643 there are many others e.g. with orders
+
+On views, I have mapped the user sign field to the User Signature on Users.
+Is this the way to do it?
+
+
+#views
+997317 my logic picked 997259 instead, both converted
+1003353 my logic picked 1003331 instead, both converted
+
+#seoptom codes with issues
+291
+219
+319
+298
+814
+
+
+#to check for duplication on reg-eyetest/orders
+10379368
+10379789
+10380149
+
+

@@ -1,0 +1,122 @@
+select 
+doc_internal_id, item_no, count
+from
+(select
+doc_internal_id, item_no,
+count(distinct sales_order_branch) as count
+	--doc_internal_id, row_no, targ_doc_internal_id, row_status, item_no, qty, post_date, sales_orderno, sales_order_entry, sales_order_branch, draft_order_entry, draft_orderno, draft_order_branch, flag_for_inv, itr__status, replaced_itemcode, picker_name
+FROM mabawa_dw.fact_itr_details
+where sales_order_branch is not null
+and sales_order_branch <> ' '
+group by doc_internal_id, item_no) as a 
+where count > 1
+order by count, doc_internal_id desc
+
+
+
+
+SELECT doc_internal_id, 
+item_no, sales_orderno, sales_order_branch 
+--row_no, targ_doc_internal_id, row_status, item_no, qty, post_date, sales_orderno, sales_order_entry, sales_order_branch, draft_order_entry, draft_orderno, draft_order_branch, flag_for_inv, itr__status, replaced_itemcode, picker_name
+FROM mabawa_dw.fact_itr_details
+where doc_internal_id = 128621
+and item_no = '450002'
+
+
+
+SELECT code, post_date, post_time, itr_lineno, item_code, status, created_user, remarks, itr_no
+FROM mabawa_staging.source_itr_log
+where itr_no = '153744'
+and item_code = '640LPC5354GR'
+
+
+testing notes
+packaging
+22101176
+227200036
+
+these are dropped due to time with issues
+
+the rest e.g. 224800058 are HOM 
+
+
+mixed date formats in the issues Gsheet
+
+
+itr 224200314 so 224200773 this item 664689871711 only in log and nowhere else 
+
+
+itr 22400423  items 716736122830,716736075730
+
+
+
+this should be in packaging 221700773
+
+
+notes:
+fixed logic to replace missing dates
+
+control
+fixed stock borrow branch drill in control dashboard
+added source store
+
+packaging
+added source store
+
+lens
+fixed item count
+changed efficiency to 2 decimal places
+
+# replacements
+changed the company efficiency logic
+-- saturday notes
+-- mainstore
+added dropped itrs export
+
+-- designerstore
+added dropped itrs export
+-- lensstore
+added main export for other exchange types
+added dropped itrs export
+-- controlroom
+added dropped itrs export
+added stock borrow branch to export
+-- packaging
+added dropped itrs export
+-- receiving
+added dropped itrs export
+
+##meeting notes
+227000054 - received copy from other Item
+sent to dw use received at control room
+
+#drop this in mainstore
+#22202368
+
+#drop for designerstore
+#22101289 - stock return
+
+#drop below for control
+#226000471
+#223800407
+#224600640
+#227200068
+
+#drop at packaging
+#225100364
+#22101307
+#224500891
+#22900826
+
+
+#drop for receiving
+224000296
+225100352
+#223600311
+#225100344
+#22101198
+#225100340
+#22202876
+
+
+

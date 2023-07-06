@@ -1,0 +1,196 @@
+1- Insurance Order Initiated
+2- Pre-Auth Initiated For Optica Insurance
+3- Upload Attachment
+4- Sent Pre-Auth to Insurance Company
+4- Rejected by Optica Insurance
+4- Insurance Company Needs Info from Branch
+4- Used Old Approval for New Order Value Higher than Approval
+4- Used Old Approval for New Order Value Lower or Equal than Approval
+
+
+## incase of rejections --rejection1
+start - corrected for resent| resent preauth
+finish - rejection | Sent Pre-Auth to Insurance Company
+
+
+if sent to pre-auth is followed by ins comp need more info - set start to preauth
+620277
+
+
+
+
+
+
+CREATE INDEX ON mabawa_dw.fact_orderscreenc1_approvals USING btree (doc_entry);
+CREATE INDEX ON mabawa_dw.fact_orderscreenc1_approvals USING btree (upld1_sentpreauth_diff);
+CREATE INDEX ON mabawa_dw.fact_orderscreenc1_approvals USING btree (upld1_ins_rej_diff);
+CREATE INDEX ON mabawa_dw.fact_orderscreenc1_approvals USING btree (upld1_ins_info_diff);
+CREATE INDEX ON mabawa_dw.fact_orderscreenc1_approvals USING btree ("odsc_datetime_1_Sent Pre-Auth to Insurance Company");
+CREATE INDEX ON mabawa_dw.fact_orderscreenc1_approvals USING btree ("odsc_datetime_1_Rejected by Optica Insurance");
+CREATE INDEX ON mabawa_dw.fact_orderscreenc1_approvals USING btree ("odsc_datetime_1_Insurance Company Needs Info from Branch");
+
+
+
+
+
+
+
+
+
+
+
+
+
+##schemes
+'OTHER PREAUTH +SMART'
+'OTHER PREAUTH + SMART'
+'OTHER DIRECT + SMART'
+'OTHER DIRECT ONLY'
+'OTHER PREAUTH ONLY'
+
+
+## confirmations
+#  direct + smart | preauth + smart | no rejections
+SELECT 
+    "odsc_usr_dept_1_Sales Order Created"  as dept,
+    doc_entry,
+	smart1_so_diff  as diff
+FROM mabawa_dw.fact_orderscreenc1_approvals 
+	where "odsc_usr_dept_1_Sales Order Created" in  ('Approvals')
+	and to_char("odsc_datetime_1_Sales Order Created",'YYYY-MM-DD') >= ${dateFrom} 
+	and to_char("odsc_datetime_1_Sales Order Created",'YYYY-MM-DD') <= ${dateTo}
+	and "is_dropped_1_Sales Order Created" is null
+	and smart1_so_diff is not null
+
+#  direct only | no rejections
+SELECT 
+    "odsc_usr_dept_1_Sales Order Created"  as dept,
+    doc_entry,
+	upld1_so_diff  as diff
+FROM mabawa_dw.fact_orderscreenc1_approvals 
+	where "odsc_usr_dept_1_Sales Order Created" in  ('Approvals')
+	and to_char("odsc_datetime_1_Sales Order Created",'YYYY-MM-DD') >= ${dateFrom} 
+	and to_char("odsc_datetime_1_Sales Order Created",'YYYY-MM-DD') <= ${dateTo}
+	and "is_dropped_1_Sales Order Created" is null
+	and upld1_so_diff is not null
+
+#  preauth only | no rejections
+SELECT 
+    "odsc_usr_dept_1_Sales Order Created"  as dept,
+    doc_entry,
+	cust1_so_diff  as diff
+FROM mabawa_dw.fact_orderscreenc1_approvals 
+	where "odsc_usr_dept_1_Sales Order Created" in  ('Approvals')
+	and to_char("odsc_datetime_1_Sales Order Created",'YYYY-MM-DD') >= ${dateFrom} 
+	and to_char("odsc_datetime_1_Sales Order Created",'YYYY-MM-DD') <= ${dateTo}
+	and "is_dropped_1_Sales Order Created" is null
+	and cust1_so_diff is not null
+
+
+
+#  all schemes | rejected once
+SELECT 
+    "odsc_usr_dept_1_Sales Order Created"  as dept,
+    doc_entry,
+	corrected1_so_diff  as diff
+FROM mabawa_dw.fact_orderscreenc1_approvals 
+	where "odsc_usr_dept_1_Sales Order Created" in  ('Approvals')
+	and to_char("odsc_datetime_1_Sales Order Created",'YYYY-MM-DD') >= ${dateFrom} 
+	and to_char("odsc_datetime_1_Sales Order Created",'YYYY-MM-DD') <= ${dateTo}
+	and "is_dropped_1_Sales Order Created" is null
+	and corrected1_so_diff is not null
+
+#  all schemes | rejected twice
+SELECT 
+    "odsc_usr_dept_1_Sales Order Created"  as dept,
+    doc_entry,
+	corrected2_so_diff  as diff
+FROM mabawa_dw.fact_orderscreenc1_approvals 
+	where "odsc_usr_dept_1_Sales Order Created" in  ('Approvals')
+	and to_char("odsc_datetime_1_Sales Order Created",'YYYY-MM-DD') >= ${dateFrom} 
+	and to_char("odsc_datetime_1_Sales Order Created",'YYYY-MM-DD') <= ${dateTo}
+	and "is_dropped_1_Sales Order Created" is null
+	and corrected2_so_diff is not null
+
+
+### rejections
+## firstrejections
+#  direct only
+SELECT 
+    "odsc_usr_dept_1_Rejected by Approvals Team"  as dept,
+    doc_entry,
+	upld1_rej_diff  as diff
+FROM mabawa_dw.fact_orderscreenc1_approvals 
+	where "odsc_usr_dept_1_Rejected by Approvals Team" in  ('Approvals')
+	and to_char("odsc_datetime_1_Rejected by Approvals Team",'YYYY-MM-DD') >= ${dateFrom} 
+	and to_char("odsc_datetime_1_Rejected by Approvals Team",'YYYY-MM-DD') <= ${dateTo}
+	and "is_dropped_1_Rejected by Approvals Team"  is null
+	and upld1_rej_diff is not null
+
+#  direct + smart
+SELECT 
+    "odsc_usr_dept_1_Rejected by Approvals Team"  as dept,
+    doc_entry,
+	smart1_rej_diff  as diff
+FROM mabawa_dw.fact_orderscreenc1_approvals 
+	where "odsc_usr_dept_1_Rejected by Approvals Team" in  ('Approvals')
+	and to_char("odsc_datetime_1_Rejected by Approvals Team",'YYYY-MM-DD') >= ${dateFrom} 
+	and to_char("odsc_datetime_1_Rejected by Approvals Team",'YYYY-MM-DD') <= ${dateTo}
+	and "is_dropped_1_Rejected by Approvals Team"  is null
+	and smart1_rej_diff is not null
+
+#  preauth only
+SELECT 
+    "odsc_usr_dept_1_Rejected by Approvals Team"  as dept,
+    doc_entry,
+	cust1_rej_diff  as diff
+FROM mabawa_dw.fact_orderscreenc1_approvals 
+	where "odsc_usr_dept_1_Rejected by Approvals Team" in  ('Approvals')
+	and to_char("odsc_datetime_1_Rejected by Approvals Team",'YYYY-MM-DD') >= ${dateFrom} 
+	and to_char("odsc_datetime_1_Rejected by Approvals Team",'YYYY-MM-DD') <= ${dateTo}
+	and "is_dropped_1_Rejected by Approvals Team"  is null
+	and cust1_rej_diff is not null
+
+## secondrejections
+# all schemes
+SELECT 
+    "odsc_usr_dept_1_Rejected by Approvals Team"  as dept,
+    doc_entry,
+	corrected1_rej2_diff  as diff
+FROM mabawa_dw.fact_orderscreenc1_approvals 
+	where "odsc_usr_dept_1_Rejected by Approvals Team" in  ('Approvals')
+	and to_char("odsc_datetime_1_Rejected by Approvals Team",'YYYY-MM-DD') >= ${dateFrom} 
+	and to_char("odsc_datetime_1_Rejected by Approvals Team",'YYYY-MM-DD') <= ${dateTo}
+	and "is_dropped_1_Rejected by Approvals Team"  is null
+	and corrected1_rej2_diff is not null
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+create table mabawa_mviews.orders_scheme_types as
+select distinct
+	p.doc_entry, p.insurance_company_name, p.insurance_scheme ,
+	ic.insurance_name, ip.plan_scheme_name, ip.plan_scheme_type 
+FROM mabawa_staging.source_payment p
+join mabawa_staging.source_insurance_company ic on p.insurance_company_name::text = ic.insurance_code::text
+join mabawa_staging.source_insurance_plan ip on ic.id::text = ip.insurance_id::text
+and ip.plan_scheme_name = p.insurance_scheme 
+
+
+
+597535 should get approval time from 2nd corrected form resent instead of the 1st corrected form resent
+this doc entry is preauth only but am showing as direct only

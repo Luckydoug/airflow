@@ -1,0 +1,84 @@
+import sys, os
+sys.path.insert(0,os.path.abspath(os.path.dirname(__file__)))
+
+from airflow import DAG
+from airflow.contrib.sensors.file_sensor import FileSensor
+from airflow.operators.python_operator import PythonOperator
+from airflow.operators.bash_operator import BashOperator
+from airflow.operators.dummy_operator import DummyOperator
+from airflow.example_dags.subdags.subdag import subdag
+from airflow.utils.task_group import TaskGroup
+from datetime import datetime
+
+#from sub_tasks.paymentsETLs.invoices import (fetch_sap_invoices)
+#from sub_tasks.paymentsETLs.expenses import (fetch_sap_expenses)
+#from sub_tasks.paymentsETLs.payments import (fetch_sap_payments)
+
+# from tmp.python_test
+DAG_ID = 'Finance_ETLs_Pipeline'
+
+default_args = {
+    'owner': 'Iconia ETLs',
+    # 'depends_on_past': False,
+    'start_date': datetime(2021, 12, 13)
+    
+}
+
+with DAG(
+    DAG_ID, 
+    default_args=default_args,
+    tags=['Live'], 
+    schedule_interval='30 17 * * *',
+    catchup=False
+    ) as dag:
+    
+    start = DummyOperator(
+        task_id = "start"
+    )
+
+    """
+    GET INVOICES
+    """    
+    """
+    with TaskGroup('invoices') as invoices:
+
+        fetch_sap_invoices = PythonOperator(
+            task_id = 'fetch_sap_invoices',
+            python_callable=fetch_sap_invoices,
+            provide_context=True
+        )
+    """
+
+    """
+    GET EXPENSES
+    """
+    """
+    with TaskGroup('expenses') as expenses:
+
+        fetch_sap_items = PythonOperator(
+            task_id = 'fetch_sap_expenses',
+            python_callable=fetch_sap_expenses,
+            provide_context=True
+        )
+
+    """
+
+    """
+    GET PAYMENTS
+    """   
+    """ 
+    with TaskGroup('payments') as payments:
+
+        fetch_sap_payments = PythonOperator(
+            task_id = 'fetch_sap_payments',
+            python_callable=fetch_sap_payments,
+            provide_context=True
+        )
+    """
+
+    finish = DummyOperator(
+        task_id = "finish"
+    )
+    
+    #start >> invoices >> payments >> expenses >> finish
+    

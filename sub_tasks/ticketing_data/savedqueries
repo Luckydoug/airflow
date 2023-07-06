@@ -1,0 +1,265 @@
+select 
+    t.dept_id,t.dept_name,
+    t.staff_id, t.user_name,
+    (case when table1.pending_tickets is null then 0 
+    else table1.pending_tickets end) as pending_tickets,
+    (case when table2.pending_unreplied is null then 0
+    else table2.pending_unreplied end) as pending_unreplied,
+    (case when table3.pending_in_progress is null then 0
+    else table3.pending_in_progress end) as pending_in_progress,
+	table4.tickets as new_tickets,
+    table4.t_email,
+    table4.t_system,
+    table4.t_api,
+	table4.open_tickets,
+	table4.reopened_tickets,
+	table4.closed_tickets,
+	table4.overdue_tickets,
+	TO_CHAR((table4.avg_servicetime || ' minute')::interval, 'HH24:MI:SS') as service_time,
+    TO_CHAR((table4.first_response_time || ' minute')::interval, 'HH24:MI:SS') as first_response_time
+from 
+(SELECT distinct
+	d.dept_id,d.dept_name,
+	s.staff_id, s.user_name 
+FROM ticketing_dw.dim_depts d 
+join ticketing_dw.dim_staff s on d.dept_id = s.dept_id 
+left join ticketing_dw.Unassigned_staff u on u.staff_id = u.staff_id 
+union all 
+SELECT distinct
+	d2.dept_id,d2.dept_name,
+	u.staff_id, u.user_name 
+FROM ticketing_dw.dim_depts d2 
+left join ticketing_dw.Unassigned_staff u on u.staff_id = u.staff_id ) as t
+left join 
+(SELECT 
+    t.dept_id, d.dept_name,
+    t.staff_id, 
+    (case when s.user_name is null then 'Un-assigned'
+    else s.user_name end) as user_name,
+    count(distinct t.ticket_no) as pending_tickets
+FROM ticketing_dw.fact_tickets t
+join ticketing_dw.dim_depts d on t.dept_id = d.dept_id 
+left join ticketing_dw.dim_staff s on t.staff_id = s.staff_id
+	where t.is_open = 1
+	group by t.dept_id, d.dept_name,t.staff_id, s.user_name) as table1 on t.dept_id = table1.dept_id
+	and t.staff_id = table1.staff_id
+left join 
+(SELECT 
+	t2.dept_id, d2.dept_name,
+	t2.staff_id, 
+	(case when s.user_name is null then 'Un-assigned'
+    else s.user_name end) as user_name,
+	count(distinct t2.ticket_no) as pending_unreplied
+FROM ticketing_dw.fact_tickets t2
+join ticketing_dw.dim_depts d2 on t2.dept_id = d2.dept_id 
+left join ticketing_dw.dim_staff s on t2.staff_id = s.staff_id 
+	where t2.is_open = 1
+	and t2.isanswered = 0
+	group by t2.dept_id, d2.dept_name,t2.staff_id, s.user_name) as table2 on t.dept_id = table2.dept_id
+	and t.staff_id = table2.staff_id
+left join 
+(SELECT 
+	t2.dept_id, d2.dept_name,
+	t2.staff_id, 
+	(case when s.user_name is null then 'Un-assigned'
+    else s.user_name end) as user_name,
+	count(distinct t2.ticket_no) as pending_in_progress
+FROM ticketing_dw.fact_tickets t2
+join ticketing_dw.dim_depts d2 on t2.dept_id = d2.dept_id 
+left join ticketing_dw.dim_staff s on t2.staff_id = s.staff_id 
+	where t2.is_open = 1
+	and t2.isanswered = 1
+	group by t2.dept_id, d2.dept_name,t2.staff_id, s.user_name) as table3 on t.dept_id = table3.dept_id
+	and t.staff_id = table3.staff_id
+left join 
+(select 
+	t.dept_id, t.dept_name,
+	t.staff_id, t.user_name,
+	(case when tab0.tickets is null then 0
+	else tab0.tickets end) as tickets,
+    (case when tab7.t_email is null then 0
+	else tab7.t_email end) as t_email,
+    (case when tab8.t_system is null then 0
+	else tab8.t_system end) as t_system,
+    (case when tab9.t_api is null then 0
+	else tab9.t_api end) as t_api,
+	(case when tab.open_tickets is null then 0
+	else tab.open_tickets end) as open_tickets,
+	(case when tab2.reopened_tickets is null then 0
+	else tab2.reopened_tickets end) as reopened_tickets,
+	(case when tab3.closed_tickets is null then 0
+	else tab3.closed_tickets end) as closed_tickets,
+	(case when tab4.overdue_tickets is null then 0
+	else tab4.overdue_tickets end) as overdue_tickets,
+	(case when tab5.avg_servicetime is null then 0
+	else tab5.avg_servicetime end) as avg_servicetime,
+    (case when tab6.first_response_time is null then 0
+	else tab6.first_response_time end) as first_response_time
+from
+(SELECT distinct
+	t.dept_id, d.dept_name,
+	t.staff_id, s.user_name
+FROM ticketing_dw.fact_tickets t
+join ticketing_dw.dim_depts d on t.dept_id = d.dept_id 
+join ticketing_dw.dim_staff s on t.staff_id = s.staff_id 
+union all 
+SELECT distinct
+	d2.dept_id,d2.dept_name,
+	u.staff_id, u.user_name 
+FROM ticketing_dw.dim_depts d2 
+left join ticketing_dw.Unassigned_staff u on u.staff_id = u.staff_id) as t
+left join 
+(SELECT 
+	t.dept_id, d.dept_name,
+	t.staff_id, 
+	(case when s.user_name is null then 'Un-assigned'
+    else s.user_name end) as user_name,
+	count(distinct t.ticket_no) as tickets
+FROM ticketing_dw.fact_tickets t
+join ticketing_dw.dim_depts d on t.dept_id = d.dept_id 
+left join ticketing_dw.dim_staff s on t.staff_id = s.staff_id 
+	where to_char(t.created,'YYYY-MM-DD') >= ${dateFrom} 
+	and to_char(t.created,'YYYY-MM-DD') <= ${dateTo}
+	group by t.dept_id, d.dept_name,t.staff_id, s.user_name) as tab0 on t.dept_id = tab0.dept_id
+	and t.staff_id = tab0.staff_id 
+left join 
+(SELECT 
+	t.dept_id, d.dept_name,
+	t.staff_id, 
+	(case when s.user_name is null then 'Un-assigned'
+    else s.user_name end) as user_name,
+	count(distinct t.ticket_no) as open_tickets
+FROM ticketing_dw.fact_tickets t
+join ticketing_dw.dim_depts d on t.dept_id = d.dept_id 
+left join ticketing_dw.dim_staff s on t.staff_id = s.staff_id 
+	where to_char(t.created,'YYYY-MM-DD') >= ${dateFrom} 
+	and to_char(t.created,'YYYY-MM-DD') <= ${dateTo}
+	and t.is_open = 1
+	group by t.dept_id, d.dept_name,t.staff_id, s.user_name) as tab on t.dept_id = tab.dept_id
+	and t.staff_id = tab.staff_id
+left join 
+(SELECT 
+	t.dept_id, d.dept_name,
+	t.staff_id, 
+    (case when s.user_name is null then 'Un-assigned'
+    else s.user_name end) as user_name,
+	count(distinct t.ticket_no) as reopened_tickets
+FROM ticketing_dw.fact_tickets t
+join ticketing_dw.dim_depts d on t.dept_id = d.dept_id 
+left join ticketing_dw.dim_staff s on t.staff_id = s.staff_id 
+	where to_char(t.created,'YYYY-MM-DD') >= ${dateFrom} 
+	and to_char(t.created,'YYYY-MM-DD') <= ${dateTo}
+	and t.is_open = 1
+	and t.reopened is not null
+	group by t.dept_id, d.dept_name,t.staff_id, s.user_name) tab2 on t.dept_id = tab2.dept_id
+	and t.staff_id = tab2.staff_id
+left join 
+(SELECT 
+	t.dept_id, d.dept_name,
+	t.staff_id, 
+    (case when s.user_name is null then 'Un-assigned'
+    else s.user_name end) as user_name,
+	count(distinct t.ticket_no) as closed_tickets
+FROM ticketing_dw.fact_tickets t
+join ticketing_dw.dim_depts d on t.dept_id = d.dept_id 
+left join ticketing_dw.dim_staff s on t.staff_id = s.staff_id
+	where to_char(t.created,'YYYY-MM-DD') >= ${dateFrom} 
+	and to_char(t.created,'YYYY-MM-DD') <= ${dateTo}
+	and t.is_open = 0
+	group by t.dept_id, d.dept_name,t.staff_id, s.user_name) as tab3 on t.dept_id = tab3.dept_id
+	and t.staff_id = tab3.staff_id
+left join 
+(SELECT 
+	t.dept_id, d.dept_name,
+	t.staff_id, 
+    (case when s.user_name is null then 'Un-assigned'
+    else s.user_name end) as user_name,
+	count(distinct t.ticket_no) as overdue_tickets
+FROM ticketing_dw.fact_tickets t
+join ticketing_dw.dim_depts d on t.dept_id = d.dept_id 
+left join ticketing_dw.dim_staff s on t.staff_id = s.staff_id
+	where to_char(t.created,'YYYY-MM-DD') >= ${dateFrom} 
+	and to_char(t.created,'YYYY-MM-DD') <= ${dateTo}
+	and t.is_open = 1
+	and t.isoverdue = 1
+	group by t.dept_id, d.dept_name,t.staff_id, s.user_name) as tab4 on t.dept_id = tab4.dept_id
+	and t.staff_id = tab4.staff_id
+left join 
+(SELECT 
+	t.dept_id, d.dept_name,
+	t.staff_id, 
+    (case when s.user_name is null then 'Un-assigned'
+    else s.user_name end) as user_name,
+	avg(t.service_time) as avg_servicetime
+FROM ticketing_mviews.fact_tickets t
+join ticketing_dw.dim_depts d on t.dept_id = d.dept_id 
+left join ticketing_dw.dim_staff s on t.staff_id = s.staff_id
+	where to_char(t.created,'YYYY-MM-DD') >= ${dateFrom} 
+	and to_char(t.created,'YYYY-MM-DD') <= ${dateTo}
+	and t.is_open = 0
+	group by t.dept_id, d.dept_name,t.staff_id, s.user_name) as tab5 on t.dept_id = tab5.dept_id
+	and t.staff_id = tab5.staff_id
+left join 
+(SELECT 
+	t.dept_id, d.dept_name,
+	t.staff_id, 
+    (case when s.user_name is null then 'Un-assigned'
+    else s.user_name end) as user_name,
+	avg(t.first_response_time) as first_response_time
+FROM ticketing_dw.ticket_response t
+join ticketing_dw.dim_depts d on t.dept_id = d.dept_id 
+left join ticketing_dw.dim_staff s on t.staff_id = s.staff_id
+	where to_char(t.created,'YYYY-MM-DD') >= ${dateFrom} 
+	and to_char(t.created,'YYYY-MM-DD') <= ${dateTo}
+	and t.is_open = 0
+	group by t.dept_id, d.dept_name,t.staff_id, s.user_name) as tab6 on t.dept_id = tab6.dept_id
+	and t.staff_id = tab6.staff_id
+left join 
+(SELECT 
+	t.dept_id, d.dept_name,
+	t.staff_id, 
+	(case when s.user_name is null then 'Un-assigned'
+    else s.user_name end) as user_name,
+	count(distinct t.ticket_no) as t_email
+FROM ticketing_dw.fact_tickets t
+join ticketing_dw.dim_depts d on t.dept_id = d.dept_id 
+left join ticketing_dw.dim_staff s on t.staff_id = s.staff_id 
+	where to_char(t.created,'YYYY-MM-DD') >= ${dateFrom} 
+	and to_char(t.created,'YYYY-MM-DD') <= ${dateTo}
+	and ticket_source in ('Email')
+	group by t.dept_id, d.dept_name,t.staff_id, s.user_name) as tab7 on t.dept_id = tab7.dept_id
+	and t.staff_id = tab7.staff_id
+left join 
+(SELECT 
+	t.dept_id, d.dept_name,
+	t.staff_id, 
+	(case when s.user_name is null then 'Un-assigned'
+    else s.user_name end) as user_name,
+	count(distinct t.ticket_no) as t_system
+FROM ticketing_dw.fact_tickets t
+join ticketing_dw.dim_depts d on t.dept_id = d.dept_id 
+left join ticketing_dw.dim_staff s on t.staff_id = s.staff_id 
+	where to_char(t.created,'YYYY-MM-DD') >= ${dateFrom} 
+	and to_char(t.created,'YYYY-MM-DD') <= ${dateTo}
+	and ticket_source in ('Web','Other','Phone')
+	group by t.dept_id, d.dept_name,t.staff_id, s.user_name) as tab8 on t.dept_id = tab8.dept_id
+	and t.staff_id = tab8.staff_id
+left join 
+(SELECT 
+	t.dept_id, d.dept_name,
+	t.staff_id, 
+	(case when s.user_name is null then 'Un-assigned'
+    else s.user_name end) as user_name,
+	count(distinct t.ticket_no) as t_api
+FROM ticketing_dw.fact_tickets t
+join ticketing_dw.dim_depts d on t.dept_id = d.dept_id 
+left join ticketing_dw.dim_staff s on t.staff_id = s.staff_id 
+	where to_char(t.created,'YYYY-MM-DD') >= ${dateFrom} 
+	and to_char(t.created,'YYYY-MM-DD') <= ${dateTo}
+	and ticket_source in ('API')
+	group by t.dept_id, d.dept_name,t.staff_id, s.user_name) as tab9 on t.dept_id = tab9.dept_id
+	and t.staff_id = tab9.staff_id
+	order by t.dept_id, t.staff_id) as table4 on t.dept_id = table4.dept_id
+	and t.staff_id = table4.staff_id
+	where t.dept_name = ${Dept}
+	order by t.dept_id, t.staff_id

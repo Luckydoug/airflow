@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "airflow",
+			"path": "../../.."
+		}
+	],
+	"settings": {
+		"python.analysis.extraPaths": [
+			"./dags"
+		]
+	}
+}

@@ -1,0 +1,109 @@
+import sys, os
+sys.path.insert(0,os.path.abspath(os.path.dirname(__file__)))
+
+from airflow import DAG
+from airflow.contrib.sensors.file_sensor import FileSensor
+from airflow.operators.python_operator import PythonOperator
+from airflow.operators.bash_operator import BashOperator
+from airflow.operators.dummy_operator import DummyOperator
+from airflow.example_dags.subdags.subdag import subdag
+from airflow.utils.task_group import TaskGroup
+from datetime import datetime
+
+
+
+from sub_tasks.dimensionsETLs.items import(fetch_sap_items)
+from sub_tasks.dimensionsETLs.users import(fetch_sap_users)
+from sub_tasks.dimensionsETLs.warehouses import(fetch_sap_warehouses)
+from sub_tasks.dimensionsETLs.customers import(fetch_sap_customers)
+from sub_tasks.dimensionsETLs.insurance import(fetch_sap_insurance)
+
+
+# from tmp.python_test
+DAG_ID = 'Dimensions_ETLs_Pipeline'
+
+default_args = {
+    'owner': 'Iconia ETLs',
+    # 'depends_on_past': False,
+    'start_date': datetime(2021, 12, 13),
+    'email': ['chrisn@iconiatech.com'],
+    'email_on_failure': True
+    
+}
+
+with DAG(
+    DAG_ID, 
+    default_args=default_args,
+    tags=['Live'], 
+    schedule_interval='30 17 * * *',
+    catchup=False
+    ) as dag:
+    
+    start = DummyOperator(
+        task_id = "start"
+    )
+
+    """
+    GET ITEMS
+    """
+    with TaskGroup('items') as items:
+
+        fetch_sap_items = PythonOperator(
+            task_id = 'fetch_sap_items',
+            python_callable=fetch_sap_items,
+            provide_context=True
+        )
+
+    """
+    GET USERS
+    """
+    with TaskGroup('users') as users:
+
+        fetch_sap_users = PythonOperator(
+            task_id = 'fetch_sap_users',
+            python_callable=fetch_sap_users,
+            provide_context=True
+        )
+
+    """
+    GET WAREHOUSES
+    """
+    with TaskGroup('warehouse') as warehouse:
+
+        fetch_sap_warehouses = PythonOperator(
+            task_id = 'fetch_sap_warehouses',
+            python_callable=fetch_sap_warehouses,
+            provide_context=True
+        )
+
+    """
+    GET INSURANCE
+    """
+    with TaskGroup('insurances') as insurances:
+
+        fetch_sap_insurance = PythonOperator(
+            task_id = 'fetch_sap_insurance',
+            python_callable=fetch_sap_insurance,
+            provide_context=True
+        )
+
+    """
+    GET CUSTOMERS
+    """
+    with TaskGroup('customers') as customers:
+
+        fetch_sap_customers = PythonOperator(
+            task_id = 'fetch_sap_customers',
+            python_callable=fetch_sap_customers,
+            provide_context=True
+        )
+
+
+
+    finish = DummyOperator(
+        task_id = "finish"
+    )
+    
+    #start >> items >> users >> warehouse >> customers >> finish
+    start >> insurances >> items >> users >> warehouse >> customers >> finish
+    

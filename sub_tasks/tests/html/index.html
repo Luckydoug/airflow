@@ -1,0 +1,730 @@
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <title>Conversion Analysis</title>
+        <link rel="icon" href="https://iconiatech.com/static/img/White_Transparent.png" type="image/icon type">
+
+        <!-- font awesome -->
+        <link rel="stylesheet" bref="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
+    </head>
+
+    <body>
+        <br>
+        <div class="sixgrid-container">
+            <div class="grid-item smallh2blue">Data Last Refreshed:</div>
+            <div class="grid-item smallh2blue" id=""></div>
+            <div class="grid-item smallh2blue"></div>
+            <div class="grid-item smallh2blue"></div>
+            <div class="grid-item smallh2blue">Logged In as: </div>
+            <div class="grid-item smallh2blue" id=""></div>
+        </div>
+        <br>
+        <div class="headerdiv">
+            Conversion Analysis Dashboard
+        </div>
+        <br>
+        <div class="sixgrid-container">
+            <div class="grid-item smallh2blue">Date Range</div>
+            <div class="grid-item smallh2blue">Branches</div>
+            <div class="grid-item smallh2blue">Days</div>
+            <div class="grid-item smallh2blue">Comparison Date Range</div>
+            <div class="grid-item smallh2blue">Export Date Range</div>
+            <div class="grid-item smallh2blue"></div>
+        </div>
+        <div class="sixgrid-container">
+            <div class="grid-item" id="select_date_range"></div>
+            <div class="grid-item" id="select_branch"></div>
+            <div class="grid-item" id="select_days"></div>
+            <div class="grid-item" id="select_comp_date"></div>
+            <div class="grid-item" id="select_exprt_date"></div>
+            <div class="grid-item"></div>
+        </div>
+        <br>
+        <div class="tabordion">
+            <section id="section1">
+                <input type="radio" name="sections" id="option1" checked>
+                <label for="option1">Summary</label>
+                <article>
+                    <br>
+                    <div class="smallh2blue">Conversion Analysis Summary Metrics</div>
+                    <br>
+                    <div class="threegrid-container">
+
+                        <div class="grid-item">
+                            <div class="columncard" style="background-color:#0a5b54;">
+                                <h6 class="">Reg-Order/EyeTest</h6>
+                            </div>
+                            <div class="columncard" style="background-color:#e5a46e;">
+                                <h6 class="tinyh2blue" id="lbl_reg_eyetest_orders_conversion"></h6>
+                            </div>
+                            <div class="columncard" style="background-color:#32435f;">
+                                <h6 class="" id="lbl_reg_eyetest_orders_conversion_comp"></h6>
+                            </div>
+                        </div>
+
+                        <div class="grid-item">
+                            <div class="columncard" style="background-color:#0a5b54;">
+                                <h6 class="">EyeTest-Order</h6>
+                            </div>
+                            <div class="columncard" style="background-color:#e5a46e;">
+                                <h6 class="tinyh2blue" id="lbl_eyetest_order_conversion"></h6>
+                            </div>
+                            <div class="columncard" style="background-color:#32435f;">
+                                <h6 class="" id="lbl_eyetest_order_conversion_comp"></h6>
+                            </div>
+                        </div>
+
+                        <div class="grid-item">
+                            <div class="columncard" style="background-color:#0a5b54;">
+                                <h6 class="">ViewRX-Order</h6>
+                            </div>
+                            <div class="columncard" style="background-color:#e5a46e;">
+                                <h6 class="tinyh2blue" id="lbl_viewrx_orders_conversion"></h6>
+                            </div>
+                            <div class="columncard" style="background-color:#32435f;">
+                                <h6 class="" id="lbl_viewrx_orders_conversion_comp"></h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="threegrid-container">
+                        <div class="grid-item">
+                            <div class="columncard" style="background-color:#0a5b54;">
+                                <h6 class="">Non ViewRX-Order</h6>
+                            </div>
+                            <div class="columncard" style="background-color:#e5a46e;">
+                                <h6 class="tinyh2blue" id="lbl_noviewrx_conversion"></h6>
+                            </div>
+                            <div class="columncard" style="background-color:#32435f;">
+                                <h6 class="" id="lbl_noviewrx_conversion_comp"></h6>
+                            </div>
+                        </div>
+
+                        <div class="grid-item">
+                            <div class="columncard" style="background-color:#0a5b54;">
+                                <h6 class="">Registrations</h6>
+                            </div>
+                            <div class="columncard" style="background-color:#e5a46e;">
+                                <h6 class="tinyh2blue" id="lbl_registrations"></h6>
+                            </div>
+                            <div class="columncard" style="background-color:#32435f;">
+                                <h6 class="" id="lbl_registrations_comp"></h6>
+                            </div>
+                        </div>
+
+                        <div class="grid-item">
+                            <div class="columncard" style="background-color:#0a5b54;">
+                                <h6 class="">EyeTests</h6>
+                            </div>
+                            <div class="columncard" style="background-color:#e5a46e;">
+                                <h6 class="tinyh2blue" id="lbl_eyetests"></h6>
+                            </div>
+                            <div class="columncard" style="background-color:#32435f;">
+                                <h6 class="" id="lbl_eyetests_comp"></h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="threegrid-container">
+                        <!-- <div class="grid-item">
+                            <div class="columncard" style="background-color:#0a5b54;">
+                                <h6 class="">Orders</h6>
+                            </div>
+                            <div class="columncard" style="background-color:#e5a46e;">
+                                <h6 class="tinyh2blue" id="lbl_orders"></h6>
+                            </div>
+                            <div class="columncard" style="background-color:#32435f;">
+                                <h6 class="" id="lbl_orders_comp"></h6>
+                            </div>
+                        </div> -->
+
+                        <div class="grid-item">
+                            <div class="columncard" style="background-color:#0a5b54;">
+                                <h6 class="">Views</h6>
+                            </div>
+                            <div class="columncard" style="background-color:#e5a46e;">
+                                <h6 class="tinyh2blue" id="lbl_views"></h6>
+                            </div>
+                            <div class="columncard" style="background-color:#32435f;">
+                                <h6 class="" id="lbl_views_comp"></h6>
+                            </div>
+                        </div>
+                        <div class="grid-item">
+                            <div class="columncard" style="background-color:#0a5b54;">
+                                <h6 class="">Key</h6>
+                            </div>
+                            <div class="columncard" style="background-color:#e5a46e;">
+                                <h6 class="">Current Metric</h6>
+                            </div>
+                            <div class="columncard" style="background-color:#32435f;">
+                                <h6 class="">Comparison Metric</h6>
+                            </div>
+                        </div>
+
+                        <div class="grid-item"></div>
+                    </div>
+                    <div></div>
+                    <br>
+                	<div></div>
+					<br>
+                    <div class="threegrid-container">
+                        <div class="grid-item smallh2blue">Conversion Metric</div>
+                        <div class="grid-item smallh2blue"></div>
+                        <div class="grid-item smallh2blue"></div>
+                    </div>
+                    <div class="threegrid-container">
+                        <div class="grid-item" id="select_regional_conversion_filters"></div>
+                        <div class="grid-item"></div>
+                        <div class="grid-item"></div>
+                    </div>
+                    <br>
+                    <div id="graph_regional_conversions"></div>
+                    <br>
+                    <div class="threegrid-container">
+                        <div class="grid-item smallh2blue">Count Metric</div>
+                        <div class="grid-item smallh2blue"></div>
+                        <div class="grid-item smallh2blue"></div>
+                    </div>
+                    <div class="threegrid-container">
+                        <div class="grid-item" id="select_regional_count_filters"></div>
+                        <div class="grid-item"></div>
+                        <div class="grid-item"></div>
+                    </div>
+                    <br>
+                    <div id="graph_regional_counts"></div>
+                    <br>
+                    <br>
+                    <div class="sixgrid-container">
+                        <div class="grid-item" id="exprt_reg_all"></div>
+                        <div class="grid-item" id="exprt_eyetest_orders"></div>
+                        <div class="grid-item" id="exprt_viewrx_orders"></div>
+                        <div class="grid-item" id="exprt_noviewrx_orders"></div>
+                        <div class="grid-item" id="exprt_tests_no_branches"></div>
+                        <div class="grid-item"></div>
+                    </div>
+                    <br>
+                    <div class="smallh2blue">SRM Conversion Analysis Summary (Click to Drill Down to RM)</div>
+                    <br>
+                    <div class="summary_table" id="tbl_srm_summary"></div>
+                    <br>
+                    <br>
+                    <br>
+                    <br>
+                </article>
+            </section>
+
+            <section id="section2">
+                <input type="radio" name="sections" id="option2">
+                <label for="option2">Registrations</label>
+                <article>
+                    <br>
+					<div class="tab">
+                        <button class="tablinks button_style active" onclick="openCity(event, 'all')" id="defaultOpen">Orders/EyeTests</button>
+                        <button class="tablinks button_style active" onclick="openCity(event, 'orders')">Orders</button>
+						<button class="tablinks button_style active" onclick="openCity(event, 'eyetests')">EyeTest</button>
+                    </div>
+                    <div id="all" class="tabcontent active">
+                        <div id="graph_reg_all_last12mons"></div>
+                        <br>
+                        <div class="smallh2blue">Reg - EyeTests/Orders Summary By Branch (Click to Drill Down)</div>
+                        <br>
+                        <div class="summary_table" id="tbl_reg_all_summary"></div>
+                        <br>
+                        <div class="sixgrid-container">
+                            <div class="grid-item smallh2blue">Report By</div>
+                            <div class="grid-item smallh2blue">Branch</div>
+                            <div class="grid-item smallh2blue"></div>
+                            <div class="grid-item smallh2blue"></div>
+                            <div class="grid-item smallh2blue"></div>
+                            <div class="grid-item smallh2blue"></div>
+                        </div>
+                        <div class="sixgrid-container">
+                            <div class="grid-item" id="select_reg_all_reportby"></div>
+                            <div class="grid-item" id="select_reg_all_branch"></div>
+                            <div class="grid-item"></div>
+                            <div class="grid-item"></div>
+                            <div class="grid-item"></div>
+                            <div class="grid-item"></div>
+                        </div>
+                        <br>
+                        <div id="graph_reg_all_linechart"></div>
+                        <br>
+                        <div class="smallh2blue">Reg - EyeTests/Orders (Click to Drill Down)</div>
+                        <br>
+                        <div class="summary_table" id="tbl_reg_all_dynamic"></div>
+                        <br>
+                    </div>
+
+                    <div id="orders" class="tabcontent">
+                        <div id="graph_reg_orders_last12mons"></div>
+                        <br>
+                        <div class="smallh2blue">Reg - Orders Summary By Branch (Click to Drill Down)</div>
+                        <br>
+                        <div class="sixgrid-container">
+                            <div class="grid-item" id="exprt_reg_orders"></div>
+                            <div class="grid-item" id=""></div>
+                            <div class="grid-item" id=""></div>
+                            <div class="grid-item" id=""></div>
+                            <div class="grid-item" id=""></div>
+                            <div class="grid-item"></div>
+                        </div>
+                        <br>
+                        <div class="summary_table" id="tbl_reg_orders_summary"></div>
+                        <br>
+                        <div class="sixgrid-container">
+                            <div class="grid-item smallh2blue">Report By</div>
+                            <div class="grid-item smallh2blue">Branch</div>
+                            <div class="grid-item smallh2blue"></div>
+                            <div class="grid-item smallh2blue"></div>
+                            <div class="grid-item smallh2blue"></div>
+                            <div class="grid-item smallh2blue"></div>
+                        </div>
+                        <div class="sixgrid-container">
+                            <div class="grid-item" id="select_reg_orders_reportby"></div>
+                            <div class="grid-item" id="select_reg_orders_branch"></div>
+                            <div class="grid-item"></div>
+                            <div class="grid-item"></div>
+                            <div class="grid-item"></div>
+                            <div class="grid-item"></div>
+                        </div>
+                        <br>
+                        <div id="graph_reg_orders_linechart"></div>
+                        <br>
+                        <div class="smallh2blue">Reg - Orders (Click to Drill Down)</div>
+                        <br>
+                        <div class="summary_table" id="tbl_reg_orders_dynamic"></div>
+                        <br>
+                    </div>
+
+                    <div id="eyetests" class="tabcontent">
+                        <div id="graph_reg_tests_last12mons"></div>
+                        <br>
+                        <div class="smallh2blue">Reg - EyeTests Summary By Branch (Click to Drill Down)</div>
+                        <br>
+                        <div class="sixgrid-container">
+                            <div class="grid-item" id="exprt_reg_tests"></div>
+                            <div class="grid-item" id=""></div>
+                            <div class="grid-item" id=""></div>
+                            <div class="grid-item" id=""></div>
+                            <div class="grid-item" id=""></div>
+                            <div class="grid-item"></div>
+                        </div>
+                        <br>
+                        <div class="summary_table" id="tbl_reg_tests_summary"></div>
+                        <br>
+                        <div class="sixgrid-container">
+                            <div class="grid-item smallh2blue">Report By</div>
+                            <div class="grid-item smallh2blue">Branch</div>
+                            <div class="grid-item smallh2blue"></div>
+                            <div class="grid-item smallh2blue"></div>
+                            <div class="grid-item smallh2blue"></div>
+                            <div class="grid-item smallh2blue"></div>
+                        </div>
+                        <div class="sixgrid-container">
+                            <div class="grid-item" id="select_reg_tests_reportby"></div>
+                            <div class="grid-item" id="select_reg_tests_branch"></div>
+                            <div class="grid-item"></div>
+                            <div class="grid-item"></div>
+                            <div class="grid-item"></div>
+                            <div class="grid-item"></div>
+                        </div>
+                        <br>
+                        <div id="graph_reg_tests_linechart"></div>
+                        <br>
+                        <div class="smallh2blue">Reg - EyeTests (Click to Drill Down)</div>
+                        <br>
+                        <div class="summary_table" id="tbl_reg_tests_dynamic"></div>
+                        <br>
+                    </div>
+                    <br>
+                    <script>
+                        function openCity(evt, cityName) {
+                            var i, tabcontent, tablinks;
+                            tabcontent = document.getElementsByClassName("tabcontent");
+                            for (i = 0; i < tabcontent.length; i++) {
+                                tabcontent[i].style.display = "none";
+                            }
+                            tablinks = document.getElementsByClassName("tablinks");
+                            for (i = 0; i < tablinks.length; i++) {
+                                tablinks[i].className = tablinks[i].className.replace(" active", "");
+                            }
+                            document.getElementById(cityName).style.display = "block";
+                            evt.currentTarget.className += " active";
+                        } 
+                    
+                        // Get the element with id="defaultOpen" and click on it
+                        document.getElementById("defaultOpen").click();
+                    </script>
+                </article>
+            </section>
+
+            <section id="section3">
+                <input type="radio" name="sections" id="option3">
+                <label for="option3">EyeTests</label>
+                <article>
+                    <br>
+					<div class="tab">
+                        <button class="tablinks button_style active" onclick="openCity(event, 'testorders')" id="defaultOpen">Orders</button>
+                        <button class="tablinks button_style active" onclick="openCity(event, 'ref')">Referalls</button>
+                    </div>
+                    <br>
+                    <div id="testorders" class="tabcontent">
+                        <div id="graph_tests_orders_last12mons"></div>
+                        <br>
+                        <div class="smallh2blue">EyeTests - Orders Summary By Branch (Click to Drill Down)</div>
+                        <br>
+                        <div class="sixgrid-container">
+                            <div class="grid-item" id="exprt_tests_orders"></div>
+                            <div class="grid-item" id=""></div>
+                            <div class="grid-item" id=""></div>
+                            <div class="grid-item" id=""></div>
+                            <div class="grid-item" id=""></div>
+                            <div class="grid-item"></div>
+                        </div>
+                        <br>
+                        <div class="summary_table" id="tbl_tests_orders_summary"></div>
+                        <br>
+                        <div class="sixgrid-container">
+                            <div class="grid-item smallh2blue">Report By</div>
+                            <div class="grid-item smallh2blue">Branch</div>
+                            <div class="grid-item smallh2blue"></div>
+                            <div class="grid-item smallh2blue"></div>
+                            <div class="grid-item smallh2blue"></div>
+                            <div class="grid-item smallh2blue"></div>
+                        </div>
+                        <div class="sixgrid-container">
+                            <div class="grid-item" id="select_testsorders_reportby"></div>
+                            <div class="grid-item" id="select_testsorders_branch"></div>
+                            <div class="grid-item"></div>
+                            <div class="grid-item"></div>
+                            <div class="grid-item"></div>
+                            <div class="grid-item"></div>
+                        </div>
+                        <br>
+                        <div id="graph_tests_orders_linechart"></div>
+                        <br>
+                        <div class="smallh2blue">EyeTests - Orders (Click to Drill Down)</div>
+                        <br>
+                        <div class="summary_table" id="tbl_tests_orders_dynamic"></div>
+                        <br>
+                    </div>
+                    
+                    <div id="ref" class="tabcontent">
+                        <div class="threegrid-container">
+                            <div class="grid-item">
+                                <div class="columncard" style="background-color:#0a5b54;">
+                                    <h6 class="">Referrals</h6>
+                                </div>
+                                <div class="columncard" style="background-color:#e5a46e;">
+                                    <h6 class="tinyh2blue" id="lbl_referrals_in"></h6>
+                                </div>
+                                <div class="columncard" style="background-color:#32435f;">
+                                    <h6 class="" id="lbl_referrals_out"></h6>
+                                </div>
+                            </div>
+                        </div>
+                        <br>
+                        <div id="graph_referalls_last12months"></div>
+                        <br>
+                        <div class="sixgrid-container">
+                            <div class="grid-item" id="exprt_referralsin"></div>
+                            <div class="grid-item" id="exprt_referralsout"></div>
+                            <div class="grid-item"></div>
+                            <div class="grid-item"></div>
+                            <div class="grid-item"></div>
+                            <div class="grid-item"></div>
+                        </div>
+                        <br>
+                        <div class="smallh2blue">Referalls (Click to Drill Down)</div>
+                        <br>
+                        <div class="summary_table" id="tbl_referrals_summary"></div>
+                        <br>
+                        <div class="sixgrid-container">
+                            <div class="grid-item smallh2blue">Report By</div>
+                            <div class="grid-item smallh2blue">Branch</div>
+                            <div class="grid-item smallh2blue"></div>
+                            <div class="grid-item smallh2blue"></div>
+                            <div class="grid-item smallh2blue"></div>
+                            <div class="grid-item smallh2blue"></div>
+                        </div>
+                        <div class="sixgrid-container">
+                            <div class="grid-item" id="select_referrals_reportby"></div>
+                            <div class="grid-item" id="select_referrals_branch"></div>
+                            <div class="grid-item"></div>
+                            <div class="grid-item"></div>
+                            <div class="grid-item"></div>
+                            <div class="grid-item"></div>
+                        </div>
+                        <br>
+                        <div id="graph_referalls_linechart"></div>
+                        <br>
+                        <div class="smallh2blue">Referrals (Click to Drill Down)</div>
+                        <br>
+                        <div class="summary_table" id="tbl_referrals_dynamic"></div>
+                        <br>
+                    </div>
+                </article>
+            </section>
+
+            <section id="section4">
+                <input type="radio" name="sections" id="option4">
+                <label for="option4">ViewRX</label>
+                <article>
+                    <br>
+					<div class="tab">
+                        <button class="tablinks button_style active" onclick="openCity(event, 'viewrx')" id="defaultOpen">ViewRX</button>
+                        <button class="tablinks button_style active" onclick="openCity(event, 'noviewrx')">NoViewRX</button>
+                    </div>
+                    <br>
+                    <div id="viewrx" class="tabcontent">
+                        <div id="graph_viewrxorders_last12months"></div>
+                        <br>
+                        <div class="smallh2blue">ViewRX-Orders (Click to Drill Down)</div>
+                        <br>
+                        <div class="summary_table" id="tbl_viewrxorders_summary"></div>
+                        <br>
+                        <div class="sixgrid-container">
+                            <div class="grid-item smallh2blue">Report By</div>
+                            <div class="grid-item smallh2blue">Branch</div>
+                            <div class="grid-item smallh2blue"></div>
+                            <div class="grid-item smallh2blue"></div>
+                            <div class="grid-item smallh2blue"></div>
+                            <div class="grid-item smallh2blue"></div>
+                        </div>
+                        <div class="sixgrid-container">
+                            <div class="grid-item" id="select_viewrx_reportby"></div>
+                            <div class="grid-item" id="select_viewrx_branch"></div>
+                            <div class="grid-item"></div>
+                            <div class="grid-item"></div>
+                            <div class="grid-item"></div>
+                            <div class="grid-item"></div>
+                        </div>
+                        <br>
+                        <div id="graph_viewrx_linechart"></div>
+                        <br>
+                        <div class="smallh2blue">ViewRX-Orders (Click to Drill Down)</div>
+                        <br>
+                        <div class="summary_table" id="tbl_viewrx_dynamic"></div>
+                        <br>
+                    </div>
+
+                    <div id="noviewrx" class="tabcontent">
+                        <div id="graph_noviewrxorders_last12months"></div>
+                        <br>
+                        <div class="smallh2blue">NoViewRX-Orders (Click to Drill Down)</div>
+                        <br>
+                        <div class="summary_table" id="tbl_noviewrxorders_summary"></div>
+                        <br>
+                        <div class="sixgrid-container">
+                            <div class="grid-item smallh2blue">Report By</div>
+                            <div class="grid-item smallh2blue">Branch</div>
+                            <div class="grid-item smallh2blue"></div>
+                            <div class="grid-item smallh2blue"></div>
+                            <div class="grid-item smallh2blue"></div>
+                            <div class="grid-item smallh2blue"></div>
+                        </div>
+                        <div class="sixgrid-container">
+                            <div class="grid-item" id="select_noviewrx_reportby"></div>
+                            <div class="grid-item" id="select_noviewrx_branch"></div>
+                            <div class="grid-item"></div>
+                            <div class="grid-item"></div>
+                            <div class="grid-item"></div>
+                            <div class="grid-item"></div>
+                        </div>
+                        <br>
+                        <div id="graph_noviewrx_linechart"></div>
+                        <br>
+                        <div class="smallh2blue">NoViewRX-Orders (Click to Drill Down)</div>
+                        <br>
+                        <div class="summary_table" id="tbl_noviewrx_dynamic"></div>
+                        <br>
+                    </div>
+                </article>
+            </section>
+        </div>
+
+        <!--modal--->
+        <a id="updates" href="#popup1">
+            Notes
+        </a>
+        <div id="popup1" class="overlay">
+            <div class="popup">
+                <div class="headerdiv">
+                    Logic Index
+                </div>
+                <a class="close" href="#">&times;</a>
+                <br>
+                <br>
+                <style>
+                    #pop-table {
+                      font-family: Arial, Helvetica, sans-serif;
+                      border-collapse: collapse;
+                      width: 100%;
+                    }
+                    
+                    #pop-table td, #customers th {
+                      border: 1px solid #ddd;
+                      padding: 8px;
+                    }
+                    
+                    #pop-table tr:nth-child(even){background-color: #f2f2f2;}
+                    
+                    #pop-table tr:hover {background-color: #ddd;}
+                    
+                    #pop-table th {
+                      padding-top: 12px;
+                      padding-bottom: 12px;
+                      text-align: left;
+                      background-color: #04AA6D;
+                      color: white;
+                    }
+                    </style>
+                <table id="pop-table">
+                    <tr>
+                        <th> _Metric</th>
+                        <th> _Description</th>
+                    </tr>
+
+                    <tr>
+                        <td> <h2 class="smallh2blue">Reg-Eyetests/Orders</h2></td>
+                        <td>
+                            <p>
+                                <h4 class="mediumh2blue">Desc:</h4>
+                                <br>
+                                Compare All EyeTests and Orders done within a specified number of days
+                                after a customer has registered.
+                                <br>
+                                <h4 class="mediumh2blue">Logic & Exceptions</h4>
+                                <br>
+                                When a customer has done multiple Eyetests and/or orders, we consider only
+                                the earliest of them as the purpose here is not to get the total count but get the
+                                earliest conversion.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td> <h2 class="smallh2blue">Reg-Orders</h2></td>
+                        <td>
+                            <p>
+                                <h4 class="mediumh2blue">Desc:</h4>
+                                <br>
+                                Compare All Orders done within a specified number of days
+                                after a customer has registered.
+                                <br>
+                                <h4 class="mediumh2blue">Logic & Exceptions</h4>
+                                <br>
+                                When a customer has done multiple orders, we consider only
+                                the earliest order as the purpose here is not to get the total count but get the
+                                earliest conversion.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td> <h2 class="smallh2blue">Reg-Eyetests</h2></td>
+                        <td>
+                            <p>
+                                <h4 class="mediumh2blue">Desc:</h4>
+                                <br>
+                                Compare All EyeTests done within a specified number of days
+                                after a customer has registered.
+                                <br>
+                                <h4 class="mediumh2blue">Logic & Exceptions</h4>
+                                <br>
+                                When a customer has done multiple EyeTests, we consider only
+                                the earliest eyetest as the purpose here is not to get the total count but get the
+                                earliest conversion.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td> <h2 class="smallh2blue">Eyetests-Orders</h2></td>
+                        <td>
+                            <p>
+                                <h4 class="mediumh2blue">Desc:</h4>
+                                <br>
+                                Compare All Orders done within a specified number of days
+                                after a customer has taken an Eyetest.
+                                <br>
+                                <h4 class="mediumh2blue">Logic & Exceptions</h4>
+                                <br>
+                                When a customer has done multiple EyeTests in a day, they are counted
+                                as one.
+                                <br>
+                                Eyetests are mapped to the orders they are used for and the eyetests with orders
+                                are the first to be considered in case of multiples.
+                                <br>
+                                If all the eyetests don't have orders, the earliest is picked.
+                                <br>
+                                If an eyetest was used for multiple orders in the same period, we pick one 
+                                as the purpose here is not to get the total count but get the conversion.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td> <h2 class="smallh2blue">Referalls In</h2></td>
+                        <td>
+                            <p>
+                                <h4 class="mediumh2blue">Desc:</h4>
+                                <br>
+                                Count all Referalls made by Optica optoms to outside Opthalmologists
+                                <br>
+                                <h4 class="mediumh2blue">Logic & Exceptions</h4>
+                                <br>
+                                This will include tests that were done then referred as well as tests that cancelled then referred
+                            </p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td> <h2 class="smallh2blue">Referalls Out</h2></td>
+                        <td>
+                            <p>
+                                <h4 class="mediumh2blue">Desc:</h4>
+                                <br>
+                                Count all Referalls made to Optica By Outside Opthalmologists
+                                <br>
+                                <h4 class="mediumh2blue">Logic & Exceptions</h4>
+                                <br>
+                            </p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td> <h2 class="smallh2blue">ViewRX-Orders</h2></td>
+                        <td>
+                            <p>
+                                <h4 class="mediumh2blue">Desc:</h4>
+                                <br>
+                                Compare all views on Eyetests vs the orders
+                                <br>
+                                <h4 class="mediumh2blue">Logic & Exceptions</h4>
+                                <br>
+                                Each view is mapped to a visit ID which is then mapped to an order.
+                                <br>
+                                If a visit ID is viewed multiple times during the selected period,
+                                that is counted as one.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td> <h2 class="smallh2blue">NoViewRX</h2></td>
+                        <td>
+                            <p>
+                                <h4 class="mediumh2blue">Desc:</h4>
+                                <br>
+                                Compare all orders placed without views vs all the orders
+                            </p>
+                        </td>
+                    </tr>
+                    
+                  </table>
+            </div>
+        </div>
+        <!--modal end here-->
+    </body>
+</html> 

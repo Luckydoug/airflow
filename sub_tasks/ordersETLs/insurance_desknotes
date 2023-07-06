@@ -1,0 +1,145 @@
+## upload to sent to preauth 1
+SELECT 
+    doc_entry,
+	upld1_sentpreauth_diff as diff
+FROM mabawa_dw.fact_orderscreenc1_approvals 
+	--where "odsc_createdby_1_Sent Pre-Auth to Insurance Company" in  (${CreatedBy})
+	where to_char("odsc_datetime_1_Sent Pre-Auth to Insurance Company",'YYYY-MM-DD') >= ${dateFrom} 
+	and to_char("odsc_datetime_1_Sent Pre-Auth to Insurance Company",'YYYY-MM-DD') <= ${dateTo}
+	and "is_dropped_1_Sent Pre-Auth to Insurance Company" is null
+	and upld1_sentpreauth_diff is not null
+
+## upload to rejected by optica insurance
+SELECT 
+    doc_entry,
+	upld1_ins_rej_diff as diff
+FROM mabawa_dw.fact_orderscreenc1_approvals 
+	--where "odsc_createdby_1_Rejected by Optica Insurance" in  (${CreatedBy})
+	where to_char("odsc_datetime_1_Rejected by Optica Insurance",'YYYY-MM-DD') >= ${dateFrom} 
+	and to_char("odsc_datetime_1_Rejected by Optica Insurance",'YYYY-MM-DD') <= ${dateTo}
+	and "is_dropped_1_Rejected by Optica Insurance" is null
+	and upld1_ins_rej_diff is not null
+
+## upload to insurance company needs more info
+SELECT 
+    doc_entry,
+	upld1_ins_info_diff as diff
+FROM mabawa_dw.fact_orderscreenc1_approvals 
+	--where "odsc_createdby_1_Insurance Company Needs Info from Branch" in  (${CreatedBy})
+	where to_char("odsc_datetime_1_Insurance Company Needs Info from Branch",'YYYY-MM-DD') >= ${dateFrom} 
+	and to_char("odsc_datetime_1_Insurance Company Needs Info from Branch",'YYYY-MM-DD') <= ${dateTo}
+	and "is_dropped_1_Rejected by Optica Insurance" is null
+	and upld1_ins_info_diff is not null
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# user based
+select 
+    a.doc_entry,
+    a.status,
+    a.start,
+    a.finish
+from
+(SELECT 
+    doc_entry,
+    'Upld-SentPre-auth' as status,
+    "odsc_datetime_1_Upload Attachment" as start,
+    "odsc_datetime_1_Sent Pre-Auth to Insurance Company" as finish,
+	upld1_sentpreauth_diff as diff
+FROM mabawa_dw.fact_orderscreenc1_approvals 
+	--where "odsc_createdby_1_Sent Pre-Auth to Insurance Company" in  (${CreatedBy})
+	where to_char("odsc_datetime_1_Sent Pre-Auth to Insurance Company",'YYYY-MM-DD') >= ${dateFrom} 
+	and to_char("odsc_datetime_1_Sent Pre-Auth to Insurance Company",'YYYY-MM-DD') <= ${dateTo}
+	and "is_dropped_1_Sent Pre-Auth to Insurance Company" is null
+	and upld1_sentpreauth_diff is not null
+union all 
+SELECT 
+    doc_entry,
+    'Upld-Rejected' as status,
+    "odsc_datetime_1_Upload Attachment" as start,
+    "odsc_datetime_1_Rejected by Optica Insurance" as finish,
+	upld1_ins_rej_diff as diff
+FROM mabawa_dw.fact_orderscreenc1_approvals 
+	--where "odsc_createdby_1_Rejected by Optica Insurance" in  (${CreatedBy})
+	where to_char("odsc_datetime_1_Rejected by Optica Insurance",'YYYY-MM-DD') >= ${dateFrom} 
+	and to_char("odsc_datetime_1_Rejected by Optica Insurance",'YYYY-MM-DD') <= ${dateTo}
+	and "is_dropped_1_Rejected by Optica Insurance" is null
+	and upld1_ins_rej_diff is not null
+union all 
+SELECT 
+    doc_entry,
+    'Upld-Needs Info' as status,
+    "odsc_datetime_1_Upload Attachment" as start,
+    "odsc_datetime_1_Insurance Company Needs Info from Branch" as finish,
+	upld1_ins_info_diff as diff
+FROM mabawa_dw.fact_orderscreenc1_approvals 
+	--where "odsc_createdby_1_Insurance Company Needs Info from Branch" in  (${CreatedBy})
+	where to_char("odsc_datetime_1_Insurance Company Needs Info from Branch",'YYYY-MM-DD') >= ${dateFrom} 
+	and to_char("odsc_datetime_1_Insurance Company Needs Info from Branch",'YYYY-MM-DD') <= ${dateTo}
+	and "is_dropped_1_Rejected by Optica Insurance" is null
+	and upld1_ins_info_diff is not null) as a
+
+
+
+
+
+select 
+    a.doc_entry,
+    a.status,
+    a.start,
+    a.finish
+from
+(SELECT 
+    doc_entry,
+    'Upld-SentPre-auth' as status,
+    "odsc_datetime_1_Upload Attachment" as start,
+    "odsc_datetime_1_Sent Pre-Auth to Insurance Company" as finish,
+    upld1_sentpreauth_diff as diff
+FROM mabawa_dw.fact_orderscreenc1_approvals 
+	--where "odsc_createdby_1_Sent Pre-Auth to Insurance Company" in  (${CreatedBy})
+	where to_char("odsc_datetime_1_Sent Pre-Auth to Insurance Company",'YYYY-MM-DD') >= ${dateFrom} 
+	and to_char("odsc_datetime_1_Sent Pre-Auth to Insurance Company",'YYYY-MM-DD') <= ${dateTo}
+	and "is_dropped_1_Sent Pre-Auth to Insurance Company" is null
+	and upld1_sentpreauth_diff is not null
+union all 
+SELECT 
+    doc_entry,
+    'Upld-Rejected' as status,
+    "odsc_datetime_1_Upload Attachment" as start,
+    "odsc_datetime_1_Rejected by Optica Insurance" as finish,
+	upld1_ins_rej_diff as diff
+FROM mabawa_dw.fact_orderscreenc1_approvals 
+	--where "odsc_createdby_1_Rejected by Optica Insurance" in  (${CreatedBy})
+	where to_char("odsc_datetime_1_Rejected by Optica Insurance",'YYYY-MM-DD') >= ${dateFrom} 
+	and to_char("odsc_datetime_1_Rejected by Optica Insurance",'YYYY-MM-DD') <= ${dateTo}
+	and "is_dropped_1_Rejected by Optica Insurance" is null
+	and upld1_ins_rej_diff is not null
+union all 
+SELECT 
+    doc_entry,
+    'Upld-Needs Info' as status,
+    "odsc_datetime_1_Upload Attachment" as start,
+    "odsc_datetime_1_Insurance Company Needs Info from Branch" as finish,
+	upld1_ins_info_diff as diff
+FROM mabawa_dw.fact_orderscreenc1_approvals 
+	--where "odsc_createdby_1_Insurance Company Needs Info from Branch" in  (${CreatedBy})
+	where to_char("odsc_datetime_1_Insurance Company Needs Info from Branch",'YYYY-MM-DD') >= ${dateFrom} 
+	and to_char("odsc_datetime_1_Insurance Company Needs Info from Branch",'YYYY-MM-DD') <= ${dateTo}
+	and "is_dropped_1_Rejected by Optica Insurance" is null
+	and upld1_ins_info_diff is not null) as a

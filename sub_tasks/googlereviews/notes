@@ -1,0 +1,16 @@
+https://medium.com/swlh/using-google-cloud-platform-and-google-my-business-api-to-obtain-coffee-shop-reviews-8f2e45d322c0
+
+https://console.developers.google.com/apis/credentials?project=reviews-324208
+
+
+
+truncate mabawa_staging.google_reviews;
+insert into mabawa_staging.google_reviews
+SELECT location_id, location_name, store_code, review_id, reviewer, star_rating, review_comment, createdat, updatedat, review_reply, reply_time
+FROM mabawa_staging.v_google_reviews;
+
+
+
+
+
+587412
