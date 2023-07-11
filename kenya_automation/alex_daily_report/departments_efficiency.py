@@ -47,52 +47,49 @@ conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", p
 ##Define the days that is yesterday
 today = datetime.date.today()
 yesterday = today - datetime.timedelta(days=1)
+formatted_date = yesterday.strftime('%Y-%m-%d')
 
 def update_calculated_field():
     OrdersWithIssues = fetch_gsheet_data()["orders_with_issues"]
+    print(OrdersWithIssues.head())
     orders_cutoff = fetch_gsheet_data()["orders_cutoff"]
+    print(orders_cutoff.head())
+
     departments = """
-    SELECT dept, status, "Order Criteria", "Doc Entry", "Doc No", "start", finish, "Time Min"
-    FROM mabawa_mviews.v_orderefficiencydata
-    where finish::date = '{yesterday}' 
+	SELECT * from
+    (SELECT dept, status, "Order Criteria", "Doc Entry", "Doc No", "start", finish, "Time Min",CAST(finish AS DATE) as "Finish_Date"
+    FROM mabawa_mviews.v_orderefficiencydata) as t
+    where t."Finish_Date"::date = '{yesterday}'  
     """
-    departments = pd.read_sql_query(departments,con=conn)    
+    departments = pd.read_sql_query(departments,con=conn)   
     
 
-    """ G-sheet with Orders to Drop"""
-    gc = pygsheets.authorize(
-    service_file=r"/home/opticabi/airflow/dags/sub_tasks/gsheets/keys2.json")
-    sh = gc.open_by_key('1cnpNo85Hncf9cdWBfkQ1dn0TYnGfs-PjVGp1XMjk2Wo')
-    OrdersWithIssues = pd.DataFrame(sh[0].get_all_records())
-    print(OrdersWithIssues)
     OrdersWithIssues["DATE"] = pd.to_datetime(OrdersWithIssues.DATE, dayfirst=True, errors="coerce")
-    OrdersWithIssues = OrdersWithIssues[(OrdersWithIssues.DATE >= '{yesterday}') & (OrdersWithIssues.DATE <= '{yesterday}')]
-    
-
-    # """ITR Cut off"""
-    print(orders_cutoff)
+    print(OrdersWithIssues.dtypes)
+    OrdersWithIssues = OrdersWithIssues[(OrdersWithIssues.DATE >= formatted_date) & (OrdersWithIssues.DATE <= formatted_date)]   
 
     
     dept_orders = departments[departments['dept'].isin(['Control', 'Designer', 'Main Store', 'Packaging', 'Lens Store'])]
     dept_orders['finish'] = dept_orders['finish'].astype(str)
     dept_orders[['Day', 'Time']] = dept_orders['finish'].str.split(' ', expand=True)
     dept_orders['Time'] = pd.to_datetime(dept_orders['Time'], format='%H:%M:%S')
-    dept_orders['Hour'] = dept_orders['Time'].dt.strftime('%H')
-    # dept_orders_matrix = pd.merge(dept_orders, orders_cutoff, on='Order Criteria', how='left')
-    # dept_orders_matrix['cut off'] = np.where(dept_orders_matrix['dept'] == 'Control', dept_orders_matrix['Control Room'],
-    #                                           (np.where(dept_orders_matrix['dept'] == 'Designer',dept_orders_matrix['Designer Store'], 
-    #                                                     (np.where(dept_orders_matrix['dept'] == 'Main Store', dept_orders_matrix['Main Store'],
-    #                                                                (np.where(dept_orders_matrix['dept'] == 'Lens Store', dept_orders_matrix['Lens Store'],
-    #                                                                           (np.where(dept_orders_matrix['dept'] == 'Packaging', dept_orders_matrix['Packaging'], 10)))))))))
+    dept_orders['Hour'] = dept_orders['Time'].dt.strftime('%H')  
+    orders = pd.merge(dept_orders, orders_cutoff, on='Order Criteria', how='left')
+    orders['cut off'] = np.where(orders['dept'] == 'Control', orders['Control Room'],
+                                              (np.where(orders['dept'] == 'Designer',orders['Designer Store'], 
+                                                        (np.where(orders['dept'] == 'Main Store', orders['Main Store'],
+                                                                   (np.where(orders['dept'] == 'Lens Store', orders['Lens Store'],
+                                                                              (np.where(orders['dept'] == 'Packaging', orders['Packaging'], 10)))))))))
     
-    # dept_orders_matrix['Delay'] = np.where(dept_orders_matrix['Time Min'] > dept_orders_matrix['cut off'], 1, 0)
+    orders['Delay'] = np.where(orders['Time Min'] > orders['cut off'], 1, 0)
 
-    """Control Room Efficiency"""
+    """   CONTROL ORDER EFFICIENCY   """
     controlIssues = OrdersWithIssues[OrdersWithIssues["DEPARTMENT"] == "CONTROL ROOM"]
     controlIssuesOrders = controlIssues["ORDER NUMBER"].tolist()
 
-    control = dept_orders[dept_orders['dept'] == 'Control']
+    control = orders[orders['dept'] == 'Control']
     control = control[~control["Doc No"].isin(controlIssuesOrders)]
+    print(control)
     controlpivot1 = pd.pivot_table(control, index=['Hour'], values=[
                                 'Doc No'], aggfunc='count', fill_value=0, margins=True, margins_name='Total')
     controlpivot2 = pd.pivot_table(control, index=['Hour'], values=[
@@ -108,19 +105,126 @@ def update_calculated_field():
     controlpivot['Time Min'] = controlpivot['Time Min'].round(2)
     controlpivot['% of Efficiency'] = controlpivot['% of Efficiency'].map('{:.2%}'.format)
     controlpivot = np.transpose(controlpivot)
-
     print(controlpivot)
 
     """ Delayed Orders"""
-    # control_delay = control[control['Delay'] == 0]
-    # controldelay = pd.pivot_table(control_delay, index=['Hour', 'Doc No'], values='Time Min', aggfunc='mean', fill_value=0)
+    control_delay = control[control['Delay'] == 0]
+    controldelay = pd.pivot_table(control_delay, index=['Hour', 'Doc No'], values='Time Min', aggfunc='mean', fill_value=0)
 
     """Cut Off"""
-    # control['Time Taken'] = control.apply 
-    # control['15 min'] = control['Time Min'].apply(lambda x: 1 if x > 15 else 0)
-    # control['12 min'] = control['Time Min'].apply(lambda x: 1 if x > 12 else 0)
-    # control['10 min'] = control['Time Min'].apply(lambda x: 1 if x > 10 else 0)
-    # control['7 min'] = control['Time Min'].apply(lambda x: 1 if x > 7 else 0)
+    control['Time Taken'] = control.apply 
+    control['15 min'] = control['Time Min'].apply(lambda x: 1 if x > 15 else 0)
+    control['12 min'] = control['Time Min'].apply(lambda x: 1 if x > 12 else 0)
+    control['10 min'] = control['Time Min'].apply(lambda x: 1 if x > 10 else 0)
+    control['7 min'] = control['Time Min'].apply(lambda x: 1 if x > 7 else 0)
 
-print('Control Room Calculated')
+    cuttoff1 = pd.pivot_table(control, index='dept', values=[
+                          '15 min'], aggfunc='sum', fill_value=0)
+    cuttoff2 = pd.pivot_table(control, index='dept', values=[
+                            '12 min'], aggfunc='sum', fill_value=0)
+    cuttoff3 = pd.pivot_table(control, index='dept', values=[
+                            '10 min'], aggfunc='sum', fill_value=0)
+    cuttoff4 = pd.pivot_table(control, index='dept', values=[
+                            '7 min'], aggfunc='sum', fill_value=0)
+    cutcontrol = pd.merge(cuttoff1, cuttoff2, on='dept')
+    cutcontrol = pd.merge(cutcontrol, cuttoff3, on='dept')
+    cutcontrol = pd.merge(cutcontrol, cuttoff4, on='dept')
+    print(cutcontrol)
+    print('Control Room Calculated')
+
+    """   DESIGNER ORDER EFFICIENCY   """        
+    designerIssues = OrdersWithIssues[OrdersWithIssues["DEPARTMENT"] == "DESIGNER STORE"]
+    designerIssuesOrders = designerIssues["ORDER NUMBER"].tolist()
+
+    designer = orders[orders['dept'] == 'Designer']
+    designer = designer[~designer["Doc No"].isin(designerIssuesOrders)]
+    designerpivot1 = pd.pivot_table(designer, index=['Hour'], values=[
+                                'Doc No'], aggfunc='count', fill_value=0, margins=True, margins_name='Total')
+    designerpivot2 = pd.pivot_table(designer, index=['Hour'], values=[
+                                'Time Min'], aggfunc='mean', fill_value=0, margins=True, margins_name='Total')
+    designerpivot3 = pd.pivot_table(designer, index=['Hour'], values=[
+                                'Delay'], aggfunc='sum', fill_value=0, margins=True, margins_name='Total')
+    
+    designerpivot4 = pd.merge(designerpivot1, designerpivot2, on=['Hour'], how='left')
+    designerpivot = pd.merge(designerpivot4, designerpivot3, on=['Hour'], how='left')
+    print(designerpivot)
+    designerpivot['% of Efficiency'] = (designerpivot['Doc No'] - designerpivot['Delay'])/designerpivot['Doc No']
+
+    designerpivot['Time Min'] = designerpivot['Time Min'].round(2)
+    designerpivot['% of Efficiency'] = designerpivot['% of Efficiency'].map('{:.2%}'.format)
+    designerpivot = np.transpose(designerpivot)
+    print(designerpivot)
+
+    """ Delayed Orders"""
+    designer_delay = designer[designer['Delay'] == 0]
+    designerdelay = pd.pivot_table(designer_delay, index=['Hour', 'Doc No'], values='Time Min', aggfunc='mean', fill_value=0)
+
+    """Cut Off"""
+    designer['Time Taken'] = designer.apply 
+    designer['15 min'] = designer['Time Min'].apply(lambda x: 1 if x > 15 else 0)
+    designer['12 min'] = designer['Time Min'].apply(lambda x: 1 if x > 12 else 0)
+    designer['10 min'] = designer['Time Min'].apply(lambda x: 1 if x > 10 else 0)
+    designer['7 min'] = designer['Time Min'].apply(lambda x: 1 if x > 7 else 0)
+
+    cuttoff1 = pd.pivot_table(designer, index='dept', values=[
+                          '15 min'], aggfunc='sum', fill_value=0)
+    cuttoff2 = pd.pivot_table(designer, index='dept', values=[
+                            '12 min'], aggfunc='sum', fill_value=0)
+    cuttoff3 = pd.pivot_table(designer, index='dept', values=[
+                            '10 min'], aggfunc='sum', fill_value=0)
+    cuttoff4 = pd.pivot_table(designer, index='dept', values=[
+                            '7 min'], aggfunc='sum', fill_value=0)
+    cutdesigner = pd.merge(cuttoff1, cuttoff2, on='dept')
+    cutdesigner = pd.merge(cutdesigner, cuttoff3, on='dept')
+    cutdesigner = pd.merge(cutdesigner, cuttoff4, on='dept')
+    print(cutdesigner)
+    print('Designer Calculated')
+
+    """ MAIN STORE ORDER EFFICIENCY   """        
+    mainstoreIssues = OrdersWithIssues[OrdersWithIssues["DEPARTMENT"] == "MAIN STORE"]
+    mainstoreIssuesOrders = mainstoreIssues["ORDER NUMBER"].tolist()
+
+    mainstore = orders[orders['dept'] == 'Main Store']
+    mainstore = mainstore[~mainstore["Doc No"].isin(mainstoreIssuesOrders)]
+    mainstorepivot1 = pd.pivot_table(mainstore, index=['Hour'], values=[
+                                'Doc No'], aggfunc='count', fill_value=0, margins=True, margins_name='Total')
+    mainstorepivot2 = pd.pivot_table(mainstore, index=['Hour'], values=[
+                                'Time Min'], aggfunc='mean', fill_value=0, margins=True, margins_name='Total')
+    mainstorepivot3 = pd.pivot_table(mainstore, index=['Hour'], values=[
+                                'Delay'], aggfunc='sum', fill_value=0, margins=True, margins_name='Total')
+    
+    mainstorepivot4 = pd.merge(mainstorepivot1, mainstorepivot2, on=['Hour'], how='left')
+    mainstorepivot = pd.merge(mainstorepivot4, mainstorepivot3, on=['Hour'], how='left')
+    print(mainstorepivot)
+    mainstorepivot['% of Efficiency'] = (mainstorepivot['Doc No'] - mainstorepivot['Delay'])/mainstorepivot['Doc No']
+
+    mainstorepivot['Time Min'] = mainstorepivot['Time Min'].round(2)
+    mainstorepivot['% of Efficiency'] = mainstorepivot['% of Efficiency'].map('{:.2%}'.format)
+    mainstorepivot = np.transpose(mainstorepivot)
+    print(mainstorepivot)
+
+    """ Delayed Orders"""
+    mainstore_delay = mainstore[mainstore['Delay'] == 0]
+    mainstoredelay = pd.pivot_table(mainstore_delay, index=['Hour', 'Doc No'], values='Time Min', aggfunc='mean', fill_value=0)
+
+    """Cut Off"""
+    mainstore['Time Taken'] = mainstore.apply 
+    mainstore['15 min'] = mainstore['Time Min'].apply(lambda x: 1 if x > 15 else 0)
+    mainstore['12 min'] = mainstore['Time Min'].apply(lambda x: 1 if x > 12 else 0)
+    mainstore['10 min'] = mainstore['Time Min'].apply(lambda x: 1 if x > 10 else 0)
+    mainstore['7 min'] = mainstore['Time Min'].apply(lambda x: 1 if x > 7 else 0)
+
+    cuttoff1 = pd.pivot_table(mainstore, index='dept', values=[
+                          '15 min'], aggfunc='sum', fill_value=0)
+    cuttoff2 = pd.pivot_table(mainstore, index='dept', values=[
+                            '12 min'], aggfunc='sum', fill_value=0)
+    cuttoff3 = pd.pivot_table(mainstore, index='dept', values=[
+                            '10 min'], aggfunc='sum', fill_value=0)
+    cuttoff4 = pd.pivot_table(mainstore, index='dept', values=[
+                            '7 min'], aggfunc='sum', fill_value=0)
+    cutmainstore = pd.merge(cuttoff1, cuttoff2, on='dept')
+    cutmainstore = pd.merge(cutdesigner, cuttoff3, on='dept')
+    cutmainstore = pd.merge(cutdesigner, cuttoff4, on='dept')
+    print(cutmainstore)
+    print('Main Store Calculated')
 update_calculated_field()    

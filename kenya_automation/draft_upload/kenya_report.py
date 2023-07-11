@@ -271,4 +271,3 @@ def clean_kenya_folder():
     clean_folders(path=path)
 
 
-push_kenya_opening_time()
