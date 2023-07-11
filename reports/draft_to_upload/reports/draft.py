@@ -28,6 +28,18 @@ When preparing a report for any country, make sure to call the following functio
 
 first_month, second_month = get_comparison_months()
 
+def return_slade(row):
+    slades = [
+        "JUBILEE",
+        "APA",
+        "MADISON"
+    ]
+
+    if row["Insurance Company"] in slades:
+        return "Yes"
+    else:
+        return "No"
+
 
 def create_draft_upload_report(selection, orderscreen, all_orders, start_date, target, branch_data, path,working_hours, drop=''):
     if not len(all_orders) or not len(orderscreen):
@@ -143,30 +155,33 @@ def create_draft_upload_report(selection, orderscreen, all_orders, start_date, t
 
     final_data_orders = pd.merge(
         final_data_orders,
-        branch_data[["Outlet", "RM", "SRM"]],
-        on = "Outlet"
+        branch_data[["Outlet", "RM", "SRM", "Front Desk"]],
+        on = "Outlet",
         how = "left"
     )
+
+    final_data_orders["Slade"] = final_data_orders.apply(lambda row: return_slade(row), axis=1)
     final_data_orders = final_data_orders.drop_duplicates(
         subset=["Order Number"]
     )
-    
 
     cols_req = [
+        "SRM",
+        "RM",
         "Order Number",
         "Outlet",
-        "Order Creator", "Code",
-        "Status", "Last View Date",
-        "Draft Time", "Preauth Time",
-        "Upload Time", "Draft to Preauth",
+        "Front Desk",
+        "Creator",
+        "Order Creator",
+        "Draft to Preauth",
         "Preuth to Upload",
         "Draft to Upload",
         "Insurance Company",
-        "Insurance Scheme",
+        "Slade",
         "Scheme Type",
-        "Feedback 1",
-        "Feedback 2"
+        "Feedback 1"
     ]
+    
 
     """
     This is the Daily Report. 

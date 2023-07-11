@@ -47,9 +47,10 @@ required_columns = [
 ]
 
 columns_order = [
-    "Code",
+    "SRM",
+    "RM",
     "Create Date",
-    "Month",
+    "Code",
     "RX Type",
     "Status",
     "Branch",
@@ -59,7 +60,6 @@ columns_order = [
     "Opthom Name",
     "EWC Handover",
     "Who Viewed RX",
-    "Request",
     "Feedback",
     "Order Number",
     "Submission",
@@ -91,7 +91,7 @@ def create_plano_report(branch_data, path, registrations, payments, all_planos, 
     plano_insurance_orders["Submission"] = plano_insurance_orders.apply(lambda row: check_plano_submission(row), axis=1)
     plano_insurance_orders["Month"] = pd.to_datetime(plano_insurance_orders["Create Date"], format="%Y-%m-%d").dt.month_name()
 
-    final_plano_data = plano_insurance_orders[columns_order]
+    final_plano_data = plano_insurance_orders
     final_plano_data = final_plano_data.drop_duplicates(subset=["Code"])
 
     final_plano_data["Create Date"] = pd.to_datetime(final_plano_data["Create Date"]).dt.date
@@ -100,7 +100,7 @@ def create_plano_report(branch_data, path, registrations, payments, all_planos, 
         branch_data[["Outlet", "RM", "SRM"]].rename(columns = {"Outlet": "Branch"}),
         on = "Branch",
         how = "left"
-    )
+    )[columns_order]
 
     final_plano_data = final_plano_data[
         final_plano_data["Insurance Company"] != "NHIF- COMPREHENSIVE MEDICAL INSURANCE"

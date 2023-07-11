@@ -147,6 +147,8 @@ if selection == "Weekly":
 if selection == "Monthly":
     date = '2023-06-01'
 
+print(date)
+
 opening_data = fetch_opening_time(
     database=database,
     engine=engine,
@@ -225,12 +227,13 @@ def trigger_kenya_smtp():
     send_draft_upload_report(
         selection=selection,
         path=path,
-        country="Kenya",
+        country="Test",
         target=target
     )
 
 
 def trigger_kenya_branches_smtp():
+    return
     branch_data = fetch_gsheet_data()["branch_data"]
     send_to_branches(
         branch_data=branch_data,

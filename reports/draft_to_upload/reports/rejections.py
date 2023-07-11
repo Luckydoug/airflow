@@ -34,9 +34,19 @@ def create_rejection_report(orderscreen, all_orders, sales_orders, branch_data, 
 
     rejections_orders = pd.merge(
         rejections,
-        all_orders[["DocNum", "Outlet", "Status", "Creator", "Order Creator"]].rename(columns={"DocNum": "Order Number", "Status": "status"}),
+        all_orders[[
+            "DocNum", "Outlet", 
+            "Status", "Creator", 
+            "Order Creator", "Insurance Company", "Scheme Type"
+            ]].rename(columns={"DocNum": "Order Number", "Status": "status"}),
         on = "Order Number",
         how = "left"
+    )
+
+    rejections_orders = pd.merge(
+        rejections_orders, 
+        branch_data[["Outlet", "SRM", "RM", "Front Desk"]], 
+        on = "Outlet"
     )
 
     if selection == "Daily":
@@ -110,11 +120,13 @@ def create_rejection_report(orderscreen, all_orders, sales_orders, branch_data, 
         )
 
         rejections_daily_data = daily_unique_rejections[[
+            "RM",
+            "SRM",
             "Outlet", 
+            "Front Desk",
             "Order Number", 
+            "Creator",
             "Order Creator",
-            "Date", 
-            "Time", 
             "Created User", 
             "Remarks"
         ]] 
