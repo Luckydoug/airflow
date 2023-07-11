@@ -140,6 +140,13 @@ def create_draft_upload_report(selection, orderscreen, all_orders, start_date, t
         ),
         axis=1
     )
+
+    final_data_orders = pd.merge(
+        final_data_orders,
+        branch_data[["Outlet", "RM", "SRM"]],
+        on = "Outlet"
+        how = "left"
+    )
     final_data_orders = final_data_orders.drop_duplicates(
         subset=["Order Number"]
     )
