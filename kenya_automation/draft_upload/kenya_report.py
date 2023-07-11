@@ -147,7 +147,6 @@ if selection == "Weekly":
 if selection == "Monthly":
     date = '2023-06-01'
 
-print(date)
 
 opening_data = fetch_opening_time(
     database=database,
@@ -266,7 +265,6 @@ def build_kenya_opening_time():
     create_opening_time_report(
         opening_data,
         path
-
     )
 
 

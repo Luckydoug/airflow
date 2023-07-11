@@ -7,7 +7,7 @@ from sub_tasks.libraries.utils import (
     fetch_gsheet_data
 )
 from reports.draft_to_upload.reports.draft import create_draft_upload_report
-from reports.draft_to_upload.utils.utils import return_report_daterange
+from reports.draft_to_upload.utils.utils import return_report_daterange, get_report_frequency
 from reports.draft_to_upload.smtp.branches import send_branches_efficiency
 from reports.draft_to_upload.smtp.smtp import clean_folders
 from reports.draft_to_upload.data.fetch_data import (
@@ -20,7 +20,8 @@ from reports.draft_to_upload.data.fetch_data import (
 
 engine =createe_engine()
 database = "mabawa_staging"
-start_date = return_report_daterange(selection="Weekly")
+selection = get_report_frequency()
+start_date = return_report_daterange(selection=selection)
 start_date = pd.to_datetime(start_date, format="%Y-%m-%d").date()
 
 orders = fetch_orders(
