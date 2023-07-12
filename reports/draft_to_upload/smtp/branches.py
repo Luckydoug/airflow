@@ -122,7 +122,7 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection):
                 email_message["Subject"] = subject
                 email_message.attach(MIMEText(html, "html"))
                     
-                save_file(email_message, export_data, branch, branch_name, "Efficiency Data", f"{path}draft_upload/")
+                save_file(email_message, export_data, branch, branch_name, "Efficiency Data.xlsx", f"{path}draft_upload/")
 
                 if branch_email not in return_sent_emails(log_file):
                     context = ssl.create_default_context()

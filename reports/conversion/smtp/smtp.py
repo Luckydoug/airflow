@@ -389,13 +389,34 @@ def send_branches_report(path, branch_data, selection):
                 email_message.attach(MIMEText(html, "html"))
 
                 if branch in eyetests_non_conversions.sheet_names:
-                    save_file(email_message, eyetests_non_conversions, branch, branch_name, "EyeTests", f"{path}conversion/eyetests/")
+                    save_file(
+                        email_message, 
+                        eyetests_non_conversions, 
+                        branch, branch_name, 
+                        "EyeTests Non Conversions.xlsx", 
+                        f"{path}conversion/eyetests/",
+                    )
                 
                 if branch in registrations_non_conversions.sheet_names:
-                    save_file(email_message, registrations_non_conversions, branch, branch_name, "Registrations", f"{path}conversion/registrations/")
+                    save_file(
+                        email_message, 
+                        registrations_non_conversions, 
+                        branch, branch_name, 
+                        "Registrations Non Conversions.xlsx", 
+                        f"{path}conversion/registrations/",
+                        name="Non Coversions.xlsx"
+                    )
                 
                 if branch in views_non_conversions.sheet_names:
-                    save_file(email_message, views_non_conversions, branch, branch_name, "ViewRX",  path = f"{path}conversion/viewrx/")
+                    save_file(
+                        email_message, 
+                        views_non_conversions, 
+                        branch, 
+                        branch_name, 
+                        "ViewRX Non Conversions.xlsx",  
+                        path = f"{path}conversion/viewrx/",
+                        name="Non Coversions.xlsx"
+                    )
                     
 
                 context = ssl.create_default_context()

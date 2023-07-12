@@ -273,7 +273,7 @@ def attach_file(email_message, filename, name):
 
 def save_file(email_message, non_converted, branch, branch_name, report, path):
     non_conversion = non_converted.parse(branch, index_col=False)
-    filename = f"{path}{branch_name} {report} Non Coversions.xlsx"
+    filename = f"{path}{branch_name} {report}"
     writer = pd.ExcelWriter(filename, engine='xlsxwriter')
     non_conversion.to_excel(writer, sheet_name='Data', index=False)
     writer.save()
