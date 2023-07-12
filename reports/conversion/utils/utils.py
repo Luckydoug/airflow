@@ -12,6 +12,7 @@ first_month, second_month = get_comparison_months()
 
 
 def return_conversion_daterange(selection):
+    today = datetime.date.today()
     if selection == "Weekly":
         start_date = first_week_start,
         end_date = fourth_week_end
@@ -34,7 +35,7 @@ def return_conversion_daterange(selection):
         return start_date, end_date
 
     else:
-        return
+        return today, today
 
 
 def manipulate_multiindex(dataframe, name, col1, col2, rename):

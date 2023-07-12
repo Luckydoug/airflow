@@ -40,7 +40,7 @@ def fetch_eyetests_conversion(engine, database, start_date, end_date, users, use
     return data
 
 
-def fetch_registrations_conversion(engine, database, start_date, end_date, users, users_table):
+def fetch_registrations_conversion(engine, database, start_date, end_date, users, users_table, view):
     registration_conv_query = f"""
     select conv.cust_code as "Customer Code", 
     conv.cust_createdon as "CreateDate", 
@@ -54,7 +54,7 @@ def fetch_registrations_conversion(engine, database, start_date, end_date, users
     case when conv.days is null then 0
     when conv.days::int <= 14::int then 1
     else 0 end as "Conversion"
-    from {database}.v_reg_conv as conv
+    from {database}.{view} as conv
     left join {users}.{users_table} as users 
     on conv.cust_sales_employeecode::text = users.se_optom::text
     where

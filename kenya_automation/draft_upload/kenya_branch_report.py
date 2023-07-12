@@ -67,7 +67,7 @@ def build_branches_efficiency():
     working_hours = fetch_gsheet_data()["working_hours"]
     branch_data = fetch_gsheet_data()["branch_data"]
     create_draft_upload_report(
-        selection="Weekly",
+        selection=selection,
         orderscreen=orderscreen,
         all_orders=orders,
         start_date=start_date,
@@ -82,6 +82,7 @@ def trigger_efficiency_smtp():
     branch_data = fetch_gsheet_data()["branch_data"]
     send_branches_efficiency(
         path = path,
+        selection=selection,
         target= target,
         branch_data=branch_data,
         log_file=f"{path}draft_upload/branch_log.txt"

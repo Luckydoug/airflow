@@ -226,13 +226,12 @@ def trigger_kenya_smtp():
     send_draft_upload_report(
         selection=selection,
         path=path,
-        country="Test",
+        country="Kenya",
         target=target
     )
 
 
 def trigger_kenya_branches_smtp():
-    return
     branch_data = fetch_gsheet_data()["branch_data"]
     send_to_branches(
         branch_data=branch_data,

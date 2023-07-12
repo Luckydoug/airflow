@@ -22,8 +22,7 @@ from reports.conversion.smtp.smtp import (
 
 database = "mabawa_mviews"
 engine = createe_engine()
-#selection = get_report_frequency()
-selection = "Weekly"
+selection = get_report_frequency()
 start_date, end_date = return_conversion_daterange(selection=selection)
 
 views_conv = fetch_views_conversion(
@@ -51,7 +50,8 @@ registrations_conv = fetch_registrations_conversion(
     start_date=start_date,
     end_date=end_date,
     users="mabawa_dw",
-    users_table="dim_users"
+    users_table="dim_users",
+    view="reg_conv"
 )
 
 

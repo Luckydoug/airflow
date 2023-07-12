@@ -404,6 +404,16 @@ req_columns = [
     "Submission"
 ]
 
+rej_cols = [
+    "Order Number",
+    "Outlet",
+    "Front Desk",
+    "Creator",
+    "Order Creator",
+    "Created User",
+    "Remarks"
+]
+
 def send_to_branches(branch_data, selection, path, filename):
     create_initial_file(filename)
     todate = get_yesterday_date(truth=True)
@@ -436,7 +446,7 @@ def send_to_branches(branch_data, selection, path, filename):
                 
                 elif branch in rejection_branches and branch in planos_branches:
                     subject = f"{branch} Insurance Errors and Plano NoN Submissions for {todate}"
-                    rejections_report = rejections_data[rejections_data["Outlet"] == branch]
+                    rejections_report = rejections_data[rejections_data["Outlet"] == branch][rej_cols]
                     rejections_style = rejections_report.style.hide_index().set_table_styles(ug_styles)
                     rejections_html = rejections_style.to_html(doctype_html = True)
                     planos_report = planos_data[planos_data["Branch"] == branch][req_columns]
@@ -452,7 +462,7 @@ def send_to_branches(branch_data, selection, path, filename):
 
                 elif branch in rejection_branches and branch not in planos_branches:
                     subject = f"{branch} Insurance Errors for {todate}"
-                    rejections_report = rejections_data[rejections_data["Outlet"] == branch]
+                    rejections_report = rejections_data[rejections_data["Outlet"] == branch][rej_cols]
                     rejections_style = rejections_report.style.hide_index().set_table_styles(ug_styles)
                     rejections_html = rejections_style.to_html(doctype_html = True)
 

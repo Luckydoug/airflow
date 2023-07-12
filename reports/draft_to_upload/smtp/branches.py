@@ -12,11 +12,14 @@ import pandas as pd
 from reports.draft_to_upload.html.html import (branch_efficiency_html)
 
 from sub_tasks.libraries.utils import (
+    save_file,
+    get_yesterday_date,
     assert_date_modified,
     record_sent_branch,
     return_sent_emails,
     create_initial_file,
     get_four_weeks_date_range,
+    get_comparison_months
 )
 
 from reports.draft_to_upload.utils.utils import (
@@ -31,9 +34,11 @@ password = os.getenv("douglas_password")
 date_ranges = get_four_weeks_date_range()
 start_date = date_ranges[3][0].strftime('%Y-%b-%d')
 end_date = date_ranges[3][1].strftime('%Y-%b-%d')
+todate = get_yesterday_date(truth=True)
+first_month, second_month = get_comparison_months()
 
 
-def send_branches_efficiency(path, target, branch_data, log_file):
+def send_branches_efficiency(path, target, branch_data, log_file, selection):
     create_initial_file(log_file)
     sales_persons = f"{path}draft_upload/draft_to_upload_sales_efficiency.xlsx"
     branches = f"{path}draft_upload/draft_to_upload_branch_efficiency.xlsx"
@@ -101,32 +106,23 @@ def send_branches_efficiency(path, target, branch_data, log_file):
                 
                 else:
                     receiver_email = [rm_email, branch_email]
-                
 
+                if selection == "Daily":
+                    subject = f"{branch_name} Draft to Upload Efficiency Report for {todate}"
+                elif selection == "Weekly":
+                    subject = f"{branch_name} Draft to Upload Efficiency Report from {start_date} to {end_date}."
+
+                elif selection == "Monthly":
+                    subject = f"{branch_name} Draft to Upload Efficiency Report for {first_month} and {second_month}"
+                
+                receiver_email = ["tstbranch@gmail.com"]
                 email_message = MIMEMultipart("alternative")
                 email_message["From"] = your_email
                 email_message["To"] = r','.join(receiver_email)
-                email_message["Subject"] = f"{branch_name} Draft to Upload Efficiency Report from {start_date} to {end_date}."
+                email_message["Subject"] = subject
                 email_message.attach(MIMEText(html, "html"))
-
-                def attach_file(email_message, filename):
-                    with open(filename, "rb") as f:
-                        file_attachment = MIMEApplication(f.read())
-
-                        file_attachment.add_header(
-                            "Content-Disposition",
-                            f"attachment; filename= {filename}"
-                        )
-
-                        email_message.attach(file_attachment)
                     
-                raw_data = export_data.parse(branch, index_col=False)
-                filename = f"{path}draft_upload/{branch_name} Draft to Upload Data.xlsx"
-                writer = pd.ExcelWriter(filename, engine='xlsxwriter')
-                raw_data.to_excel(writer, sheet_name='Data', index=False)
-                writer.save()
-                writer.close()
-                attach_file(email_message, filename)
+                save_file(email_message, export_data, branch, branch_name, "Efficiency Data", f"{path}draft_upload/")
 
                 if branch_email not in return_sent_emails(log_file):
                     context = ssl.create_default_context()
