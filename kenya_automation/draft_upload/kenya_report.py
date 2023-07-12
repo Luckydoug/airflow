@@ -271,3 +271,4 @@ def clean_kenya_folder():
     clean_folders(path=path)
 
 
+build_kenya_rejections()

@@ -26,7 +26,7 @@ def create_rejection_report(orderscreen, all_orders, sales_orders, branch_data, 
     unique_insurance_merge = pd.merge(
         unique_insurance_orders, 
         all_orders[[
-            "DocNum", "Outlet", "CreateDate", "Insurance Order"
+            "DocNum", "Outlet", "CreateDate", "Insurance Order", "Order Creator"
         ]].rename(columns={"DocNum": "Order Number"}), on = "Order Number", how = "left"
     )
     unique_insurance_merge["Date"] = pd.to_datetime(unique_insurance_merge["Date"], dayfirst=True)
@@ -61,7 +61,14 @@ def create_rejection_report(orderscreen, all_orders, sales_orders, branch_data, 
             index = "Outlet", 
             aggfunc="count", 
             values="Order Number"
-        ).reset_index().rename(columns={"Order Number": "Total Ins Orders"})
+        ).reset_index().rename(columns={"Order Number": "Rejected"})
+
+        ewc_daily_orders = pd.pivot_table(
+            daily_insurance_orders,
+            index=["Outlet", "Order Creator"],
+            aggfunc="count",
+            values="Order Number"
+        ).reset_index().rename(columns={"Order Number": "Total Orders"})
 
 
         daily_rejections = rejections_orders[rejections_orders["Date"] == start_date]
@@ -71,12 +78,6 @@ def create_rejection_report(orderscreen, all_orders, sales_orders, branch_data, 
         
         daily_unique_rejections = daily_rejections.drop_duplicates(subset=["Order Number", "Date", "Time"])
 
-        daily_rejections_pivot = pd.pivot_table(daily_unique_rejections,
-            index = "Outlet",
-            values="Order Number",
-            aggfunc="count"
-        ).reset_index().rename(columns={"Order Number": "Count of Rejections"})
-
         daily_rejections_pivot = pd.pivot_table(
             daily_unique_rejections,
             index = "Outlet",
@@ -84,6 +85,21 @@ def create_rejection_report(orderscreen, all_orders, sales_orders, branch_data, 
             aggfunc="count"
         ).reset_index().rename(columns={"Order Number": "Count of Rejections"})
 
+        ewc_daily_rejections = pd.pivot_table(
+            daily_unique_rejections,
+            index=["Order Creator", "Outlet"],
+            values="Order Number",
+            aggfunc="count"
+        ).reset_index().rename(columns={"Order Number": "Count of Rejections"})
+
+        final_ewc_pivot = pd.merge(
+            ewc_daily_orders,
+            ewc_daily_rejections,
+            on = ["Outlet", "Order Creator"],
+            how = "outer"
+        ).fillna(0)
+
+        final_ewc_pivot["%Rejected"] = round((final_ewc_pivot["Count of Rejections"] / final_ewc_pivot["Total Orders"])* 100, 0)
         daily_rejections_branches = pd.merge(
             branch_data[["Outlet", "RM", "SRM"]],
             daily_rejections_pivot,
@@ -139,6 +155,7 @@ def create_rejection_report(orderscreen, all_orders, sales_orders, branch_data, 
         with pd.ExcelWriter(f"{path}draft_upload/rejections_report.xlsx") as writer:
             final_daily_rejections_report.to_excel(writer, sheet_name="daily_summary", index=False)
             rejections_daily_data.to_excel(writer, sheet_name="daily_rejections_data", index=False)
+            final_ewc_pivot.to_excel(writer, sheet_name="ewc_summary", index=False)
 
     if selection == "Weekly":
         weekly_insurance_orders = unique_insurance_merge[

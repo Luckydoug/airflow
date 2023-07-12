@@ -429,7 +429,11 @@ def send_to_branches(branch_data, selection, path, filename):
             rejections_data = rejections.parse("daily_rejections_data", index_col=False)
             planos = pd.ExcelFile(planos_path)
             planos_data = planos.parse("daily_data", index_col=False)
+            plano_branches_summary = planos.parse("daily_submission_branch", index_col=False)
+            plano_ewc_summary = planos.parse("daily_submission_ewc", index_col=False)
             planos_data = planos_data[planos_data["Submission"] == "Not Submitted"]
+            rejection_branches_summary = rejections.parse("daily_summary", index_col=False)
+            rejections_ewc_summary = rejections.parse("ewc_summary", index_col=False)
             rejection_branches = rejections_data["Outlet"].to_list()
             planos_branches = planos_data["Branch"].to_list()
             all_branches = planos_branches + rejection_branches
@@ -449,9 +453,34 @@ def send_to_branches(branch_data, selection, path, filename):
                     rejections_report = rejections_data[rejections_data["Outlet"] == branch][rej_cols]
                     rejections_style = rejections_report.style.hide_index().set_table_styles(ug_styles)
                     rejections_html = rejections_style.to_html(doctype_html = True)
+
                     planos_report = planos_data[planos_data["Branch"] == branch][req_columns]
                     planos_style = planos_report.style.hide_index().set_table_styles(ug_styles)
                     planos_html =planos_style.to_html(doctype_html = True)
+
+                    plano_branch_summary = plano_branches_summary[
+                        plano_branches_summary["Branch"] == branch
+                    ]
+                    plano_branch_summary_style = plano_branch_summary.style.hide_index().set_table_styles(ug_styles)
+                    plano_branch_summary_html = plano_branch_summary_style.to_html(doctype_html = True)
+
+                    plano_ewc_summary = plano_ewc_summary[
+                        plano_ewc_summary["Branch"] == branch
+                    ]
+                    plano_ewc_summary_style = plano_ewc_summary.style.hide_index().set_table_styles(ug_styles)
+                    plano_ewc_summary_html = plano_ewc_summary_style.to_html(doctype_html = True)
+
+                    rejections_branch_summary = rejection_branches_summary[
+                        rejection_branches_summary["Outlet"] == branch
+                    ]
+                    rejections_branch_summary_style = rejection_branches_summary.style.hide_index().set_table_styles(ug_styles)
+                    rejections_branch_summary_html = rejections_branch_summary_style.to_html(doctype_html = True)
+
+                    rejections_ewc_summary = rejections_ewc_summary[
+                        rejections_ewc_summary["Outlet"] == branch
+                    ]
+                    rejections_ewc_summary_style = rejections_ewc_summary.style.hide_index().set_table_styles(ug_styles)
+                    plano_ewc_summary_html = rejections_ewc_summary_style.to_html(doctype_html = True)
 
                     html = branches_html.format(
                         planos = planos_html,
