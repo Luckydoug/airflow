@@ -272,13 +272,12 @@ def attach_file(email_message, filename, name):
 
 
 def save_file(email_message, non_converted, branch, branch_name, report, path):
-    non_conversion = non_converted.parse(branch, index_col=False)
     filename = f"{path}{branch_name} {report}"
     writer = pd.ExcelWriter(filename, engine='xlsxwriter')
-    non_conversion.to_excel(writer, sheet_name='Data', index=False)
+    non_converted.to_excel(writer, sheet_name='Data', index=False)
     writer.save()
     writer.close()
-    attach_file(email_message, filename, name=f"{branch_name} {report} Non Conversions.xlsx")
+    attach_file(email_message, filename, name=f"{branch_name} {report}")
 
 
 def get_comparison_months():

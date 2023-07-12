@@ -75,11 +75,22 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection):
 
                 sales_report_html = sales_style.to_html(doctype_html = True)
                 branch_html = branch_style.to_html(doctype_html = True)
+                branch_export = export_data.parse(branch, index_col=False)
+                branch_export = branch_export[branch_export["Draft to Upload"] > 8]
+                
+                if not len(branch_export):
+                    color = "green"
+                    message = "You have no late orders for the above period. Thanks for maintaining 100% efficiency"
+                else:
+                    color = "red"
+                    message = "Please find the attached late orders data."
 
                 html = branch_efficiency_html.format(
                     branch_name = branch_name,
                     branch_report_html = branch_html,
-                    sales_person_report_html = sales_report_html
+                    sales_person_report_html = sales_report_html,
+                    color = color,
+                    message = message
                 )
 
                 if branch == random_branch:
@@ -115,14 +126,14 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection):
                 elif selection == "Monthly":
                     subject = f"{branch_name} Draft to Upload Efficiency Report for {first_month} and {second_month}"
                 
-                receiver_email = ["tstbranch@gmail.com"]
                 email_message = MIMEMultipart("alternative")
                 email_message["From"] = your_email
                 email_message["To"] = r','.join(receiver_email)
                 email_message["Subject"] = subject
                 email_message.attach(MIMEText(html, "html"))
-                    
-                save_file(email_message, export_data, branch, branch_name, "Efficiency Data.xlsx", f"{path}draft_upload/")
+
+                if len(branch_export):
+                    save_file(email_message, branch_export, branch, branch_name, "Late Orders.xlsx", f"{path}draft_upload/")
 
                 if branch_email not in return_sent_emails(log_file):
                     context = ssl.create_default_context()

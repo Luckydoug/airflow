@@ -206,7 +206,7 @@ branch_efficiency_html = """
     <b>2) Sales Persons Efficiency</b>
     <table style = "empty-cells: hide !important;">{sales_person_report_html}</table>
     <br>
-    <p>Kindly see on the attachments a list of orders and the time taken from Draft Order Created to Upload Attachment statuses</p>
+    <p style = "color: {color};">{message}</p>
     <br>
     <b><i>Best Regards</i></b><br>
     <b><i>Douglas</i></b>
