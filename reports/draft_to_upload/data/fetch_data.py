@@ -271,7 +271,7 @@ def fetch_opening_time(database, engine, start_date = '2023-01-01'):
     select date::date as "Date", "day" as "Day", "branch" as "Branch", 
     "opening_time" as "Opening Time", time_opened as "Time Opened", "lost_time" as "Lost Time"
     from {database}.source_opening_time
-    where lost_time::int > 0::int and date::date between '{start_date}' and '{start_date}'
+    where lost_time::int > 0::int and date::date between '{start_date}' and '{today}'
     """.format(start_date = start_date)
    
    opening_time = pd.read_sql_query(opening_time_query, con=engine)

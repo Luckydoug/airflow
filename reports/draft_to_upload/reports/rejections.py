@@ -23,7 +23,12 @@ def create_rejection_report(orderscreen, all_orders, sales_orders, branch_data, 
     insurance_status = ["Draft Order Created"]
     insurance_orders = orderscreen[orderscreen.Status.isin(insurance_status)].copy()
     unique_insurance_orders = insurance_orders.drop_duplicates(subset="Order Number")
-    unique_insurance_merge = pd.merge(unique_insurance_orders, all_orders[["DocNum", "Outlet", "CreateDate", "Insurance Order"]].rename(columns={"DocNum": "Order Number"}), on = "Order Number", how = "left")
+    unique_insurance_merge = pd.merge(
+        unique_insurance_orders, 
+        all_orders[[
+            "DocNum", "Outlet", "CreateDate", "Insurance Order"
+        ]].rename(columns={"DocNum": "Order Number"}), on = "Order Number", how = "left"
+    )
     unique_insurance_merge["Date"] = pd.to_datetime(unique_insurance_merge["Date"], dayfirst=True)
     unique_insurance_merge["CreateDate"] = pd.to_datetime(unique_insurance_merge["CreateDate"], dayfirst=True)
     unique_insurance_merge = unique_insurance_merge[unique_insurance_merge["Insurance Order"] == "Yes"].copy()
