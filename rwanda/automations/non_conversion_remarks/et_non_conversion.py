@@ -105,8 +105,8 @@ def smtp():
 
     log_file=f"{rwanda_path}et_non_conversions/branch_log.txt"
     load_dotenv()
-    your_email = os.getenv("simon_email")
-    password = os.getenv("simon_password")
+    your_email = os.getenv("wairimu_email")
+    password = os.getenv("wairimu_password")
     create_initial_file(log_file)
     et_non_q_file = f"{rwanda_path}et_non_conversions/et_non_conversions.xlsx"
 

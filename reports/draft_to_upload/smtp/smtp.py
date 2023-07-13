@@ -80,6 +80,7 @@ It is important to regularly check if the pipelines are running properly to avoi
 
 
 def send_draft_upload_report(selection, country, path, target):
+    return
     lower = selection.lower()
     draft_path = f"{path}draft_upload/draft_to_upload.xlsx"
     rejections_path = f"{path}draft_upload/rejections_report.xlsx"
@@ -470,23 +471,27 @@ def send_to_branches(branch_data, selection, path, filename):
                     plano_ewc_summary_style = plano_ewc_summary.style.hide_index().set_table_styles(ug_styles)
                     plano_ewc_summary_html = plano_ewc_summary_style.to_html(doctype_html = True)
 
-                    rejections_branch_summary = rejection_branches_summary[
+                    rejection_branch_summary = rejection_branches_summary[
                         rejection_branches_summary["Outlet"] == branch
                     ]
-                    rejections_branch_summary_style = rejection_branches_summary.style.hide_index().set_table_styles(ug_styles)
+                    rejections_branch_summary_style = rejection_branch_summary.style.hide_index().set_table_styles(ug_styles)
                     rejections_branch_summary_html = rejections_branch_summary_style.to_html(doctype_html = True)
 
-                    rejections_ewc_summary = rejections_ewc_summary[
+                    rejection_ewc_summary = rejections_ewc_summary[
                         rejections_ewc_summary["Outlet"] == branch
                     ]
-                    rejections_ewc_summary_style = rejections_ewc_summary.style.hide_index().set_table_styles(ug_styles)
-                    plano_ewc_summary_html = rejections_ewc_summary_style.to_html(doctype_html = True)
+                    rejections_ewc_summary_style = rejection_ewc_summary.style.hide_index().set_table_styles(ug_styles)
+                    rejections_ewc_summary_html = rejections_ewc_summary_style.to_html(doctype_html = True)
 
                     html = branches_html.format(
                         planos = planos_html,
                         rejections = rejections_html,
                         branch = branch_name,
-                        branch_manager = branch_manager
+                        branch_manager = branch_manager,
+                        rejections_branch_summary_html = rejections_branch_summary_html,
+                        rejections_ewc_summary_html = rejections_ewc_summary_html,
+                        plano_branch_summary_html =  plano_branch_summary_html,
+                        plano_ewc_summary_html  = plano_ewc_summary_html 
                     )
 
                 elif branch in rejection_branches and branch not in planos_branches:
@@ -495,10 +500,24 @@ def send_to_branches(branch_data, selection, path, filename):
                     rejections_style = rejections_report.style.hide_index().set_table_styles(ug_styles)
                     rejections_html = rejections_style.to_html(doctype_html = True)
 
+                    rejection_branch_summary = rejection_branches_summary[
+                        rejection_branches_summary["Outlet"] == branch
+                    ]
+                    rejections_branch_summary_style = rejection_branch_summary.style.hide_index().set_table_styles(ug_styles)
+                    rejections_branch_summary_html = rejections_branch_summary_style.to_html(doctype_html = True)
+
+                    rejection_ewc_summary = rejections_ewc_summary[
+                        rejections_ewc_summary["Outlet"] == branch
+                    ]
+                    rejections_ewc_summary_style = rejection_ewc_summary.style.hide_index().set_table_styles(ug_styles)
+                    rejections_ewc_summary_html = rejections_ewc_summary_style.to_html(doctype_html = True)
+
                     html = html_rejections.format(
                         rejections = rejections_html,
                         branch = branch_name,
-                        branch_manager = branch_manager
+                        branch_manager = branch_manager,
+                        rejections_branch_summary_html =  rejections_branch_summary_html,
+                        rejections_ewc_summary_html =   rejections_ewc_summary_html
                     )
                 
                 elif branch in planos_branches and branch not in rejection_branches:
@@ -507,10 +526,24 @@ def send_to_branches(branch_data, selection, path, filename):
                     planos_style = planos_report.style.hide_index().set_table_styles(ug_styles)
                     planos_html =planos_style.to_html(doctype_html = True)
 
+                    plano_branch_summary = plano_branches_summary[
+                        plano_branches_summary["Branch"] == branch
+                    ]
+                    plano_branch_summary_style = plano_branch_summary.style.hide_index().set_table_styles(ug_styles)
+                    plano_branch_summary_html = plano_branch_summary_style.to_html(doctype_html = True)
+
+                    planos_ewc_summary = plano_ewc_summary[
+                        plano_ewc_summary["Branch"] == branch
+                    ]
+                    plano_ewc_summary_style = planos_ewc_summary.style.hide_index().set_table_styles(ug_styles)
+                    plano_ewc_summary_html = plano_ewc_summary_style.to_html(doctype_html = True)
+
                     html = html_planos.format(
                         planos = planos_html,
                         branch = branch_name,
-                        branch_manager = branch_manager
+                        branch_manager = branch_manager,
+                        plano_branch_summary_html = plano_branch_summary_html,
+                        plano_ewc_summary_html = plano_ewc_summary_html
                     )
                 
                 if branch == random_branch:
@@ -539,6 +572,8 @@ def send_to_branches(branch_data, selection, path, filename):
                 
                 else:
                     receiver_email = [rm_email,branch_email]
+
+                receiver_email = ["tstbranch@gmail.com"]
 
                 html_content = quopri.encodestring(html.encode("utf-8")).decode("utf-8")
                 email_message = MIMEMultipart("alternative")

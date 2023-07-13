@@ -61,7 +61,7 @@ def create_rejection_report(orderscreen, all_orders, sales_orders, branch_data, 
             index = "Outlet", 
             aggfunc="count", 
             values="Order Number"
-        ).reset_index().rename(columns={"Order Number": "Rejected"})
+        ).reset_index().rename(columns={"Order Number": "Total Ins Orders"})
 
         ewc_daily_orders = pd.pivot_table(
             daily_insurance_orders,
@@ -72,7 +72,6 @@ def create_rejection_report(orderscreen, all_orders, sales_orders, branch_data, 
 
 
         daily_rejections = rejections_orders[rejections_orders["Date"] == start_date]
-
         if not len(daily_rejections):
             return
         
@@ -117,6 +116,7 @@ def create_rejection_report(orderscreen, all_orders, sales_orders, branch_data, 
             values="Order Number",
             aggfunc="count"
         ).reset_index().rename(columns = {"Order Number": "Converted"})
+
         categories = ["Outlet", "Converted"]
         daily_conversion_pivot = daily_conversion_pivot.reindex(categories, axis=1, fill_value=0)
 
@@ -126,7 +126,6 @@ def create_rejection_report(orderscreen, all_orders, sales_orders, branch_data, 
             on = "Outlet", 
             how = "left"
         ).fillna(0)[["Outlet", "RM", "SRM", "Total Ins Orders", "Count of Rejections"]]
-
 
         daily_rej_total["% Rejected"] = round((daily_rej_total["Count of Rejections"] / daily_rej_total["Total Ins Orders"]) * 100, 0).replace([np.inf, -np.inf], np.nan).fillna(0).astype(int)
         daily_rej_total = pd.merge(daily_rej_total, daily_conversion_pivot, on = "Outlet", how = "left").fillna(0)
@@ -366,7 +365,6 @@ def create_rejection_report(orderscreen, all_orders, sales_orders, branch_data, 
             (second_month, "Conversion")
         ]
         final_monthly_rejections = final_monthly_rejections.reindex(columns, axis=1, fill_value=0)
-        print(final_monthly_rejections)
 
         for date in final_monthly_rejections.columns.levels[0]:
             col_name = (date, '%Rejected')

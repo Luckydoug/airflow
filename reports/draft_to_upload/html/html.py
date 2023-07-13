@@ -78,7 +78,17 @@ branches_html = """
                 Please help us understand why the below mentioned insurance error 
                 has occurred and what action you have taken to curtail this going forward.
             </p>
-            <table>{rejections}</table>
+            <ol>
+                <li><h4>Branch Summary</h4>
+                <table>{rejections_branch_summary_html}</table>
+                </li> </br></br>
+                <li><h4>Staff Summary</h4>
+                <table>{rejections_ewc_summary_html}</table>
+                </li></br></br>
+                <li><h4>Data</h4>
+                <table>{rejections}</table>
+                </li>
+            </ol>
         </div>
 
         <div class="rejections">
@@ -88,8 +98,19 @@ branches_html = """
                 why the below Plano Rx was not submitted to insurance for preauth 
                 and what action you have taken to curtail this going forward.
             </p>
+             <ol>
+                <li><h4>Branch Summary</h4>
+                    <table>{plano_branch_summary_html}</table>
+                </li></br></br>
 
-            <table>{planos}</table>
+                <li><h4>Staff Summary</h4>
+                    <table>{plano_ewc_summary_html}</table>
+                </li></br></br>
+
+                <li><h4>Data</h4>
+                    <table>{planos}</table>
+                </li>
+            </ol>
         </div>
        <br><br>
        <b><i>Best Regards <br> Optica Data Team</i></b>
@@ -126,7 +147,17 @@ html_rejections = """
                 Please help us understand why the below mentioned insurance error 
                 has occurred and what action you have taken to curtail this going forward.
             </p>
-            <table>{rejections}</table>
+            <ol>
+                <li><h4>Branch Summary</h4>
+                <table>{rejections_branch_summary_html}</table>
+                </li> </br></br>
+                <li><h4>Staff Summary</h4>
+                <table>{rejections_ewc_summary_html}</table>
+                </li></br></br>
+                <li><h4>Data</h4>
+                <table>{rejections}</table>
+                </li>
+            </ol>
         </div>
        <br><br>
        <b><i>Best Regards <br> Optica Data Team</i></b>
@@ -165,8 +196,19 @@ html_planos = """
                 why the below Plano Rx was not submitted to insurance for preauth 
                 and what action you have taken to curtail this going forward.
             </p>
+            <ol>
+                <li><h4>Branch Summary</h4>
+                    <table>{plano_branch_summary_html}</table>
+                </li></br></br>
 
-            <table>{planos}</table>
+                <li><h4>Staff Summary</h4>
+                    <table>{plano_ewc_summary_html}</table>
+                </li></br></br>
+
+                <li> <h4>Data</h4>
+                    <table>{planos}</table>
+                </li>
+            </ol>
         </div>
        <br><br>
        <b><i>Best Regards <br> Optica Data Team</i></b>

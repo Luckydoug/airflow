@@ -163,17 +163,17 @@ def update_calculated_field():
     designer['Time Taken'] = designer.apply 
     designer['15 min'] = designer['Time Min'].apply(lambda x: 1 if x > 15 else 0)
     designer['12 min'] = designer['Time Min'].apply(lambda x: 1 if x > 12 else 0)
-    designer['10 min'] = designer['Time Min'].apply(lambda x: 1 if x > 10 else 0)
-    designer['7 min'] = designer['Time Min'].apply(lambda x: 1 if x > 7 else 0)
+    designer['8 min'] = designer['Time Min'].apply(lambda x: 1 if x > 10 else 0)
+    designer['6 min'] = designer['Time Min'].apply(lambda x: 1 if x > 7 else 0)
 
     cuttoff1 = pd.pivot_table(designer, index='dept', values=[
                           '15 min'], aggfunc='sum', fill_value=0)
     cuttoff2 = pd.pivot_table(designer, index='dept', values=[
                             '12 min'], aggfunc='sum', fill_value=0)
     cuttoff3 = pd.pivot_table(designer, index='dept', values=[
-                            '10 min'], aggfunc='sum', fill_value=0)
+                            '8 min'], aggfunc='sum', fill_value=0)
     cuttoff4 = pd.pivot_table(designer, index='dept', values=[
-                            '7 min'], aggfunc='sum', fill_value=0)
+                            '6 min'], aggfunc='sum', fill_value=0)
     cutdesigner = pd.merge(cuttoff1, cuttoff2, on='dept')
     cutdesigner = pd.merge(cutdesigner, cuttoff3, on='dept')
     cutdesigner = pd.merge(cutdesigner, cuttoff4, on='dept')
@@ -211,20 +211,145 @@ def update_calculated_field():
     mainstore['Time Taken'] = mainstore.apply 
     mainstore['15 min'] = mainstore['Time Min'].apply(lambda x: 1 if x > 15 else 0)
     mainstore['12 min'] = mainstore['Time Min'].apply(lambda x: 1 if x > 12 else 0)
-    mainstore['10 min'] = mainstore['Time Min'].apply(lambda x: 1 if x > 10 else 0)
-    mainstore['7 min'] = mainstore['Time Min'].apply(lambda x: 1 if x > 7 else 0)
+    mainstore['8 min'] = mainstore['Time Min'].apply(lambda x: 1 if x > 10 else 0)
+    mainstore['6 min'] = mainstore['Time Min'].apply(lambda x: 1 if x > 7 else 0)
 
     cuttoff1 = pd.pivot_table(mainstore, index='dept', values=[
-                          '15 min'], aggfunc='sum', fill_value=0)
+                            '15 min'], aggfunc='sum', fill_value=0)
     cuttoff2 = pd.pivot_table(mainstore, index='dept', values=[
                             '12 min'], aggfunc='sum', fill_value=0)
     cuttoff3 = pd.pivot_table(mainstore, index='dept', values=[
-                            '10 min'], aggfunc='sum', fill_value=0)
+                            '8 min'], aggfunc='sum', fill_value=0)
     cuttoff4 = pd.pivot_table(mainstore, index='dept', values=[
-                            '7 min'], aggfunc='sum', fill_value=0)
+                            '6 min'], aggfunc='sum', fill_value=0)
+
     cutmainstore = pd.merge(cuttoff1, cuttoff2, on='dept')
-    cutmainstore = pd.merge(cutdesigner, cuttoff3, on='dept')
-    cutmainstore = pd.merge(cutdesigner, cuttoff4, on='dept')
+    cutmainstore = pd.merge(cutmainstore, cuttoff3, on='dept')
+    cutmainstore = pd.merge(cutmainstore, cuttoff4, on='dept')
     print(cutmainstore)
     print('Main Store Calculated')
+
+    """ PACKAGING ORDER EFFICIENCY   """        
+    packagingIssues = OrdersWithIssues[OrdersWithIssues["DEPARTMENT"] == "PACKAGING"]
+    packagingIssuesOrders = packagingIssues["ORDER NUMBER"].tolist()
+
+    packaging = orders[orders['dept'] == 'Packaging']
+    packaging = packaging[~packaging["Doc No"].isin(packagingIssuesOrders)]
+    packagingpivot1 = pd.pivot_table(packaging, index=['Hour'], values=[
+                                'Doc No'], aggfunc='count', fill_value=0, margins=True, margins_name='Total')
+    packagingpivot2 = pd.pivot_table(packaging, index=['Hour'], values=[
+                                'Time Min'], aggfunc='mean', fill_value=0, margins=True, margins_name='Total')
+    packagingpivot3 = pd.pivot_table(packaging, index=['Hour'], values=[
+                                'Delay'], aggfunc='sum', fill_value=0, margins=True, margins_name='Total')
+    
+    packagingpivot4 = pd.merge(packagingpivot1, packagingpivot2, on=['Hour'], how='left')
+    packagingpivot = pd.merge(packagingpivot4, packagingpivot3, on=['Hour'], how='left')
+    print(packagingpivot)
+    packagingpivot['% of Efficiency'] = (packagingpivot['Doc No'] - packagingpivot['Delay'])/packagingpivot['Doc No']
+
+    packagingpivot['Time Min'] = packagingpivot['Time Min'].round(2)
+    packagingpivot['% of Efficiency'] = packagingpivot['% of Efficiency'].map('{:.2%}'.format)
+    packagingpivot = np.transpose(packagingpivot)
+    print(packagingpivot)
+
+    """ Delayed Orders"""
+    packaging_delay = packaging[packaging['Delay'] == 0]
+    packagingdelay = pd.pivot_table(packaging_delay, index=['Hour', 'Doc No'], values='Time Min', aggfunc='mean', fill_value=0)
+
+    """Cut Off"""
+    packaging['Time Taken'] = packaging.apply 
+    packaging['15 min'] = packaging['Time Min'].apply(lambda x: 1 if x > 15 else 0)
+    packaging['12 min'] = packaging['Time Min'].apply(lambda x: 1 if x > 12 else 0)
+    packaging['8 min'] = packaging['Time Min'].apply(lambda x: 1 if x > 10 else 0)
+    packaging['6 min'] = packaging['Time Min'].apply(lambda x: 1 if x > 7 else 0)
+
+    cuttoff1 = pd.pivot_table(packaging, index='dept', values=[
+                            '15 min'], aggfunc='sum', fill_value=0)
+    cuttoff2 = pd.pivot_table(packaging, index='dept', values=[
+                            '12 min'], aggfunc='sum', fill_value=0)
+    cuttoff3 = pd.pivot_table(packaging, index='dept', values=[
+                            '8 min'], aggfunc='sum', fill_value=0)
+    cuttoff4 = pd.pivot_table(packaging, index='dept', values=[
+                            '6 min'], aggfunc='sum', fill_value=0)
+
+    cutpackaging = pd.merge(cuttoff1, cuttoff2, on='dept')
+    cutpackaging = pd.merge(cutpackaging, cuttoff3, on='dept')
+    cutpackaging = pd.merge(cutpackaging, cuttoff4, on='dept')
+    print(cutpackaging)
+    print('Packaging Calculated')
+
+    """ LENS STORE ORDER EFFICIENCY   """        
+    lensstoreIssues = OrdersWithIssues[OrdersWithIssues["DEPARTMENT"] == "LENS STORE"]
+    lensstoreIssuesOrders = lensstoreIssues["ORDER NUMBER"].tolist()
+
+    lensstore = orders[orders['dept'] == 'Lens Store']
+    lensstore = lensstore[~lensstore["Doc No"].isin(lensstoreIssuesOrders)]
+    lensstorepivot1 = pd.pivot_table(lensstore, index=['Hour'], values=[
+                                'Doc No'], aggfunc='count', fill_value=0, margins=True, margins_name='Total')
+    lensstorepivot2 = pd.pivot_table(lensstore, index=['Hour'], values=[
+                                'Time Min'], aggfunc='mean', fill_value=0, margins=True, margins_name='Total')
+    lensstorepivot3 = pd.pivot_table(lensstore, index=['Hour'], values=[
+                                'Delay'], aggfunc='sum', fill_value=0, margins=True, margins_name='Total')
+    
+    lensstorepivot4 = pd.merge(lensstorepivot1, lensstorepivot2, on=['Hour'], how='left')
+    lensstorepivot = pd.merge(lensstorepivot4, lensstorepivot3, on=['Hour'], how='left')
+    print(lensstorepivot)
+    lensstorepivot['% of Efficiency'] = (lensstorepivot['Doc No'] - lensstorepivot['Delay'])/lensstorepivot['Doc No']
+
+    lensstorepivot['Time Min'] = lensstorepivot['Time Min'].round(2)
+    lensstorepivot['% of Efficiency'] = lensstorepivot['% of Efficiency'].map('{:.2%}'.format)
+    lensstorepivot = np.transpose(lensstorepivot)
+    print(packagingpivot)
+
+    """ Delayed Orders"""
+    lensstore_delay = lensstore[lensstore['Delay'] == 0]
+    lensstoredelay = pd.pivot_table(lensstore_delay, index=['Hour', 'Doc No'], values='Time Min', aggfunc='mean', fill_value=0)
+
+    """Cut Off"""
+    lensstore['Time Taken'] = lensstore.apply 
+    lensstore['15 min'] = lensstore['Time Min'].apply(lambda x: 1 if x > 15 else 0)
+    lensstore['12 min'] = lensstore['Time Min'].apply(lambda x: 1 if x > 12 else 0)
+    lensstore['8 min'] = lensstore['Time Min'].apply(lambda x: 1 if x > 10 else 0)
+    lensstore['6 min'] = lensstore['Time Min'].apply(lambda x: 1 if x > 7 else 0)
+
+    cuttoff1 = pd.pivot_table(lensstore, index='dept', values=[
+                            '15 min'], aggfunc='sum', fill_value=0)
+    cuttoff2 = pd.pivot_table(lensstore, index='dept', values=[
+                            '12 min'], aggfunc='sum', fill_value=0)
+    cuttoff3 = pd.pivot_table(lensstore, index='dept', values=[
+                            '8 min'], aggfunc='sum', fill_value=0)
+    cuttoff4 = pd.pivot_table(lensstore, index='dept', values=[
+                            '6 min'], aggfunc='sum', fill_value=0)
+
+    cutlensstore = pd.merge(cuttoff1, cuttoff2, on='dept')
+    cutlensstore = pd.merge(cutlensstore, cuttoff3, on='dept')
+    cutlensstore = pd.merge(cutlensstore, cuttoff4, on='dept')
+    print(cutlensstore)
+    print('lens Store Calculated')
+
+
+    """Save In Excel """
+    with pd.ExcelWriter(r"/home/opticabi/Documents/optica_reports/order_efficiency/order efficiency results.xlsx", engine='xlsxwriter') as writer:
+        controlpivot.to_excel(writer, sheet_name='Control',index=True)
+        controldelay.to_excel(writer, sheet_name='ControlDelays',index=True)
+        cutcontrol.to_excel(writer, sheet_name='ControlCutOffs', index=True)
+        designerpivot.to_excel(writer, sheet_name='Designer',index=True)
+        designerdelay.to_excel(writer, sheet_name='DesignerDelays',index=True)
+        cutdesigner.to_excel(writer, sheet_name='DesignerCutOffs', index=True)
+        mainstorepivot.to_excel(writer, sheet_name='Main store',index=True)
+        mainstoredelay.to_excel(writer, sheet_name='Main storeDelays',index=True)
+        cutmainstore.to_excel(writer, sheet_name='Main storeCutOffs', index=True)
+        packagingpivot.to_excel(writer, sheet_name='Packaging',index=True)
+        packagingdelay.to_excel(writer, sheet_name='PackagingDelays',index=True)
+        cutpackaging.to_excel(writer, sheet_name='PackagingCutOffs', index=True)
+        lensstorepivot.to_excel(writer, sheet_name='Lens store',index=True)
+        lensstoredelay.to_excel(writer, sheet_name='Lens storeDelays', index=True)
+        cutlensstore.to_excel(writer, sheet_name='Lens storeCutOffs', index=True)
+
+    def save_xls(list_dfs, xls_path):
+        with ExcelWriter(xls_path) as writer:
+            for n, df in enumerate(list_dfs):
+                df.to_excel(writer,'sheet%s' % n)
+            writer.save()
+
 update_calculated_field()    
