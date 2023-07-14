@@ -26,7 +26,7 @@ SessionId = login_rwanda()
 # ToDate = '2023/05/10'
 
 today = date.today()
-pastdate = today - timedelta(days=3)
+pastdate = today - timedelta(days=1)
 FromDate = pastdate.strftime('%Y/%m/%d')
 ToDate = date.today().strftime('%Y/%m/%d')
 

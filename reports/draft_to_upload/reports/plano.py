@@ -47,9 +47,9 @@ required_columns = [
 ]
 
 columns_order = [
+    "Create Date",
     "SRM",
     "RM",
-    "Create Date",
     "Code",
     "RX Type",
     "Status",

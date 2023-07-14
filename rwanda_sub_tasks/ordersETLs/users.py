@@ -80,7 +80,9 @@ def fetch_sap_users():
                 'User_Locked':'user_locked_status', 
                 'Department':'user_department_code',
                 'Spct_Len_Eligible':'spct_len_eligible', 
-                'SE_Optom':'se_optom'}
+                'SE_Optom':'se_optom',
+                'PAYROLL_NUMBER':'payroll_no'
+                }
     ,inplace=True)
 
 
@@ -99,5 +101,5 @@ def fetch_sap_users():
 
         print('Update successful')
 
-fetch_sap_users()
+# fetch_sap_users()
 

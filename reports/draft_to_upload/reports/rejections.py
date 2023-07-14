@@ -98,7 +98,7 @@ def create_rejection_report(orderscreen, all_orders, sales_orders, branch_data, 
             how = "outer"
         ).fillna(0)
 
-        final_ewc_pivot["%Rejected"] = round((final_ewc_pivot["Count of Rejections"] / final_ewc_pivot["Total Orders"])* 100, 0)
+        final_ewc_pivot["%Rejected"] = round((final_ewc_pivot["Count of Rejections"] / final_ewc_pivot["Total Orders"])* 100, 0).replace([np.inf, -np.inf], np.nan).fillna(0).astype(int)
         daily_rejections_branches = pd.merge(
             branch_data[["Outlet", "RM", "SRM"]],
             daily_rejections_pivot,
@@ -140,6 +140,7 @@ def create_rejection_report(orderscreen, all_orders, sales_orders, branch_data, 
         )
 
         rejections_daily_data = daily_unique_rejections[[
+            "Date",
             "RM",
             "SRM",
             "Outlet", 

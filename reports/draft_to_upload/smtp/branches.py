@@ -134,6 +134,8 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection):
 
                 if len(branch_export):
                     save_file(email_message, branch_export, branch, branch_name, "Late Orders.xlsx", f"{path}draft_upload/")
+                else:
+                    continue
 
                 if branch_email not in return_sent_emails(log_file):
                     context = ssl.create_default_context()

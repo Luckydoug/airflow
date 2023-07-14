@@ -30,6 +30,8 @@ from uganda_sub_tasks.ordersETLs.order_checking_details import fetch_order_check
 from uganda_sub_tasks.ordersETLs.optom_queue import fetch_optom_queue_mgmt
 from uganda_sub_tasks.ordersETLs.items import (fetch_sap_items, fetch_item_groups)
 from uganda_sub_tasks.ordersETLs.insurance import (fetch_sap_insurance)
+from uganda_sub_tasks.ordersETLs.branch_targets import fetch_sap_branch_targets
+from uganda_sub_tasks.ordersETLs.incentive_slab import fetch_sap_incentive_slab
 
 DAG_ID = 'UG_Main_Pipeline'
 
@@ -193,6 +195,21 @@ with DAG(
         )
 
         fetch_sap_items >> fetch_item_groups
+    
+    with TaskGroup('targets') as targets:
+        fetch_sap_branch_targets = PythonOperator(
+            task_id = 'fetch_sap_branch_targets',
+            python_callable = fetch_sap_branch_targets,
+            provide_context = True
+        ) 
+
+        fetch_sap_incentive_slab = PythonOperator(
+            task_id = 'fetch_sap_incentive_slab',
+            python_callable = fetch_sap_incentive_slab,
+            provide_context = True
+        )
+
+        fetch_sap_branch_targets >> fetch_sap_incentive_slab
 
     # with TaskGroup('invoices') as invoices:
 
@@ -215,6 +232,6 @@ with DAG(
     )
     
     # start >> orders >> orderlog >> payments >> customers >> prescriptions >> view >> salesorders >> discounts >> users >>invoices >> finish
-    start >> orders >> orderlog >> payments >> customers >> prescriptions >> view >> salesorders >> discounts >> users >> items >> insurance >> finish
+    start >> orders >> orderlog >> payments >> customers >> prescriptions >> view >> salesorders >> discounts >> users >> items >> targets >> insurance >> finish
 
 

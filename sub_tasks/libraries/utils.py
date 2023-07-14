@@ -57,6 +57,7 @@ def fetch_gsheet_data():
     rw_srm_rm = pd.DataFrame(sheet.worksheet_by_title("RW_SRM_RM").get_all_records())
     sheet_orderstodrop = service_key.open_by_key('1cnpNo85Hncf9cdWBfkQ1dn0TYnGfs-PjVGp1XMjk2Wo')
     OrdersWithIssues = pd.DataFrame(sheet_orderstodrop[0].get_all_records())    
+    ITRWithIssues = pd.DataFrame(sheet_orderstodrop[2].get_all_records()) 
     
     return {
         'staff': staff,
@@ -69,7 +70,8 @@ def fetch_gsheet_data():
         'itr_cutoff': itr_cutoff,
         'orders_cutoff': orders_cutoff,
         'rw_srm_rm': rw_srm_rm,
-        'orders_with_issues': OrdersWithIssues
+        'orders_with_issues': OrdersWithIssues,
+        'itrs_with_issues' : ITRWithIssues
         }
 
 

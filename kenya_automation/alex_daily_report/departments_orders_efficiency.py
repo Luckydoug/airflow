@@ -330,26 +330,38 @@ def update_calculated_field():
 
     """Save In Excel """
     with pd.ExcelWriter(r"/home/opticabi/Documents/optica_reports/order_efficiency/order efficiency results.xlsx", engine='xlsxwriter') as writer:
-        controlpivot.to_excel(writer, sheet_name='Control',index=True)
-        controldelay.to_excel(writer, sheet_name='ControlDelays',index=True)
-        cutcontrol.to_excel(writer, sheet_name='ControlCutOffs', index=True)
-        designerpivot.to_excel(writer, sheet_name='Designer',index=True)
-        designerdelay.to_excel(writer, sheet_name='DesignerDelays',index=True)
-        cutdesigner.to_excel(writer, sheet_name='DesignerCutOffs', index=True)
-        mainstorepivot.to_excel(writer, sheet_name='Main store',index=True)
-        mainstoredelay.to_excel(writer, sheet_name='Main storeDelays',index=True)
-        cutmainstore.to_excel(writer, sheet_name='Main storeCutOffs', index=True)
-        packagingpivot.to_excel(writer, sheet_name='Packaging',index=True)
-        packagingdelay.to_excel(writer, sheet_name='PackagingDelays',index=True)
-        cutpackaging.to_excel(writer, sheet_name='PackagingCutOffs', index=True)
-        lensstorepivot.to_excel(writer, sheet_name='Lens store',index=True)
-        lensstoredelay.to_excel(writer, sheet_name='Lens storeDelays', index=True)
-        cutlensstore.to_excel(writer, sheet_name='Lens storeCutOffs', index=True)
+        controlpivot.to_excel(writer, sheet_name='Control', index=True)
+        controldelay.to_excel(writer, sheet_name='Control',
+                            index=True, startrow=15)
+        cutcontrol.to_excel(writer, sheet_name='Control', index=True, startrow=9)
+        designerpivot.to_excel(writer, sheet_name='Designer', index=True)
+        designerdelay.to_excel(writer, sheet_name='Designer',
+                            index=True, startrow=15)
+        cutdesigner.to_excel(writer, sheet_name='Designer',
+                            index=True, startrow=9)
+        mainstorepivot.to_excel(writer, sheet_name='Main store', index=True)
+        mainstoredelay.to_excel(
+            writer, sheet_name='Main store', index=True, startrow=15)
+        cutmainstore.to_excel(
+            writer, sheet_name='Main store', index=True, startrow=9)
+        packagingpivot.to_excel(writer, sheet_name='Packaging', index=True)
+        packagingdelay.to_excel(
+            writer, sheet_name='Packaging', index=True, startrow=15)
+        cutpackaging.to_excel(
+            writer, sheet_name='Packaging', index=True, startrow=9)
+        lensstorepivot.to_excel(writer, sheet_name='Lens store', index=True)
+        lensstoredelay.to_excel(
+            writer, sheet_name='Lens store', index=True, startrow=15)
+        cutlensstore.to_excel(writer, sheet_name='Lens store', index=True, startrow=9)
+
 
     def save_xls(list_dfs, xls_path):
         with ExcelWriter(xls_path) as writer:
             for n, df in enumerate(list_dfs):
-                df.to_excel(writer,'sheet%s' % n)
+                df.to_excel(writer, 'sheet%s' % n)
             writer.save()
+
+
+
 
 update_calculated_field()    

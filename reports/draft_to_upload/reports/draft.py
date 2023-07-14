@@ -162,11 +162,13 @@ def create_draft_upload_report(selection, orderscreen, all_orders, start_date, t
     )
 
     final_data_orders["Slade"] = final_data_orders.apply(lambda row: return_slade(row), axis=1)
+    final_data_orders["Date"] = final_data_orders["Upload Time"].dt.date
     final_data_orders = final_data_orders.drop_duplicates(
         subset=["Order Number"]
     )
 
     cols_req = [
+        "Date",
         "SRM",
         "RM",
         "Order Number",
@@ -174,6 +176,9 @@ def create_draft_upload_report(selection, orderscreen, all_orders, start_date, t
         "Front Desk",
         "Creator",
         "Order Creator",
+        "Draft Time",
+        "Preauth Time",
+        "Upload Time",
         "Draft to Preauth",
         "Preuth to Upload",
         "Draft to Upload",

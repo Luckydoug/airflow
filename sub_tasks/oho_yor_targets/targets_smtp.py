@@ -269,16 +269,18 @@ def send_branch_version():
             return
         else:
             if branch == "OHO":
-                receiver_email = ["opticahouse@optica.africa"]
+                receiver_email = [
+                    "opticahouse@optica.africa", 
+                    "duncan.muchai@optica.africa", 
+                    "susan@optica.africa"
+                ]
                 branch_name = "Optica House"
             elif branch == "YOR":
                 receiver_email = [
                     "yorkhouse@optica.africa", "yh.manager@optica.africa"]
                 branch_name = "York House"
             else:
-                print(Fore.RED + "Invalid Branch")
-
-            # receiver_email = ["tstbranch@gmail.com"]
+                continue
 
         html = """
         <!DOCTYPE html>

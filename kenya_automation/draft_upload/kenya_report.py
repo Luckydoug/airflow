@@ -226,7 +226,7 @@ def trigger_kenya_smtp():
     send_draft_upload_report(
         selection=selection,
         path=path,
-        country="Kenya",
+        country="Test",
         target=target
     )
 
@@ -269,6 +269,3 @@ def build_kenya_opening_time():
 
 def clean_kenya_folder():
     clean_folders(path=path)
-
-
-build_kenya_rejections()

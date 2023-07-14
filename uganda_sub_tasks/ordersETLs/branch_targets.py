@@ -141,4 +141,4 @@ def fetch_sap_branch_targets():
 
         # itemdetails_df.to_sql('source_targets_details', con = engine, schema='mawingu_staging', if_exists = 'append', index=False)
 
-fetch_sap_branch_targets()
+# fetch_sap_branch_targets()
