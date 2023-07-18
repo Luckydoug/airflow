@@ -42,7 +42,6 @@ from sub_tasks.api_login.api_login import(login)
 conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", password="@Akb@rp@$$w0rtf31n")
 
 
-
 selection = get_report_frequency()
 if selection == 'Daily':
     start_date = return_report_daterange(selection)
@@ -54,8 +53,8 @@ print(start_date)
 print(end_date)
 start_date = return_report_daterange(selection)
 
-# start_date = '2023-06-01'
-# end_date = '2023-06-30'
+# start_date = '2023-07-10'
+# end_date = '2023-07-16'
 
 def rejections():
     branch_data = fetch_gsheet_data()["branch_data"]

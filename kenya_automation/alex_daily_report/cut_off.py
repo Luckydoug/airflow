@@ -51,26 +51,30 @@ def cutoff():
     ITRWithIssues=ITRWithIssues[["ITR Number","DEPARTMENT","DEPARTMENT 2"]]
 
     orders_cutoff = fetch_gsheet_data()["itr_cutoff"]
+    print(orders_cutoff.columns)
+    # orders_cutoff['Control Cut'] = pd.to_datetime(orders_cutoff['Control Cut'], format="%H:%M:%S", errors='coerce').dt.time
+    # orders_cutoff[time_columns] = pd.to_datetime(orders_cutoff[time_columns], format="%H%M%S", errors='coerce').dt.time
     print(orders_cutoff.head())
     Branches2 = orders_cutoff
 
     """Replacement ITR over date range to distinguish between branch stock and stock borrow"""
-    Repdata = """select * 
-                    from 
-                    (select sid.replaced_itemcode as "Item No.",i.item_desc as "Item/Service Description",sid.itr__status as "ITR Status",si.doc_no as "ITR Number",si.internal_no as "Internal Number",si.post_date as "ITR Date",
+    Repdata = """with replacement as (
+                    select sid.replaced_itemcode as "Item No.",i.item_desc as "Item/Service Description",sid.itr__status as "ITR Status",si.doc_no as "ITR Number",si.internal_no as "Internal Number",si.post_date as "ITR Date",
                     si.exchange_type as "Exchange Type",sid.sales_orderno as "Sales Order number",sid.sales_order_entry as "Sales Order entry",
                     sid.sales_order_branch as "Sales Branch",sid.draft_order_entry as "Draft order entry",sid.draft_orderno as "Order Number",si.createdon as "Creation Date",
                     si.creationtime_incl_secs as "Creatn Time - Incl. Secs",sid.picker_name as "Picker Name"
                     from mabawa_staging.source_itr_details sid
                     inner join mabawa_staging.source_itr si on si.internal_no = sid.doc_internal_id 
                     left join mabawa_staging.source_items i on i.item_code = sid.replaced_itemcode
-                    where si.exchange_type = 'Replacement') as t
+                    where si.exchange_type = 'Replacement') 
+                    select * from replacement 
                     where "ITR Date"::date between '{yesterday}' and '{yesterday}'
+                    and "Sales Branch" <> ''
                 """.format(yesterday=yesterday)
     
     Repdata = pd.read_sql_query(Repdata,con=conn)     
     Repdata['Creation Date']=pd.to_datetime(Repdata['Creation Date'],dayfirst=True  ).dt.date
-    Repdata['Creatn Time - Incl. Secs']=pd.to_datetime(Repdata["Creatn Time - Incl. Secs"],format="%H%M%S" ).dt.time
+    Repdata['Creatn Time - Incl. Secs']=pd.to_datetime(Repdata["Creatn Time - Incl. Secs"],format="%H%M%S",errors = 'coerce').dt.time
     print(Repdata)
 
     """3rd floor  all user Replacement"""
@@ -82,7 +86,7 @@ def cutoff():
     
     Replacements = pd.read_sql_query(Replacements,con=conn)
     Replacements['Date']=pd.to_datetime(Replacements['Date'],dayfirst=True  ).dt.date
-    Replacements["Date_Time"]=pd.to_datetime(Replacements.Date.astype(str) + ' ' + Replacements.Time.astype(str), format="%Y%m%d %H:%M:%S")
+    Replacements["Date_Time"]=pd.to_datetime(Replacements.Date.astype(str) + ' ' + Replacements.Time.astype(str), format="%Y%m%d %H:%M")
     Replacements['Day_End'] = Replacements["Date_Time"].dt.day_name()
     Replacements=Replacements[["Date","Time",'Created User', 'Status', 'Item Code', 'ITR No','Day_End','Date_Time']]
     Replacements['Date'] = Replacements.Date.astype('datetime64[ns]')
@@ -349,13 +353,14 @@ def cutoff():
     Control_Pivot=Control_Pivot.rename(columns={'Time':"Max"})
     ControlRoom_data=pd.merge(ControlRoom_data,Control_Pivot,on=["Warehouse Name","Date","Type"],how="left")
     ControlRoom_data['Time'] = ControlRoom_data['Time'].astype(str)
+    ControlRoom_data['Control Cut'] = ControlRoom_data['Control Cut'].astype(str)
     ControlRoom_data['Control CutOFF'] = np.where(ControlRoom_data['Time']>ControlRoom_data['Control Cut'],0, 1)
+    print(ControlRoom_data[ControlRoom_data['Internal Number'] == 257904])
 
     ControlRoom_data["Type"]=np.where((ControlRoom_data["Type"]=="Second") & ~(ControlRoom_data["Branch"].isin(branchesfilter)),"First",ControlRoom_data["Type"])
     filtercontrol = ['CONTROL ROOM','ALL']
     issuesControl = ControlRoom_data[((ControlRoom_data['DEPARTMENT'].isin(filtercontrol)) | (ControlRoom_data['DEPARTMENT 2'].isin(filtercontrol)))]
     issuesControl = issuesControl["ITR Number"].to_list()
-
     ControlRoom_data = ControlRoom_data[~ControlRoom_data["ITR Number"].isin(issuesControl)]
 
     
@@ -429,14 +434,13 @@ def cutoff():
     import xlsxwriter
     print(xlsxwriter.__version__)
     #Create a Pandas Excel writer using XlsxWriter as the engine.
-    with pd.ExcelWriter(r"/home/opticabi/Documents/optica_reports/order_efficiency/Cutoff_Summary.xlsx", engine='xlsxwriter') as writer:   
-        # Write each dataframe to a different worksheet.
-            Summary_BRS.to_excel(writer, sheet_name='BRS',startrow=0 , startcol=0)
-            Summary_MainStore.to_excel(writer, sheet_name='Main',startrow=0 , startcol=0)
-            Summary_designerStore.to_excel(writer, sheet_name='Designer',startrow=0, startcol=0)
-            Summary_LensStore.to_excel(writer, sheet_name='Lens',startrow=0, startcol=0)
-            Summary_control.to_excel(writer, sheet_name='Control',startrow=0, startcol=0)
-            Summary_packaging.to_excel(writer, sheet_name='Packaging',startrow=0, startcol=0)            
+    with pd.ExcelWriter(r"/home/opticabi/Documents/optica_reports/order_efficiency/Cutoff_Summary.xlsx", engine='xlsxwriter') as writer:          
+        Summary_BRS.to_excel(writer, sheet_name='BRS',startrow=0 , startcol=0)
+        Summary_MainStore.to_excel(writer, sheet_name='Main',startrow=0 , startcol=0)
+        Summary_designerStore.to_excel(writer, sheet_name='Designer',startrow=0, startcol=0)
+        Summary_LensStore.to_excel(writer, sheet_name='Lens',startrow=0, startcol=0)
+        Summary_control.to_excel(writer, sheet_name='Control',startrow=0, startcol=0)
+        Summary_packaging.to_excel(writer, sheet_name='Packaging',startrow=0, startcol=0)            
     writer.save()
 
     def save_xls(list_dfs, xls_path):
@@ -447,31 +451,30 @@ def cutoff():
 
 
     #Create a Pandas Excel writer using XlsxWriter as the engine.
-    with pd.ExcelWriter(r"/home/opticabi/Documents/optica_reports/order_efficiency/cutoff_Full_Report.xlsx", engine='xlsxwriter') as writer:   
-        # Write each dataframe to a different worksheet.
-            BRS.to_excel(writer, sheet_name='Summary Cut Off',startrow=0 , startcol=0,header=False,index=False)
-            Summary_BRS.to_excel(writer, sheet_name='Summary Cut Off',startrow=2 , startcol=0,header="Brs Summary")
-            
-            Mainstore.to_excel(writer, sheet_name='Summary Cut Off',startrow=0 , startcol=5,header=False,index=False)
-            Summary_MainStore.to_excel(writer, sheet_name='Summary Cut Off',startrow=2 , startcol=5)
-            
-            Designerstore.to_excel(writer, sheet_name='Summary Cut Off',startrow=0 , startcol=10,header=False,index=False)
-            Summary_designerStore.to_excel(writer, sheet_name='Summary Cut Off',startrow=2, startcol=10)
-            
-            Lenstore.to_excel(writer, sheet_name='Summary Cut Off',startrow=0 , startcol=15,header=False,index=False)
-            Summary_LensStore.to_excel(writer, sheet_name='Summary Cut Off',startrow=2, startcol=15)
-            
-            Control.to_excel(writer, sheet_name='Summary Cut Off',startrow=0 , startcol=20,header=False,index=False)
-            Summary_control.to_excel(writer, sheet_name='Summary Cut Off',startrow=2, startcol=20)
-            
-            Packaging.to_excel(writer, sheet_name='Summary Cut Off',startrow=0 , startcol=25,header=False,index=False)
-            Summary_packaging.to_excel(writer, sheet_name='Summary Cut Off',startrow=2, startcol=25)
-            NormalRepRegion.to_excel(writer, sheet_name='BRS Data')
-            MainStore_data.to_excel(writer, sheet_name='MainStore Data')
-            DesinerStore_data.to_excel(writer, sheet_name='DesignerStore Data')
-            ControlRoom_data.to_excel(writer, sheet_name='ControlRoom Data')
-            Packaging_data.to_excel(writer, sheet_name='Packaging Data')
-            LensStore_data.to_excel(writer, sheet_name='Lens Data')
+    with pd.ExcelWriter(r"/home/opticabi/Documents/optica_reports/order_efficiency/cutoff_Full_Report.xlsx", engine='xlsxwriter') as writer:      
+        BRS.to_excel(writer, sheet_name='Summary Cut Off',startrow=0 , startcol=0,header=False,index=False)
+        Summary_BRS.to_excel(writer, sheet_name='Summary Cut Off',startrow=2 , startcol=0,header="Brs Summary")
+        
+        Mainstore.to_excel(writer, sheet_name='Summary Cut Off',startrow=0 , startcol=5,header=False,index=False)
+        Summary_MainStore.to_excel(writer, sheet_name='Summary Cut Off',startrow=2 , startcol=5)
+        
+        Designerstore.to_excel(writer, sheet_name='Summary Cut Off',startrow=0 , startcol=10,header=False,index=False)
+        Summary_designerStore.to_excel(writer, sheet_name='Summary Cut Off',startrow=2, startcol=10)
+        
+        Lenstore.to_excel(writer, sheet_name='Summary Cut Off',startrow=0 , startcol=15,header=False,index=False)
+        Summary_LensStore.to_excel(writer, sheet_name='Summary Cut Off',startrow=2, startcol=15)
+        
+        Control.to_excel(writer, sheet_name='Summary Cut Off',startrow=0 , startcol=20,header=False,index=False)
+        Summary_control.to_excel(writer, sheet_name='Summary Cut Off',startrow=2, startcol=20)
+        
+        Packaging.to_excel(writer, sheet_name='Summary Cut Off',startrow=0 , startcol=25,header=False,index=False)
+        Summary_packaging.to_excel(writer, sheet_name='Summary Cut Off',startrow=2, startcol=25)
+        NormalRepRegion.to_excel(writer, sheet_name='BRS Data')
+        MainStore_data.to_excel(writer, sheet_name='MainStore Data')
+        DesinerStore_data.to_excel(writer, sheet_name='DesignerStore Data')
+        ControlRoom_data.to_excel(writer, sheet_name='ControlRoom Data')
+        Packaging_data.to_excel(writer, sheet_name='Packaging Data')
+        LensStore_data.to_excel(writer, sheet_name='Lens Data')
         
             #All_Departments.to_excel(writer, sheet_name='All Departments',index=False)
     writer.save()
@@ -482,4 +485,4 @@ def cutoff():
                 df.to_excel(writer,'sheet%s' % n)
             writer.save()            
 
-cutoff()            
+# cutoff()            

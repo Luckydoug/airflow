@@ -1,0 +1,127 @@
+import sys
+import numpy as np
+sys.path.append(".")
+
+# Import Libraries
+import json
+import psycopg2
+import requests
+import pandas as pd
+from sqlalchemy import create_engine
+from airflow.models import Variable
+from airflow.exceptions import AirflowException
+from pangres import upsert, DocsExampleTable
+from sqlalchemy import create_engine, text, VARCHAR
+from datetime import date
+import datetime
+import pytz
+import businesstimedelta
+import pandas as pd
+import holidays as pyholidays
+from workalendar.africa import Kenya
+import pygsheets
+import mysql.connector as database
+import urllib.parse
+
+##Others
+import os
+import smtplib
+from email.mime.application import MIMEApplication
+from email.mime.multipart import MIMEMultipart
+from email.mime.image import MIMEImage
+from email.mime.text import MIMEText
+from sub_tasks.libraries.utils import get_todate,send_report,assert_date_modified, create_initial_file, return_sent_emails, fetch_gsheet_data, record_sent_branch, fourth_week_start, fourth_week_end
+
+
+# PG Execute(Query)
+from sub_tasks.data.connect import (pg_execute, engine) 
+from sub_tasks.api_login.api_login import(login)
+conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", password="@Akb@rp@$$w0rtf31n")
+
+
+##Define the days that is yesterday
+today = datetime.date.today()
+yesterday = today - datetime.timedelta(days=1)
+formatted_date = yesterday.strftime('%Y-%m-%d')
+
+
+def awaiting_feedback():
+    status = """ select odsc_createdby as "Created User",odsc_date as "Date", odsc_time,
+                to_char(odsc_time, 'FM999:09:99'::text)::time without time zone AS "Time",
+                odsc_status as "Status", so.doc_entry as "DocEntry", so.odsc_doc_no,so2.doc_no as "DocNum",so2.ods_ordercriteriastatus as "OrderCriteria Status"
+                from mabawa_staging.source_orderscreenc1 so
+                left join mabawa_staging.source_orderscreen so2 on so2.doc_entry = so.doc_entry 
+                where odsc_date::date between '{yesterday}'and '{yesterday}'
+                """.format(yesterday=yesterday)
+    
+    status = pd.read_sql_query(status,con=conn) 
+    printed = status[status['Status']=='Repair Order Printed']
+    printed["Date"]=pd.to_datetime(printed["Date"],dayfirst = True).dt.date
+    printed['Date Time order printed'] = printed['Date'].astype(str)+' '+printed['Time'].astype(str)
+    printed = printed.sort_values(by = ["Date Time order printed"],ascending=True)
+    printed['Date Time order printed'] = pd.to_datetime(printed['Date Time order printed'], format = '%Y/%m/%d %H:%M:%S')
+
+    awaiting = status[status['Status']== 'Lens Store Awaiting Branch feedback from Client']
+    awaiting['Date'] = pd.to_datetime(awaiting['Date'],dayfirst=True).dt.date
+    awaiting['Date Time Awaiting feedback'] = awaiting['Date'].astype(str)+' '+awaiting['Time'].astype(str)
+    awaiting = awaiting.sort_values(by = ["Date Time Awaiting feedback"],ascending=True)
+    awaiting['Date Time Awaiting feedback'] = pd.to_datetime(awaiting['Date Time Awaiting feedback'], format = '%Y/%m/%d %H:%M:%S')
+
+    final = pd.merge(awaiting,printed[['DocNum','Date Time order printed']], on='DocNum', how='left')
+    final = final[final['Date Time order printed'] !='']
+
+    ##Define a working day
+    ####Days of the week
+    workday = businesstimedelta.WorkDayRule(
+        start_time=datetime.time(9),
+        end_time=datetime.time(19),
+        working_days=[0,1, 2, 3, 4])
+
+    cal = Kenya()
+    hl = cal.holidays()
+    vic_holidays = pyholidays.KE() 
+    holidays = businesstimedelta.HolidayRule(vic_holidays)
+    businesshrs = businesstimedelta.Rules([workday, holidays], hl)
+
+    def BusHrs(start, end):
+        if end>=start:
+            return businesshrs.difference(start,end).hours+float(businesshrs.difference(start,end).seconds)/float(3600)
+        else:
+            ""
+        
+    RejectedSentWk_hrs=final.apply(lambda row: BusHrs(row['Date Time order printed'], row['Date Time Awaiting feedback']), axis=1)
+
+    # Define a working weekend day(Saturday)
+    Saturday = businesstimedelta.WorkDayRule(start_time=datetime.time(9),end_time=datetime.time(17),working_days=[5])
+
+    vic_holidays = pyholidays.KE()
+    holidays = businesstimedelta.HolidayRule(vic_holidays)
+    businesshrs = businesstimedelta.Rules([Saturday, holidays])
+
+    def SatHrs(start, end):
+        if end>=start:
+            return businesshrs.difference(start,end).hours+float(businesshrs.difference(start,end).seconds)/float(3600)
+        else:
+            ""
+
+    RejectedSentSat_hrs=final.apply(lambda row: BusHrs(row['Date Time order printed'], row['Date Time Awaiting feedback']), axis=1)
+
+    final["delay"]=(RejectedSentWk_hrs+RejectedSentSat_hrs)*60
+    final.drop(columns={'Created User','Date','Time','DocEntry'}, inplace=True)
+    final = final.rename(columns={'delay':'Time taken'})
+    final =final.sort_values(by=['Time taken'],ascending=False)
+    print(final)
+    print('Awaiting Feedback Orders Calculated')
+
+    import xlsxwriter
+    with pd.ExcelWriter(r"/home/opticabi/Documents/optica_reports/order_efficiency/lensstoreawaiting.xlsx", engine='xlsxwriter') as writer:    
+        final.to_excel(writer, sheet_name='Awaiting feedback',index=False)
+            
+    writer.save()
+
+    def save_xls(list_dfs, xls_path):
+        with ExcelWriter(xls_path) as writer:
+            for n, df in enumerate(list_dfs):
+                df.to_excel(writer,'sheet%s' % n)
+            writer.save() 
+# awaiting_feedback()

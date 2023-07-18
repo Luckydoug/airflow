@@ -135,12 +135,7 @@ def create_dim_customers():
 def create_reg_conv():
     
     query = """
-    truncate mabawa_mviews.reg_conv;
-    insert into mabawa_mviews.reg_conv
-    select cust_code, cust_createdon, cust_outlet, cust_sales_employeecode, cust_type, 
-    cust_old_new_bp, cust_age, age_group, draft_orderno, creation_date, o_days, code, 
-    create_date, t_days, days
-    from mabawa_mviews.v_reg_conv;
+    refresh materialized view mabawa_mviews.reg_conv;
     insert into mabawa_dw.update_log(table_name, update_time) values('reg_conv', default);
     """
 

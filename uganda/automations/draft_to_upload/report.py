@@ -131,6 +131,11 @@ registrations = fetch_registrations(
 
 
 def push_uganda_opening_time():
+    #This function is tested and working. But it can fail at some point.
+    #To Debug this function, kindly proceed to this G-Sheet; https://docs.google.com/spreadsheets/d/1jTTvbk8g--Q3FWKMLZaLquDiJJ5a03hsJEtZcUTTFr8/edit#gid=0
+    #On the sheet name called Uganda Opening Time, check if the columns are defined exactly the way the appear on the rename object below
+    #The Keys for the rename object are the column names expected on the G-Sheet.
+    #Modify the column names accordingly.
     uganda_opening = fetch_gsheet_data()["uganda_opening"]
     push_branch_opening_time_data(
         opening_time=uganda_opening,
@@ -155,7 +160,7 @@ if selection == "Daily":
 if selection == "Weekly":
     date = fourth_week_start
 if selection == "Monthly":
-    date = '2023-06-01'
+    date = '2023-07-01'
 
 opening_data = fetch_opening_time(
     database=database,
@@ -228,6 +233,10 @@ def build_plano_report():
 
 
 def trigger_uganda_smtp():
+    #This is the function to trigger SMTP.
+    #When country is the name of the function the report is for.
+    #If wanted to send for Rwanda then you would pass Rwanda as the argument for country parameter.
+    #To Test this report. please pass Test as the argument.
     send_draft_upload_report(
         selection=selection,
         path=uganda_path,
@@ -239,7 +248,7 @@ def trigger_uganda_smtp():
 def clean_uganda_folder():
     clean_folders(path=uganda_path)
 
-build_ug_rejections()
+
 
 
 

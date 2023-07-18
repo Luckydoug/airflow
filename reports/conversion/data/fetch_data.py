@@ -111,3 +111,4 @@ def fetch_views_conversion(engine, database, start_date, end_date, users, users_
         })
     data["ViewDate"] = pd.to_datetime(data["ViewDate"], format="%Y-%m-%d")
     return data
+

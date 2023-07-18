@@ -376,12 +376,26 @@ def send_branches_report(path, branch_data, selection):
                     salespersons_views_html = salespersons_views_html
                 )
 
-                receiver_email = [
-                    branch_rm,
-                    branch_email
-                ]
+                if branch == "OHO":
+                    receiver_email = [
+                        branch_rm,
+                        "duncan.muchai@optica.africa",
+                        "susan@optica.africa",
+                        branch_email
+                    ]
+                elif branch == "YOR":
+                    receiver_email = [
+                        branch_rm,
+                        "yh.manager@optica.africa",
+                        branch_email
+                    ]
 
-                
+                else:
+                    receiver_email = [
+                        branch_rm,
+                        branch_email
+                    ]
+
                 email_message = MIMEMultipart("alternative")
                 email_message["From"] = your_email
                 email_message["To"] = r','.join(receiver_email)
@@ -389,33 +403,34 @@ def send_branches_report(path, branch_data, selection):
                 email_message.attach(MIMEText(html, "html"))
 
                 if branch in eyetests_non_conversions.sheet_names:
+                    branch_export = eyetests_non_conversions.parse(branch, index_col=False)
                     save_file(
                         email_message, 
-                        eyetests_non_conversions, 
+                        branch_export, 
                         branch, branch_name, 
                         "EyeTests Non Conversions.xlsx", 
                         f"{path}conversion/eyetests/",
                     )
                 
                 if branch in registrations_non_conversions.sheet_names:
+                    branch_export = registrations_non_conversions.parse(branch, index_col=False)
                     save_file(
                         email_message, 
-                        registrations_non_conversions, 
+                        branch_export, 
                         branch, branch_name, 
                         "Registrations Non Conversions.xlsx", 
                         f"{path}conversion/registrations/",
-                        name="Non Coversions.xlsx"
                     )
                 
                 if branch in views_non_conversions.sheet_names:
+                    branch_export = views_non_conversions.parse(branch, index_col=False)
                     save_file(
                         email_message, 
-                        views_non_conversions, 
+                        branch_export, 
                         branch, 
                         branch_name, 
                         "ViewRX Non Conversions.xlsx",  
                         path = f"{path}conversion/viewrx/",
-                        name="Non Coversions.xlsx"
                     )
                     
 

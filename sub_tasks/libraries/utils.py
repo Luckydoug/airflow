@@ -55,6 +55,7 @@ def fetch_gsheet_data():
     itr_cutoff = pd.DataFrame(sheet.worksheet_by_title("ITR_Cutoffs").get_all_records())
     orders_cutoff = pd.DataFrame(sheet.worksheet_by_title("Order_Cutoffs").get_all_records())
     rw_srm_rm = pd.DataFrame(sheet.worksheet_by_title("RW_SRM_RM").get_all_records())
+    department_emails = pd.DataFrame(sheet.worksheet_by_title("Operations Department Emails").get_all_records())
     sheet_orderstodrop = service_key.open_by_key('1cnpNo85Hncf9cdWBfkQ1dn0TYnGfs-PjVGp1XMjk2Wo')
     OrdersWithIssues = pd.DataFrame(sheet_orderstodrop[0].get_all_records())    
     ITRWithIssues = pd.DataFrame(sheet_orderstodrop[2].get_all_records()) 
@@ -71,7 +72,8 @@ def fetch_gsheet_data():
         'orders_cutoff': orders_cutoff,
         'rw_srm_rm': rw_srm_rm,
         'orders_with_issues': OrdersWithIssues,
-        'itrs_with_issues' : ITRWithIssues
+        'itrs_with_issues' : ITRWithIssues,
+        'department_emails' : department_emails
         }
 
 
@@ -159,8 +161,11 @@ def send_report(email_message, your_email, password, receiver_email, name):
     context = ssl.create_default_context()
     with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
         server.login(your_email, password)
-        server.sendmail(your_email, receiver_email,
-                        email_message.as_string())
+        server.sendmail(
+            your_email, 
+            receiver_email,
+            email_message.as_string()
+        )
 
         print(Fore.GREEN + f'{name.split(" ")[0]} sent✔')
 

@@ -76,7 +76,8 @@ def send_to_salespersons():
     create_initial_file(filename=log)
     for outlet in scheduled_branches:
         # sales_person = load_workbook(
-        #     r"/home/opticabi/airflow/{outlet}.xlsx".format(outlet=outlet))
+        #     r"/home/opticabi/airflow/{outlet}.xlsx".format(outlet=outlet)
+        #)
         sales_person = load_workbook(
             r"/home/opticabi/Documents/optica_reports/{outlet}.xlsx".format(outlet=outlet))
         payroll_numbers = sales_person.sheetnames
@@ -277,7 +278,9 @@ def send_branch_version():
                 branch_name = "Optica House"
             elif branch == "YOR":
                 receiver_email = [
-                    "yorkhouse@optica.africa", "yh.manager@optica.africa"]
+                    "yorkhouse@optica.africa", 
+                    "yh.manager@optica.africa"
+                ]
                 branch_name = "York House"
             else:
                 continue

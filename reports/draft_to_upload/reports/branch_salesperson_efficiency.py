@@ -32,7 +32,7 @@ def create_branch_salesperson_efficiency(data, target, path, cols_req):
             "Average Upload Time",
             "Orders <= 8 mins (Draft to Upload)",
             "Late Orders",
-            "% Efficiency (Target: 8 mins)"
+            f"% Efficiency (Target: {target} mins)"
         ]
     ]
 
@@ -83,5 +83,10 @@ def create_branch_salesperson_efficiency(data, target, path, cols_req):
             name = f'{group}'
             dataframe.sort_values(by="Order Creator")[cols_req].to_excel(
                 writer, sheet_name=name, index=False)
+
+    return sales_persons_efficiency.sort_values(
+         by = ["Outlet", "Order Creator", f"% Efficiency (Target: {target} mins)"],
+         ascending = True
+        )
 
 

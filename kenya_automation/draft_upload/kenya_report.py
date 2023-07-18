@@ -22,7 +22,10 @@ from reports.draft_to_upload.reports.rejections import create_rejection_report
 from reports.draft_to_upload.reports.plano import (
     create_plano_report
 )
-from reports.draft_to_upload.reports.opening_time import push_branch_opening_time_data, create_opening_time_report
+from reports.draft_to_upload.reports.opening_time import(
+push_branch_opening_time_data, 
+create_opening_time_report
+)
 from reports.draft_to_upload.reports.sops import create_ug_sops_report
 from reports.draft_to_upload.reports.ratings import create_ratings_report
 from reports.draft_to_upload.data.fetch_data import (
@@ -46,7 +49,6 @@ database = "mabawa_staging"
 
 engine = createe_engine()
 selection = get_report_frequency()
-# selection = "Weekly"
 start_date = return_report_daterange(
     selection=selection
 )
@@ -145,7 +147,7 @@ if selection == "Daily":
 if selection == "Weekly":
     date = fourth_week_start
 if selection == "Monthly":
-    date = '2023-06-01'
+    date = '2023-07-01'
 
 
 opening_data = fetch_opening_time(
@@ -226,7 +228,7 @@ def trigger_kenya_smtp():
     send_draft_upload_report(
         selection=selection,
         path=path,
-        country="Test",
+        country="Kenya",
         target=target
     )
 

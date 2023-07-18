@@ -1,6 +1,9 @@
 import pandas as pd
 from airflow.models import variable
-from sub_tasks.libraries.utils import (createe_engine, return_incentives_daterange)
+from sub_tasks.libraries.utils import (
+    createe_engine, 
+    return_incentives_daterange
+)
 import datetime
 
 
@@ -71,7 +74,8 @@ def fetch_targets():
     month = today.strftime("%B")
     targets_query = """
     select warehouse_code::text as "Outlet", user_code::text as "Payroll Number",
-    user_name as "Name",target_branch_amount as "Cash Branch Target", target_insurance_branch as "Insurance Branch Target",
+    user_name as "Name",target_branch_amount as "Cash Branch Target", 
+    target_insurance_branch as "Insurance Branch Target",
     target_individual_cash as "Cash Target",
     target_individual_insurance as "Insurance Target"
     from mabawa_mviews.v_staff_targets_2

@@ -47,22 +47,25 @@ conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", p
 ##Define the days that is yesterday
 today = datetime.date.today()
 yesterday = today - datetime.timedelta(days=1)
+print(yesterday)
 formatted_date = yesterday.strftime('%Y-%m-%d')
 
 def update_calculated_field():
     OrdersWithIssues = fetch_gsheet_data()["orders_with_issues"]
-    print(OrdersWithIssues.head())
+    # print(OrdersWithIssues.head())
     orders_cutoff = fetch_gsheet_data()["orders_cutoff"]
-    print(orders_cutoff.head())
+    # print(orders_cutoff.head())
 
     departments = """
-	SELECT * from
+	with dept as 
     (SELECT dept, status, "Order Criteria", "Doc Entry", "Doc No", "start", finish, "Time Min",CAST(finish AS DATE) as "Finish_Date"
-    FROM mabawa_mviews.v_orderefficiencydata) as t
-    where t."Finish_Date"::date = '{yesterday}'  
-    """
+    FROM mabawa_mviews.v_orderefficiencydata) 
+    select * from dept 
+    where "Finish_Date"::date = '{yesterday}'
+    """.format(yesterday=yesterday)
+
     departments = pd.read_sql_query(departments,con=conn)   
-    
+    print(departments)
 
     OrdersWithIssues["DATE"] = pd.to_datetime(OrdersWithIssues.DATE, dayfirst=True, errors="coerce")
     print(OrdersWithIssues.dtypes)
@@ -70,8 +73,9 @@ def update_calculated_field():
 
     
     dept_orders = departments[departments['dept'].isin(['Control', 'Designer', 'Main Store', 'Packaging', 'Lens Store'])]
+    print(dept_orders)
     dept_orders['finish'] = dept_orders['finish'].astype(str)
-    dept_orders[['Day', 'Time']] = dept_orders['finish'].str.split(' ', expand=True)
+    dept_orders[['Day', 'Time']] = dept_orders['finish'].str.split(' ', expand=True)    
     dept_orders['Time'] = pd.to_datetime(dept_orders['Time'], format='%H:%M:%S')
     dept_orders['Hour'] = dept_orders['Time'].dt.strftime('%H')  
     orders = pd.merge(dept_orders, orders_cutoff, on='Order Criteria', how='left')
@@ -82,7 +86,7 @@ def update_calculated_field():
                                                                               (np.where(orders['dept'] == 'Packaging', orders['Packaging'], 10)))))))))
     
     orders['Delay'] = np.where(orders['Time Min'] > orders['cut off'], 1, 0)
-
+    print(orders)
     """   CONTROL ORDER EFFICIENCY   """
     controlIssues = OrdersWithIssues[OrdersWithIssues["DEPARTMENT"] == "CONTROL ROOM"]
     controlIssuesOrders = controlIssues["ORDER NUMBER"].tolist()
@@ -108,7 +112,7 @@ def update_calculated_field():
     print(controlpivot)
 
     """ Delayed Orders"""
-    control_delay = control[control['Delay'] == 0]
+    control_delay = control[control['Delay'] == 1]
     controldelay = pd.pivot_table(control_delay, index=['Hour', 'Doc No'], values='Time Min', aggfunc='mean', fill_value=0)
 
     """Cut Off"""
@@ -156,15 +160,15 @@ def update_calculated_field():
     print(designerpivot)
 
     """ Delayed Orders"""
-    designer_delay = designer[designer['Delay'] == 0]
+    designer_delay = designer[designer['Delay'] == 1]
     designerdelay = pd.pivot_table(designer_delay, index=['Hour', 'Doc No'], values='Time Min', aggfunc='mean', fill_value=0)
 
     """Cut Off"""
     designer['Time Taken'] = designer.apply 
     designer['15 min'] = designer['Time Min'].apply(lambda x: 1 if x > 15 else 0)
     designer['12 min'] = designer['Time Min'].apply(lambda x: 1 if x > 12 else 0)
-    designer['8 min'] = designer['Time Min'].apply(lambda x: 1 if x > 10 else 0)
-    designer['6 min'] = designer['Time Min'].apply(lambda x: 1 if x > 7 else 0)
+    designer['8 min'] = designer['Time Min'].apply(lambda x: 1 if x > 8 else 0)
+    designer['6 min'] = designer['Time Min'].apply(lambda x: 1 if x > 6 else 0)
 
     cuttoff1 = pd.pivot_table(designer, index='dept', values=[
                           '15 min'], aggfunc='sum', fill_value=0)
@@ -204,15 +208,15 @@ def update_calculated_field():
     print(mainstorepivot)
 
     """ Delayed Orders"""
-    mainstore_delay = mainstore[mainstore['Delay'] == 0]
+    mainstore_delay = mainstore[mainstore['Delay'] == 1]
     mainstoredelay = pd.pivot_table(mainstore_delay, index=['Hour', 'Doc No'], values='Time Min', aggfunc='mean', fill_value=0)
 
     """Cut Off"""
     mainstore['Time Taken'] = mainstore.apply 
     mainstore['15 min'] = mainstore['Time Min'].apply(lambda x: 1 if x > 15 else 0)
     mainstore['12 min'] = mainstore['Time Min'].apply(lambda x: 1 if x > 12 else 0)
-    mainstore['8 min'] = mainstore['Time Min'].apply(lambda x: 1 if x > 10 else 0)
-    mainstore['6 min'] = mainstore['Time Min'].apply(lambda x: 1 if x > 7 else 0)
+    mainstore['8 min'] = mainstore['Time Min'].apply(lambda x: 1 if x > 8 else 0)
+    mainstore['6 min'] = mainstore['Time Min'].apply(lambda x: 1 if x > 6 else 0)
 
     cuttoff1 = pd.pivot_table(mainstore, index='dept', values=[
                             '15 min'], aggfunc='sum', fill_value=0)
@@ -253,15 +257,15 @@ def update_calculated_field():
     print(packagingpivot)
 
     """ Delayed Orders"""
-    packaging_delay = packaging[packaging['Delay'] == 0]
+    packaging_delay = packaging[packaging['Delay'] == 1]
     packagingdelay = pd.pivot_table(packaging_delay, index=['Hour', 'Doc No'], values='Time Min', aggfunc='mean', fill_value=0)
 
     """Cut Off"""
     packaging['Time Taken'] = packaging.apply 
     packaging['15 min'] = packaging['Time Min'].apply(lambda x: 1 if x > 15 else 0)
     packaging['12 min'] = packaging['Time Min'].apply(lambda x: 1 if x > 12 else 0)
-    packaging['8 min'] = packaging['Time Min'].apply(lambda x: 1 if x > 10 else 0)
-    packaging['6 min'] = packaging['Time Min'].apply(lambda x: 1 if x > 7 else 0)
+    packaging['8 min'] = packaging['Time Min'].apply(lambda x: 1 if x > 8 else 0)
+    packaging['6 min'] = packaging['Time Min'].apply(lambda x: 1 if x > 6 else 0)
 
     cuttoff1 = pd.pivot_table(packaging, index='dept', values=[
                             '15 min'], aggfunc='sum', fill_value=0)
@@ -302,15 +306,15 @@ def update_calculated_field():
     print(packagingpivot)
 
     """ Delayed Orders"""
-    lensstore_delay = lensstore[lensstore['Delay'] == 0]
+    lensstore_delay = lensstore[lensstore['Delay'] == 1]
     lensstoredelay = pd.pivot_table(lensstore_delay, index=['Hour', 'Doc No'], values='Time Min', aggfunc='mean', fill_value=0)
 
     """Cut Off"""
     lensstore['Time Taken'] = lensstore.apply 
     lensstore['15 min'] = lensstore['Time Min'].apply(lambda x: 1 if x > 15 else 0)
     lensstore['12 min'] = lensstore['Time Min'].apply(lambda x: 1 if x > 12 else 0)
-    lensstore['8 min'] = lensstore['Time Min'].apply(lambda x: 1 if x > 10 else 0)
-    lensstore['6 min'] = lensstore['Time Min'].apply(lambda x: 1 if x > 7 else 0)
+    lensstore['8 min'] = lensstore['Time Min'].apply(lambda x: 1 if x > 8 else 0)
+    lensstore['6 min'] = lensstore['Time Min'].apply(lambda x: 1 if x > 6 else 0)
 
     cuttoff1 = pd.pivot_table(lensstore, index='dept', values=[
                             '15 min'], aggfunc='sum', fill_value=0)
@@ -364,4 +368,4 @@ def update_calculated_field():
 
 
 
-update_calculated_field()    
+# update_calculated_field()    

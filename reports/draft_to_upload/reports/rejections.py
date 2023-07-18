@@ -42,7 +42,7 @@ def create_rejection_report(orderscreen, all_orders, sales_orders, branch_data, 
         all_orders[[
             "DocNum", "Outlet", 
             "Status", "Creator", 
-            "Order Creator", "Insurance Company", "Scheme Type"
+            "Order Creator", "Insurance Company", "Insurance Scheme", "Scheme Type"
             ]].rename(columns={"DocNum": "Order Number", "Status": "status"}),
         on = "Order Number",
         how = "left"
@@ -145,10 +145,14 @@ def create_rejection_report(orderscreen, all_orders, sales_orders, branch_data, 
             "SRM",
             "Outlet", 
             "Front Desk",
-            "Order Number", 
+            "Status",
+            "Order Number",
             "Creator",
             "Order Creator",
             "Created User", 
+            "Insurance Company",
+            "Insurance Scheme",
+            "Scheme Type", 
             "Remarks"
         ]] 
 
@@ -191,7 +195,9 @@ def create_rejection_report(orderscreen, all_orders, sales_orders, branch_data, 
         weekly_rejections = raw_rejections_data[raw_rejections_data["Week Range"] != "None"]
         unique_weekly_rejections = weekly_rejections.drop_duplicates(subset=["Date", "Order Number", "Time"])
 
-        weekly_rejection_conversion = unique_weekly_rejections[unique_weekly_rejections["Order Number"].isin(sales_orders["Order Number"])]
+        weekly_rejection_conversion = unique_weekly_rejections[
+            unique_weekly_rejections["Order Number"].isin(sales_orders["Order Number"])
+        ]
         weely_rejection_conv = pd.pivot_table(
             weekly_rejection_conversion,
             index = "Outlet",
@@ -241,7 +247,6 @@ def create_rejection_report(orderscreen, all_orders, sales_orders, branch_data, 
 
         final_reje_merge = final_reje_merge.swaplevel(0, 1, axis=1).sort_index(axis=1, level=0)
         final_reje_merge = final_reje_merge.reindex(["Total Orders", "Rejected", "Converted"], axis = 1, level = 1)
-
         sorted_columns = return_four_week_range()
 
         cols = []
@@ -252,12 +257,11 @@ def create_rejection_report(orderscreen, all_orders, sales_orders, branch_data, 
 
 
         final_reje_merge = final_reje_merge.reindex(cols, axis =1, fill_value=0)
-        
         for date in final_reje_merge.columns.levels[0]:
             col_name = (date, '%Rejected')
             final_reje_merge.insert(
                 final_reje_merge.columns.get_loc((date, 'Rejected')) + 1, col_name,(final_reje_merge[(date, 'Rejected')] / final_reje_merge[(date, 'Total Orders')] * 100).replace([np.inf, -np.inf], np.nan).fillna(0).round().astype(int)
-                )
+            )
 
         for date in final_reje_merge.columns.levels[0]:
             col_name = (date, '%Conversion')

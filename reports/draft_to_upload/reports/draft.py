@@ -120,6 +120,7 @@ def create_draft_upload_report(selection, orderscreen, all_orders, start_date, t
     final_data_orders = final_data_orders.dropna(subset=["Outlet"])
     final_data_orders = final_data_orders[final_data_orders["Insurance Company"] != drop]
     final_data_orders = final_data_orders[final_data_orders["Outlet"] != "MUR"]
+    final_data_orders = final_data_orders[final_data_orders["Outlet"] != "MUR"]
 
     if not len(final_data_orders):
         return
@@ -279,18 +280,38 @@ def create_draft_upload_report(selection, orderscreen, all_orders, start_date, t
             f"% Efficiency (Target: {target} mins)"
         ]]
 
-        create_branch_salesperson_efficiency(
+        sales_persons = create_branch_salesperson_efficiency(
             data = daily_data,
             target=target,
             path=path,
             cols_req=sales_cols
         )
 
+        late_daily_orders = daily_data[daily_data["Draft to Upload"] > 8]
+
         with pd.ExcelWriter(f"{path}draft_upload/draft_to_upload.xlsx") as writer:
             final_daily_report.to_excel(
-                writer, sheet_name="daily_summary", index=False)
-            daily_data[cols_req].to_excel(
-                writer, sheet_name="daily_data", index=False)
+                writer, 
+                sheet_name="daily_summary", 
+                index=False
+            )
+            daily_data[cols_req].sort_values(by = ["Outlet", "Draft to Upload"], ascending = False).to_excel(
+                writer, 
+                sheet_name="daily_data", 
+                index=False
+            )
+
+            sales_persons.to_excel(
+                writer,
+                sheet_name = "ewc_summary",
+                index = False
+            )
+
+            late_daily_orders[cols_req].sort_values(by = ["Outlet", "Draft to Upload"], ascending = False).to_excel(
+                writer, 
+                sheet_name="late_orders", 
+                index=False
+            )
 
         """
         The Daily Report ends here

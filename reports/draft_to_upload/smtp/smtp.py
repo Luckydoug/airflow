@@ -493,7 +493,7 @@ def send_to_branches(branch_data, selection, path, filename):
             index_col=False
         )
         planos = pd.ExcelFile(planos_path)
-        planos_data = planos.parse(f"{selection}_data", index_col=False)
+        planos_data = planos.parse(f"{selections_lower}_data", index_col=False)
         plano_branches_summary = planos.parse(
             f"{selections_lower}_submission_branch", 
             index_col=False

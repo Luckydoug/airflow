@@ -14,7 +14,8 @@ default_args = {
     'owner': 'Data Team',
     'start_date': datetime.now().date().strftime('%Y-%m-%d'),
     'retries': 2,
-    'retry_delay': timedelta(seconds=30)
+    'retry_delay': timedelta(seconds=30),
+    
 }
 
 
