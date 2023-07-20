@@ -272,10 +272,45 @@ def fetch_opening_time(database, engine, start_date = '2023-01-01'):
     "opening_time" as "Opening Time", time_opened as "Time Opened", "lost_time" as "Lost Time"
     from {database}.source_opening_time
     where lost_time::int > 0::int and date::date between '{start_date}' and '{today}'
-    """.format(start_date = start_date)
+    """
    
    opening_time = pd.read_sql_query(opening_time_query, con=engine)
    return opening_time
+
+def fetch_daywise_efficiency(database, engine, start_date, end_date):
+    daywise_query = f"""
+        SELECT
+        outlet AS "Outlet",
+        upload_time::date AS "Date",
+        ROUND((SUM(CASE WHEN draft_to_upload::int <= 8 THEN 1 ELSE 0 END)::DECIMAL 
+        / COUNT(upload_time))::DECIMAL * 100) AS "Efficiency"
+        FROM
+            {database}.source_insurance_efficiency sie
+            where upload_time::date between '{start_date}' and '{end_date}'
+        GROUP BY
+        outlet, upload_time::date
+        order by upload_time::date;
+    """
+    data = pd.read_sql_query(daywise_query, con=engine)
+    return data
+
+
+def fetch_mtd_efficiency(database, engine, start_date, end_date):
+    mtd_query = f"""
+    SELECT
+    outlet AS "Outlet",
+    ROUND((SUM(CASE WHEN draft_to_upload::int <= 8 THEN 1 ELSE 0 END)::DECIMAL 
+    / COUNT(upload_time))::DECIMAL * 100) AS "Grand Total"
+    FROM
+        {database}.source_insurance_efficiency sie
+        where upload_time::date between '{start_date}' and '{end_date}'
+    GROUP BY
+    outlet
+    """
+
+    data = pd.read_sql_query(mtd_query, con=engine)
+    return data
+
 
 
 

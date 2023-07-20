@@ -7,7 +7,11 @@ from sub_tasks.libraries.utils import (
     get_comparison_months, 
     return_four_week_range
 )
-from reports.draft_to_upload.utils.utils import today
+from reports.draft_to_upload.utils.utils import (
+    today, 
+    create_rejections_ewc,
+    create_rejections_branches
+)
 from sub_tasks.libraries.utils import check_date_range
 first_month, second_month = get_comparison_months()
 
@@ -53,6 +57,23 @@ def create_rejection_report(orderscreen, all_orders, sales_orders, branch_data, 
         branch_data[["Outlet", "SRM", "RM", "Front Desk"]], 
         on = "Outlet"
     )
+
+    cols_rej = [
+        "Date",
+        "RM",
+        "SRM",
+        "Outlet", 
+        "Front Desk",
+        "Status",
+        "Order Number",
+        "Creator",
+        "Order Creator",
+        "Created User", 
+        "Insurance Company",
+        "Insurance Scheme",
+        "Scheme Type", 
+        "Remarks"
+    ]
 
     if selection == "Daily":
         daily_insurance_orders = unique_insurance_merge[unique_insurance_merge["CreateDate"].dt.date == start_date]
@@ -139,22 +160,7 @@ def create_rejection_report(orderscreen, all_orders, sales_orders, branch_data, 
             has_perc=True,  
         )
 
-        rejections_daily_data = daily_unique_rejections[[
-            "Date",
-            "RM",
-            "SRM",
-            "Outlet", 
-            "Front Desk",
-            "Status",
-            "Order Number",
-            "Creator",
-            "Order Creator",
-            "Created User", 
-            "Insurance Company",
-            "Insurance Scheme",
-            "Scheme Type", 
-            "Remarks"
-        ]] 
+        rejections_daily_data = daily_unique_rejections[cols_rej] 
 
         with pd.ExcelWriter(f"{path}draft_upload/rejections_report.xlsx") as writer:
             final_daily_rejections_report.to_excel(writer, sheet_name="daily_summary", index=False)
@@ -287,12 +293,28 @@ def create_rejection_report(orderscreen, all_orders, sales_orders, branch_data, 
 
         weekly_rejections_data = unique_weekly_rejections[
             (unique_weekly_rejections["Week Range"] ==  sorted_columns[-1])
-        ].iloc[:, :-1][["Outlet", "Order Number", "Date", "Time", "Created User", "Remarks"]]
+        ][cols_rej]
+
+        weekly_insu_orders = weekly_insurance_orders[
+            (weekly_insurance_orders["Week Range"] ==  sorted_columns[-1])
+        ]
+
+        ewc_weekly_pivot = create_rejections_ewc(
+            orders = weekly_insu_orders,
+            rejections=weekly_rejections_data
+        )
+
+        branches_rejections_weekly = create_rejections_branches(
+            orders=weekly_insu_orders,
+            rejections=weekly_rejections_data,
+            branch_data=branch_data
+        )
 
         with pd.ExcelWriter(f"{path}draft_upload/rejections_report.xlsx") as writer:
             final_weekly_rejections_report.to_excel(writer, sheet_name="weekly_summary")
             weekly_rejections_data.to_excel(writer, sheet_name="weekly_rejections_data", index=False)
-
+            ewc_weekly_pivot.to_excel(writer, sheet_name="ewc_summary", index=False)
+            branches_rejections_weekly.to_excel(writer, sheet_name="branch_summary", index=False)
     
     if selection == "Monthly":
         monthly_insurance_orders = unique_insurance_merge.copy()
@@ -308,7 +330,6 @@ def create_rejection_report(orderscreen, all_orders, sales_orders, branch_data, 
             on = "Outlet",
             how = "left"
         )
-
 
         monthly_rejections = rejections_orders.copy()
         monthly_rejections = monthly_rejections.drop_duplicates(subset=["DocEntry", "Date", "Time"])
@@ -343,7 +364,6 @@ def create_rejection_report(orderscreen, all_orders, sales_orders, branch_data, 
             values="Order Number",
             aggfunc="count"
         )
-
 
         monthly_rejections_pivot = pd.pivot_table(monthly_rejections_data,
             index=["Outlet", "RM", "SRM"],

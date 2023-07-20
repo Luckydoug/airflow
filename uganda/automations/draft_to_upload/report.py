@@ -240,7 +240,7 @@ def trigger_uganda_smtp():
     send_draft_upload_report(
         selection=selection,
         path=uganda_path,
-        country="Uganda",
+        country="Test",
         target=uganda_target
     )
 

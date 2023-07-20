@@ -502,13 +502,22 @@ def send_to_branches(branch_data, selection, path, filename):
             f"{selections_lower}_submission_ewc", 
             index_col=False
         )
+        
         planos_data = planos_data[
             planos_data["Submission"]== "Not Submitted"
         ]
-        rejection_branches_summary = rejections.parse(
-            f"{selections_lower}_summary", 
-            index_col=False
-        )
+        if selection == "Daily":
+            rejection_branches_summary = rejections.parse(
+                f"{selections_lower}_summary", 
+                index_col=False
+            )
+        elif selection == "Weekly":
+            rejection_branches_summary = rejections.parse(
+                "branch_summary", 
+                index_col=False
+            )
+        else:
+            return
         rejections_ewc_summary = rejections.parse(
             "ewc_summary", 
             index_col=False
@@ -528,7 +537,12 @@ def send_to_branches(branch_data, selection, path, filename):
                 continue
 
             elif branch in rejection_branches and branch in planos_branches:
-                subject = f"{branch} Insurance Errors and Plano NoN Submissions for {todate}"
+                if selection == "Daily":
+                    subject = f"{branch} Insurance Errors and Plano NoN Submissions for {todate}"
+                elif selection == "Weekly":
+                    subject = f"{branch} Insurance Errors and Plano NoN Submissions from {fourth_week_start} to {fourth_week_end}"
+                else:
+                    return
                 rejections_report = rejections_data[
                     rejections_data["Outlet"]== branch
                 ][rej_cols]
@@ -542,7 +556,7 @@ def send_to_branches(branch_data, selection, path, filename):
                 ][req_columns]
                 planos_style = planos_report.style.hide_index().set_table_styles(ug_styles)
                 planos_html = planos_style.to_html(doctype_html=True)
-
+              
                 plano_branch_summary = plano_branches_summary[
                     plano_branches_summary["Branch"] == branch
                 ]
@@ -552,10 +566,10 @@ def send_to_branches(branch_data, selection, path, filename):
                     doctype_html=True
                 )
 
-                plano_ewc_summary = plano_ewc_summary[
+                plano_ewcs_summary = plano_ewc_summary[
                     plano_ewc_summary["Branch"] == branch
                 ]
-                plano_ewc_summary_style = plano_ewc_summary.style.hide_index().set_table_styles(ug_styles)
+                plano_ewc_summary_style = plano_ewcs_summary.style.hide_index().set_table_styles(ug_styles)
                 plano_ewc_summary_html = plano_ewc_summary_style.to_html(
                     doctype_html=True)
 
@@ -589,7 +603,12 @@ def send_to_branches(branch_data, selection, path, filename):
                 )
 
             elif branch in rejection_branches and branch not in planos_branches:
-                subject = f"{branch} Insurance Errors for {todate}"
+                if selection == "Daily":
+                    subject = f"{branch} Insurance Errors for {todate}"
+                elif selection == "Weekly":
+                    subject = f"{branch} Insurance Errors from {fourth_week_start} to {fourth_week_end}"
+                else:
+                    return
                 rejections_report = rejections_data[
                     rejections_data["Outlet"]== branch
                 ][rej_cols]
@@ -624,7 +643,12 @@ def send_to_branches(branch_data, selection, path, filename):
                 )
 
             elif branch in planos_branches and branch not in rejection_branches:
-                subject = f"{branch} Plano No Submissions for {todate}"
+                if selection == "Daily":
+                    subject = f"{branch} Plano No Submissions for {todate}"
+                elif selection == "Weekly":
+                    subject = f"{branch} Plano No Submissions from {fourth_week_start} to {fourth_week_end}"
+                else:
+                    return
                 planos_report = planos_data[
                     planos_data["Branch"] == branch
                 ][req_columns]
@@ -640,10 +664,10 @@ def send_to_branches(branch_data, selection, path, filename):
                     doctype_html=True
                 )
 
-                planos_ewc_summary = plano_ewc_summary[
+                planos_ewcs_summary = plano_ewc_summary[
                     plano_ewc_summary["Branch"] == branch
                 ]
-                plano_ewc_summary_style = planos_ewc_summary.style.hide_index().set_table_styles(ug_styles)
+                plano_ewc_summary_style = planos_ewcs_summary.style.hide_index().set_table_styles(ug_styles)
                 plano_ewc_summary_html = plano_ewc_summary_style.to_html(
                     doctype_html=True
                 )

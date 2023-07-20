@@ -171,11 +171,38 @@ def create_plano_report(branch_data, path, registrations, payments, all_planos, 
             month=False
         )
 
+
+        export_data = weekly_plano_data[
+            weekly_plano_data["Week Range"] == weekly_submission_ewc.columns.get_level_values(0)[-1]
+        ]
+            
+
+        weekly_submission_ewc_two = create_daily_submission_pivot(
+            plano_data= export_data,
+            index=["SRM", "RM", "Branch", "EWC Handover"],
+            cols=["SRM", "RM", "Branch","EWC Handover", "Plano Eye Tests", "Converted", "Submitted", "Not Submitted"],
+            cols_order=["SRM", "RM", "Branch","EWC Handover", "Plano Eye Tests", "Submitted", "Not Submitted", "Converted"]
+        )
+
+        weekly_submission_branch_two = create_daily_submission_pivot(
+            plano_data=export_data,
+            index=["SRM", "RM", "Branch"],
+            cols=[ "SRM", "RM", "Branch", "Plano Eye Tests", "Converted", "Submitted", "Not Submitted"],
+            cols_order=["SRM", "RM", "Branch", "Plano Eye Tests", "Submitted", "Not Submitted", "Converted"]
+        )
+
+        weekly_plano_data = weekly_plano_data[
+            weekly_plano_data["Week Range"] == weekly_submission_ewc.columns.get_level_values(0)[-1]
+        ]
+
         with pd.ExcelWriter(f"{path}draft_upload/planorx_not_submitted.xlsx") as writer:
-            weekly_submission_branch.to_excel(writer, sheet_name="weekly_submission_branch")
+            # weekly_submission_branch.to_excel(writer, sheet_name="weekly_submission_branch")
+            weekly_submission_branch_two.to_excel(writer, sheet_name="weekly_submission_branch", index = False)
             weekly_submission_optom.to_excel(writer, sheet_name="weekly_submission_optom")
-            weekly_submission_ewc.to_excel(writer, sheet_name="weekly_submission_ewc")
+            # weekly_submission_ewc.to_excel(writer, sheet_name="weekly_submission_ewc")
             weekly_plano_data.sort_values(by="Submission").to_excel(writer, sheet_name="weekly_data", index=False)
+            weekly_submission_ewc_two.to_excel(writer, sheet_name="weekly_submission_ewc", index=False)
+
 
 
     if selection == "Monthly":

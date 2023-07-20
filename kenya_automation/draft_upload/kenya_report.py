@@ -46,9 +46,9 @@ from reports.draft_to_upload.data.fetch_data import (
 
 
 database = "mabawa_staging"
-
 engine = createe_engine()
-selection = get_report_frequency()
+# selection = get_report_frequency()
+selection = "Weekly"
 start_date = return_report_daterange(
     selection=selection
 )
@@ -169,6 +169,7 @@ def build_kenya_draft_upload():
         branch_data=branch_data,
         path=path,
         working_hours=working_hours,
+        country="Kenya",
         drop="KENYA PIPELINE COMPANY"
     )
 
@@ -228,12 +229,13 @@ def trigger_kenya_smtp():
     send_draft_upload_report(
         selection=selection,
         path=path,
-        country="Kenya",
+        country="Test",
         target=target
     )
 
 
 def trigger_kenya_branches_smtp():
+    return
     branch_data = fetch_gsheet_data()["branch_data"]
     send_to_branches(
         branch_data=branch_data,
@@ -271,3 +273,4 @@ def build_kenya_opening_time():
 
 def clean_kenya_folder():
     clean_folders(path=path)
+

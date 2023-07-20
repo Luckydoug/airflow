@@ -23,7 +23,7 @@ from sub_tasks.api_login.api_login import(login)
 
 SessionId = login()
 
-FromDate = '2023/01/01'
+FromDate = '2023/05/01'
 # ToDate = '2023/03/31'
 
 today = date.today()
@@ -37,7 +37,7 @@ pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=Get
 pagecount_payload={}
 pagecount_headers = {}
 
-def fetch_sap_orders():
+def fetch_purchase_orders():
 
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     data = pagecount_response.json()
@@ -94,12 +94,12 @@ def fetch_sap_orders():
 
     orders_header.set_index('doc_entry',inplace=True)
 
-    # upsert(engine=engine,
-    # df=orders_header,
-    # schema='mabawa_staging',
-    # table_name='source_purchase_orders_header',
-    # if_row_exists='update',
-    # create_table=True)
+    upsert(engine=engine,
+    df=orders_header,
+    schema='mabawa_staging',
+    table_name='source_purchase_orders_header',
+    if_row_exists='update',
+    create_table=True)
 
     print("Inserted Orders Header")
 
@@ -128,13 +128,13 @@ def fetch_sap_orders():
 
     orders_line['posting_date'] = pd.to_datetime(orders_line['posting_date'],yearfirst=True)
 
-    upsert(engine=engine,
-       df=orders_line,
-       schema='mabawa_staging',
-       table_name='source_purchase_orders_line',
-       if_row_exists='update',
-       create_table=True)
+    # upsert(engine=engine,
+    #    df=orders_line,
+    #    schema='mabawa_staging',
+    #    table_name='source_purchase_orders_line',
+    #    if_row_exists='update',
+    #    create_table=True)
 
     print("Inserted Orders Lines")
     
-fetch_sap_orders()
+fetch_purchase_orders()

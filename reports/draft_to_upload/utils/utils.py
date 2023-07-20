@@ -1,7 +1,7 @@
 """
 This file contains functions that are specific to a certain report.
 """
-
+import numpy as np
 import calendar
 from airflow.models import variable
 from sub_tasks.libraries.utils import service_file
@@ -156,4 +156,66 @@ def highlight_efficiency(value):
     else:
         colour = "red"
     return 'background-color: {}'.format(colour)
+
+
+def create_rejections_ewc(orders, rejections):
+    ewc_daily_orders = pd.pivot_table(
+            orders,
+            index=["Outlet", "Order Creator"],
+            aggfunc="count",
+            values="Order Number"
+    ).reset_index().rename(columns={"Order Number": "Total Orders"})
+     
+    ewc_daily_rejections = pd.pivot_table(
+        rejections,
+        index=["Order Creator", "Outlet"],
+        values="Order Number",
+        aggfunc="count"
+    ).reset_index().rename(columns={"Order Number": "Count of Rejections"})
+
+    
+
+    final = pd.merge(
+        ewc_daily_orders,
+        ewc_daily_rejections,
+        on = ["Outlet", "Order Creator"],
+        how = "outer"
+    ).fillna(0)
+
+    final["% Rejected"] = round((final["Count of Rejections"] / final["Total Orders"]) * 100, 0).replace([np.inf, -np.inf], np.nan).fillna(0).astype(int)
+
+    return final[["Outlet", "Order Creator", "Total Orders", "Count of Rejections", "% Rejected"]]
+
+def create_rejections_branches(orders, rejections, branch_data):
+    daily_insurance_orders_pivot = pd.pivot_table(
+        orders,
+        index = "Outlet", 
+        aggfunc="count", 
+        values="Order Number"
+    ).reset_index().rename(columns={"Order Number": "Total Ins Orders"})
+     
+    daily_rejections_pivot = pd.pivot_table(
+        rejections,
+        index = "Outlet",
+        values="Order Number",
+        aggfunc="count"
+    ).reset_index().rename(columns={"Order Number": "Count of Rejections"})
+
+    daily_rejections_branches = pd.merge(
+        branch_data[["Outlet", "RM", "SRM"]],
+        daily_rejections_pivot,
+        on = "Outlet",
+        how = "left"
+    ).fillna(0)
+
+    daily_rej_total = pd.merge(
+        daily_rejections_branches, 
+        daily_insurance_orders_pivot, 
+        on = "Outlet", 
+        how = "left"
+    ).fillna(0)[["Outlet", "RM", "SRM", "Total Ins Orders", "Count of Rejections"]]
+
+    daily_rej_total["% Rejected"] = round((daily_rej_total["Count of Rejections"] / daily_rej_total["Total Ins Orders"]) * 100, 0).replace([np.inf, -np.inf], np.nan).fillna(0).astype(int)
+
+    return daily_rej_total
 

@@ -9,7 +9,7 @@ their email from this list.
 
 
 test = [
-  "tstbranch@gmail.com"
+  "tstbranch@gmail.com", "wairimu@optica.africa"
 ]
 
 kenya_daily = [

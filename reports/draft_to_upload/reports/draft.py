@@ -1,9 +1,10 @@
 import numpy as np
 import pandas as pd
+from pangres import upsert
 from airflow.models import variable
 from sub_tasks.libraries.time_diff import calculate_time_difference
 from reports.draft_to_upload.utils.utils import today, get_comparison_months
-from sub_tasks.libraries.utils import get_rm_srm_total, check_date_range
+from sub_tasks.libraries.utils import get_rm_srm_total, check_date_range, createe_engine
 from reports.draft_to_upload.reports.branch_salesperson_efficiency import create_branch_salesperson_efficiency
 
 """
@@ -42,7 +43,7 @@ def return_slade(row):
         return "No"
 
 
-def create_draft_upload_report(selection, orderscreen, all_orders, start_date, target, branch_data, path,working_hours, drop=''):
+def create_draft_upload_report(selection, orderscreen, all_orders, start_date, target, branch_data, path,working_hours, country = None, drop=''):
     if not len(all_orders) or not len(orderscreen):
         return
 
@@ -100,7 +101,7 @@ def create_draft_upload_report(selection, orderscreen, all_orders, start_date, t
     final_data_orders = pd.merge(
         final_data,
         all_orders[[
-            "DocNum", "Code", "Last View Date",
+            "DocNum", "Code", "Customer Code", "Last View Date",
             "Status", "Outlet", "Insurance Company",
             "Insurance Scheme", "Scheme Type",
             "Feedback 1", "Feedback 2",
@@ -167,6 +168,60 @@ def create_draft_upload_report(selection, orderscreen, all_orders, start_date, t
     final_data_orders = final_data_orders.drop_duplicates(
         subset=["Order Number"]
     )
+
+    data_to_upload = final_data_orders.copy()
+    rename_data_to_upload = data_to_upload.rename(columns= {
+        "Order Number": "order_number",
+        "Customer Code": "customer_code",
+        "Outlet": "outlet",
+        "Front Desk": "front_desk",
+        "Creator": "creator",
+        "Order Creator": "order_creator",
+        "Draft Time": "draft_time",
+        "Preauth Time": "preauth_time",
+        "Upload Time": "upload_time",
+        "Draft to Preauth": "draft_to_preauth",
+        "Preuth to Upload": "preauth_to_upload",
+        "Draft to Upload": "draft_to_upload",
+        "Insurance Company": "insurance_company",
+        "Slade": "slade",
+        "Insurance Scheme": "insurance_scheme",
+        "Scheme Type": "scheme_type",
+        "Feedback 1": "feedback_1",
+        "Feedback 2": "feedback_2"
+    })
+
+    final_data_to_upload = rename_data_to_upload[[
+        "order_number",
+        "customer_code",
+        "outlet",
+        "front_desk",
+        "creator",
+        "order_creator",
+        "draft_time",
+        "preauth_time",
+        "upload_time",
+        "draft_to_preauth",
+        "preauth_to_upload",
+        "draft_to_upload",
+        "insurance_company",
+        "slade",
+        "insurance_scheme",
+        "scheme_type",
+        "feedback_1",
+        "feedback_2"
+    ]].set_index("order_number")
+
+    if country == "Kenya":
+        engine = createe_engine()
+        upsert(
+            engine=engine,
+            df=final_data_to_upload,
+            schema="mabawa_staging",
+            table_name="source_insurance_efficiency",
+            if_row_exists='update',
+            create_table=True
+        )
 
     cols_req = [
         "Date",
@@ -251,6 +306,15 @@ def create_draft_upload_report(selection, orderscreen, all_orders, start_date, t
             on="Outlet", how="outer"
         )   .fillna(0)
 
+        daily_gsheet_update = daily_rm_srm[[
+            "Outlet",
+            f"% Efficiency (Target: {target} mins)"
+        ]].copy()
+
+        daily_gsheet_update = daily_gsheet_update.rename(columns={
+            f"% Efficiency (Target: {target} mins)": start_date.strftime("%Y-%m-%d")
+        })
+
         column_total = get_rm_srm_total(
             daily_rm_srm,
             x=[f"% Efficiency (Target: {target} mins)"],
@@ -258,7 +322,10 @@ def create_draft_upload_report(selection, orderscreen, all_orders, start_date, t
             z=["Total Orders"],
             has_perc=True,
             avg_cols=[
-                "Shop's Overall Avg. (Draft - Upload)", "Total Time", "Total Orders"]
+                "Shop's Overall Avg. (Draft - Upload)", 
+                "Total Time", 
+                "Total Orders"
+            ]
         )
 
         final_daily_report = column_total[[
@@ -310,6 +377,12 @@ def create_draft_upload_report(selection, orderscreen, all_orders, start_date, t
             late_daily_orders[cols_req].sort_values(by = ["Outlet", "Draft to Upload"], ascending = False).to_excel(
                 writer, 
                 sheet_name="late_orders", 
+                index=False
+            )
+
+            daily_gsheet_update.sort_values(by = "Outlet", ascending=True).to_excel(
+                writer,
+                sheet_name="gsheet-update",
                 index=False
             )
 
@@ -392,9 +465,15 @@ def create_draft_upload_report(selection, orderscreen, all_orders, start_date, t
 
         with pd.ExcelWriter(f"{path}draft_upload/draft_to_upload.xlsx") as writer:
             final_weekly.sort_values(by="SRM").to_excel(
-                writer, sheet_name="weekly_summary", index=False)
+                writer, 
+                sheet_name="weekly_summary", 
+                index=False
+            )
             sales_efficiency_data.iloc[:, :-1].to_excel(
-                writer, sheet_name="weekly_data", index=False)
+                writer, 
+                sheet_name="weekly_data", 
+                index=False
+            )
 
     if selection == "Monthly":
         """
