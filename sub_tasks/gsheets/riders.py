@@ -61,7 +61,10 @@ def fetch_rider_times():
                        'CBD time from Hq':'cbd_time_from_hq',
                        'CBD time back at Hq':'cbd_time_back_at_hq',
                        'CBD2 time from Hq':'cbd2_time_from_hq',
-                       'CBD2 time back at Hq':'cbd2_time_back_at_hq'},inplace=True)
+                       'CBD2 time back at Hq':'cbd2_time_back_at_hq',
+                       'Rider 5 - Thika Town from HQ':'rider5_thikatown_from_hq',
+                       'Rider 5 - Thika Town at HQ':'rider5_thikatown_at_hq'
+                       },inplace=True)
 
      print('The columns have been renamed successfully')
 

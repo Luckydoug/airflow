@@ -16,6 +16,8 @@ from airflow.utils.task_group import TaskGroup
 from sub_tasks.receiving.testreceiving import create_receivingdata
 from sub_tasks.receiving.testreceiving import receiving  
 from sub_tasks.receiving.testreceiving import create_time_difference
+from sub_tasks.gsheets.riders import (fetch_rider_times)
+from sub_tasks.gsheets.routes import (fetch_routesdata)
 # from sub_tasks.receiving.testreceiving import update_source_receiving_data
 # from tmp.python_test
 DAG_ID = 'Receiving_ETL_Pipeline'
@@ -39,6 +41,28 @@ with DAG(
         task_id = "start"
     )
 
+    """
+    RIDERS TIMINGS
+    """
+    with TaskGroup('riders') as riders:
+
+        fetch_rider_times = PythonOperator(
+            task_id = 'fetch_rider_times',
+            python_callable=fetch_rider_times,
+            provide_context=True
+        )
+        fetch_rider_times
+    """
+    ROUTES
+    """
+    with TaskGroup('routes') as routes:
+
+        fetch_routesdata = PythonOperator(
+            task_id = 'fetch_routesdata',
+            python_callable=fetch_routesdata,
+            provide_context=True
+        )
+        fetch_routesdata
     """
     TEST
     """
@@ -74,4 +98,4 @@ with DAG(
         task_id = "finish"
     ) 
 
-    start >> test >> finish
+    start >> riders >> routes >> test >> finish

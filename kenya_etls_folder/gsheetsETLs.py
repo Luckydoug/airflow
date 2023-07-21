@@ -58,28 +58,6 @@ with DAG(
         )
 
     """
-    RIDERS TIMINGS
-    """
-    with TaskGroup('riders') as riders:
-
-        fetch_rider_times = PythonOperator(
-            task_id = 'fetch_rider_times',
-            python_callable=fetch_rider_times,
-            provide_context=True
-        )
-
-    """
-    ROUTES
-    """
-    with TaskGroup('routes') as routes:
-
-        fetch_routesdata = PythonOperator(
-            task_id = 'fetch_routesdata',
-            python_callable=fetch_routesdata,
-            provide_context=True
-        )
-
-    """
     EXEMPT USERS
     """
     with TaskGroup('exempt_users') as exempt_users:
@@ -143,4 +121,4 @@ with DAG(
         task_id = "finish"
     ) 
 
-    start >> exempt_users >> holidays >> branches >> riders >> routes >> finish
+    start >> exempt_users >> holidays >> branches >> finish

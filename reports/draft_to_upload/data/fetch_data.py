@@ -3,6 +3,7 @@ from airflow.models import variable
 from reports.draft_to_upload.utils.utils import today
 from reports.draft_to_upload.utils.utils import get_start_end_dates
 
+
 def fetch_orderscreen(database, engine, start_date='2023-01-01'):
     orderscreen_query = f"""
     select orderscreen.doc_entry as "DocEntry", odsc_date::date  as "Date",
@@ -91,7 +92,8 @@ def fetch_insurance_companies(database, engine, start_date='2023-01-01'):
     where orders.ods_createdon::date between '{start_date}' and '{today}'
     """
 
-    insurance_companies = pd.read_sql_query(insurance_companies_query, con=engine)
+    insurance_companies = pd.read_sql_query(
+        insurance_companies_query, con=engine)
     return insurance_companies
 
 
@@ -111,13 +113,15 @@ def fetch_eyetests(database, engine, start_date='2023-01-01'):
     eyetests = pd.read_sql_query(eyetests_query, con=engine)
     return eyetests
 
-def fetch_salesorders(database, engine, start_date = '2023-01-01'):
+
+def fetch_salesorders(database, engine, start_date='2023-01-01'):
     sales_orders_query = f"""
     select draft_orderno::int as "Order Number" from {database}.source_orders_header
     where posting_date::date between '{start_date}' and '{today}'
     """
     sales_orders = pd.read_sql_query(sales_orders_query, con=engine)
     return sales_orders
+
 
 def fetch_sops_branch_info(engine):
     branch_info_query = """
@@ -127,7 +131,8 @@ def fetch_sops_branch_info(engine):
     sop_branch_info = pd.read_sql_query(branch_info_query, con=engine)
     return sop_branch_info
 
-def fetch_registrations(engine, database,  table, table2, start_date = '2023-01-01'):
+
+def fetch_registrations(engine, database,  table, table2, start_date='2023-01-01'):
     registrations_query = f"""
     SELECT cust_outlet as "Outlet", CAST(customers.cust_code AS TEXT) AS "Customer Code", 
     customers.cust_createdon AS "Registration Date", 
@@ -144,7 +149,7 @@ def fetch_registrations(engine, database,  table, table2, start_date = '2023-01-
     return registrations
 
 
-def fetch_payments(engine, database, start_date = '2023-01-01'):
+def fetch_payments(engine, database, start_date='2023-01-01'):
     payments_query = f"""
     select payments.doc_entry as "PyDocEntry",payments.full_doc_type as "DocType", 
     payments.mode_of_pay as "Mode of Pay", payments.draft_orderno as "Order Number", 
@@ -165,9 +170,9 @@ def fetch_payments(engine, database, start_date = '2023-01-01'):
     return payments
 
 
-def fetch_planos(database, engine, schema, users, customers, table, views, start_date = '2023-01-01'):
-    datest = pd.to_datetime(start_date, format = "%Y-%m-%d").date()
-    datend = pd.to_datetime(today, format = "%Y-%m-%d").date()
+def fetch_planos(database, engine, schema, users, customers, table, views, start_date='2023-01-01'):
+    datest = pd.to_datetime(start_date, format="%Y-%m-%d").date()
+    datend = pd.to_datetime(today, format="%Y-%m-%d").date()
     planos_query = f"""
         SELECT
             a.code AS "Code",
@@ -211,11 +216,11 @@ def fetch_planos(database, engine, schema, users, customers, table, views, start
     all_planos = pd.read_sql_query(
         planos_query, con=engine, params=(14, datest, datend)
     )
-    
+
     return all_planos
 
 
-def fetch_planorderscreen(database, engine, start_date = '2023-01-01'):
+def fetch_planorderscreen(database, engine, start_date='2023-01-01'):
     plano_orderscreen_query = f"""
     SELECT 
         orderscreen.doc_entry AS "DocEntry", 
@@ -256,7 +261,7 @@ def fetch_planorderscreen(database, engine, start_date = '2023-01-01'):
     return plano_orderscreen
 
 
-def fetch_detractors(database, engine, start_date = '2023-01-01'):
+def fetch_detractors(database, engine, start_date='2023-01-01'):
     detractors_query = f"""
     select sap_internal_number as "SAP Internal Number", branch as "Branch",
     trigger_date::date as "Trigger Date", nps_rating::int as "NPS Rating", long_feedback as "Long Remarks"
@@ -267,16 +272,18 @@ def fetch_detractors(database, engine, start_date = '2023-01-01'):
     surveys = pd.read_sql_query(detractors_query, con=engine)
     return surveys
 
-def fetch_opening_time(database, engine, start_date = '2023-01-01'):
-   opening_time_query = f"""
+
+def fetch_opening_time(database, engine, start_date='2023-01-01'):
+    opening_time_query = f"""
     select date::date as "Date", "day" as "Day", "branch" as "Branch", 
     "opening_time" as "Opening Time", time_opened as "Time Opened", "lost_time" as "Lost Time"
     from {database}.source_opening_time
     where lost_time::int > 0::int and date::date between '{start_date}' and '{today}'
     """
-   
-   opening_time = pd.read_sql_query(opening_time_query, con=engine)
-   return opening_time
+
+    opening_time = pd.read_sql_query(opening_time_query, con=engine)
+    return opening_time
+
 
 def fetch_insurance_efficiency(database, engine, start_date):
     query = f"""
@@ -309,6 +316,8 @@ def fetch_insurance_efficiency(database, engine, start_date):
 
 
 start_date, end_date = get_start_end_dates()
+
+
 def fetch_daywise_efficiency(database, engine):
     daywise_query = f"""
         SELECT
@@ -344,5 +353,119 @@ def fetch_mtd_efficiency(database, engine):
     return data
 
 
+def fetch_daywise_rejections(view, database, engine):
+    daywise_query = f"""
+    WITH rej AS (
+    SELECT
+        b."Outlet",
+        b.date AS date,
+        COUNT(b.doc_no) AS "Rejections"
+    FROM (
+        SELECT
+            a.ods_outlet AS "Outlet",
+            a.doc_no,
+            a.odsc_date AS date
+        FROM (
+            SELECT
+                rejections_view.ods_outlet,
+                rejections_view.doc_no,
+                rejections_view.odsc_date
+            FROM {view}.rejections_view
+        ) a
+    ) b
+    GROUP BY b."Outlet", b.date
+    ),
+    orders AS (
+        SELECT
+            a."Outlet",
+            a.date,
+            COUNT(a.doc_entry) AS "Orders"
+        FROM (
+            SELECT
+                so.doc_entry,
+                so.ods_createdon AS date,
+                so.ods_outlet AS "Outlet"
+            FROM {database}.source_orderscreen so
+            WHERE so.ods_insurance_order = 'Yes'::text
+        ) a
+        GROUP BY a."Outlet", date
+    )
+
+    SELECT
+        rej."Outlet",
+        rej.date,
+        orders."Orders",
+        rej."Rejections"
+    FROM rej
+    LEFT JOIN orders ON rej."Outlet" = orders."Outlet" AND rej.date::date = orders.date::date
+    WHERE rej.date::date BETWEEN '{start_date}' AND '{end_date}'
+    AND orders.date::date BETWEEN '{start_date}' AND '{end_date}';
+    """
+
+    data = pd.read_sql_query(daywise_query, con=engine)
+    data["% Rejected"] = round((data["Rejections"] / data["Orders"]) * 100, 0)
+    return data
 
 
+def fetch_mtd_rejections(engine, database, view):
+    query_two = f"""
+    WITH rej AS (
+        SELECT
+            b."Outlet",
+            COUNT(b.doc_no) AS "Rejections"
+        FROM (
+            SELECT
+                a.ods_outlet AS "Outlet",
+                a.doc_no,
+                a.odsc_date AS date
+            FROM (
+                SELECT
+                    rejections_view.ods_outlet,
+                    rejections_view.doc_no,
+                    rejections_view.odsc_date
+                FROM {view}.rejections_view
+                where odsc_date::date between '{start_date}' and '{end_date}'
+            ) a
+            
+        ) b
+        GROUP BY b."Outlet"
+    ),
+    orders AS (
+        SELECT
+            a."Outlet",
+            COUNT(a.doc_entry) AS "Orders"
+        FROM (
+            SELECT
+                so.doc_entry,
+                so.ods_createdon AS date,
+                so.ods_outlet AS "Outlet"
+            FROM {database}.source_orderscreen so
+            WHERE so.ods_insurance_order = 'Yes'::text
+            and so.ods_createdon::date between '{start_date}' and '{end_date}'
+        ) a
+        GROUP BY a."Outlet"
+    )
+
+    SELECT
+        rej."Outlet",
+        orders."Orders",
+        rej."Rejections"
+    FROM rej
+    LEFT JOIN orders ON rej."Outlet" = orders."Outlet"
+    """
+
+    data = pd.read_sql_query(query_two, con=engine)
+    data["Grand Total"] = round((data["Rejections"] / data["Orders"]) * 100, 0)
+    data = data[["Outlet", "Grand Total"]]
+    return data
+
+
+def fetch_customers(engine, database, start_date):
+    query = f"""
+        select outlet as "Outlet", date::date as "Date", 
+        customer_count as "Customer Code"
+        from {database}.sop_customers_view
+        where date::date between '{start_date}' and '{today}';
+    """
+    data = pd.read_sql_query(query, con=engine)
+    return data

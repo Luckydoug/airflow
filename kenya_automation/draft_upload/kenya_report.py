@@ -45,7 +45,10 @@ from reports.draft_to_upload.data.fetch_data import (
     fetch_opening_time,
     fetch_insurance_efficiency,
     fetch_mtd_efficiency,
-    fetch_daywise_efficiency
+    fetch_daywise_efficiency,
+    fetch_daywise_rejections,
+    fetch_mtd_rejections,
+    fetch_customers
 )
 
 
@@ -208,6 +211,19 @@ def build_kenya_draft_upload():
     )
 
 
+daywise_rejections = fetch_daywise_rejections(
+    database=database,
+    view="mabawa_mviews",
+    engine=engine
+)
+
+mtd_rejections = fetch_mtd_rejections(
+    database=database,
+    view="mabawa_mviews",
+    engine=engine
+)
+
+
 def build_kenya_rejections():
     branch_data = fetch_gsheet_data()["branch_data"]
     create_rejection_report(
@@ -217,9 +233,16 @@ def build_kenya_rejections():
         path=path,
         selection=selection,
         start_date=start_date,
-        sales_orders=sales_orders
+        sales_orders=sales_orders,
+        mtd_data=mtd_rejections,
+        daywise_data=daywise_rejections
     )
 
+customers = fetch_customers(
+    database="mabawa_mviews",
+    engine=engine,
+    start_date=start_date
+)
 
 def build_kenya_sops():
     branch_data = fetch_gsheet_data()["branch_data"]
@@ -228,10 +251,8 @@ def build_kenya_sops():
         branch_data=branch_data,
         sops_info=sops_info,
         start_date=start_date,
-        all_orders=all_orders,
-        registrations=registrations,
-        eyetests=eyetests,
-        path=path
+        path=path,
+        customers=customers
     )
 
 
@@ -263,12 +284,13 @@ def trigger_kenya_smtp():
     send_draft_upload_report(
         selection=selection,
         path=path,
-        country="Kenya",
+        country="Test",
         target=target
     )
 
 
 def trigger_kenya_branches_smtp():
+    return
     branch_data = fetch_gsheet_data()["branch_data"]
     send_to_branches(
         branch_data=branch_data,
@@ -306,5 +328,7 @@ def build_kenya_opening_time():
 
 def clean_kenya_folder():
     clean_folders(path=path)
+
+
 
 

@@ -15,8 +15,11 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.sensors.time_sensor import TimeSensor
 
 
-from rwanda_sub_tasks.postgres.salesorders_views import (refresh_order_line_with_details,refresh_salesorders_line_cl_and_rr,
-                                                    refresh_fact_orders_header)
+from rwanda_sub_tasks.postgres.salesorders_views import (
+    refresh_order_line_with_details,
+    refresh_salesorders_line_cl_and_rr,
+    refresh_fact_orders_header
+)
 
 from rwanda_sub_tasks.postgres.prescriptions_views import refresh_et_conv
 

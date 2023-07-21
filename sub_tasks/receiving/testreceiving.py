@@ -65,13 +65,18 @@ def receiving():
 
      # Riders Information
     riders = pd.read_sql("""
-    SELECT trip_date, trip, westlands_time_from_hq, westlands_time_back_at_hq, karen_time_from_hq, karen_time_back_at_hq, eastlands_time_from_hq, eastlands_time_back_at_hq, thika_time_from_hq, thika_time_back_at_hq, mombasa_time_from_hq, "mombasa_time_back_at_hq", "rongai_time_from_hq", rongai_time_back_at_hq, upcountry, "CBD  time from Hq", cbd_time_back_at_hq, "CBD2  time from Hq", cbd2_time_back_at_hq
+    SELECT trip_date, trip, westlands_time_from_hq, westlands_time_back_at_hq, karen_time_from_hq, karen_time_back_at_hq, eastlands_time_from_hq, 
+    eastlands_time_back_at_hq, thika_time_from_hq, thika_time_back_at_hq, mombasa_time_from_hq, "mombasa_time_back_at_hq", "rongai_time_from_hq", 
+    rongai_time_back_at_hq, upcountry, "CBD  time from Hq", cbd_time_back_at_hq, "CBD2  time from Hq", cbd2_time_back_at_hq,
+    rider5_thikatown_from_hq, rider5_thikatown_at_hq            
     FROM mabawa_staging.source_riders
     """,con=engine)
 
     #Routes data
     routes = pd.read_sql("""
-    select "Date", "Trip", "Westlands", "Karen", "Eastlands", "Thika Road", "Mombasa Road", "Rongai", "Upcountry","CBD" from mabawa_staging.source_rider_routes
+                        select "Date", "Trip", "Westlands", "Karen", "Eastlands", "Thika Road", "Mombasa Road",
+                        "Rongai", "Upcountry", "CBD", "Rider 5 - Thika Town" 
+                        from mabawa_staging.source_rider_routes
     """,con=engine)
     print('The routes information has been fetched')
 
@@ -372,6 +377,42 @@ def receiving():
 
     print('lets now pick the correct time')
 
+    # Rider 5 Route "Rider 5 - Thika Town"
+    thikatown = routes[['Date','Trip','Rider 5 - Thika Town']]
+    thikatown['Thika_Town Branches'] = thikatown['Rider 5 - Thika Town'].str.split(',')
+    thikatown = thikatown.explode('Thika_Town Branches')
+
+    # Thika Time back at Hq based on the full/partial trips
+    thikatownroad = riders[['trip_date','trip','rider5_thikatown_at_hq']]
+    thika_town = thikatown[['Date','Trip','Thika_Town Branches']].rename(columns={'Date':'trip_date','Trip':'trip'})
+    thika_trip = pd.merge(thikatownroad, thika_town, on=['trip_date','trip'], how='left')
+
+    # Merge based on the date and branch
+    thika_townlist = thika_trip['Thika_Town Branches'].to_list()
+    thikatown = receiving[receiving['ods_outlet'].isin(thika_townlist)]
+    thikatown.sort_values(by=['odsc_date'], ascending=True, inplace=True)
+    print(thikatown['doc_no'].nunique())
+
+    # Thika Receiving
+    thikatown = pd.merge(thikatown, thika_trip, left_on=['odsc_date','ods_outlet'], right_on=['trip_date','Thika_Town Branches'], how='left')
+    print(rongai['doc_no'].nunique())
+
+    # Selecting the trip that came with the orders
+    thikatown['rider5_thikatown_at_hq2'] = thikatown.groupby('doc_no', as_index=False)['rider5_thikatown_at_hq'].shift(-1)
+
+    # Fill the nulls with the closing time for OHO 
+    thikatown['rider5_thikatown_at_hq2'] = thikatown['rider5_thikatown_at_hq2'].fillna('19:00:00')
+
+    # thika['odsc_time']= pd.to_datetime(thika['odsc_time']).dt.time
+    thikatown['rider5_thikatown_at_hq']= pd.to_datetime(thikatown['rider5_thikatown_at_hq']).dt.time
+    thikatown['rider5_thikatown_at_hq2']= pd.to_datetime(thikatown['rider5_thikatown_at_hq2']).dt.time
+
+    # Pick the correct trip the orders came with 
+    thikatown['CorrectTrip'] = np.where((thikatown['odsc_time'] >= thikatown['rider5_thikatown_at_hq']) & (thikatown['odsc_time'] <= thikatown['rider5_thikatown_at_hq2']) | (thikatown['odsc_time'] >= thikatown['rider5_thikatown_at_hq']) & (thikatown['rider5_thikatown_at_hq2'].isnull()),1,0)
+    print(thikatown)
+    thikatown['region'] = 'Rider 5 - Thika Town'
+
+
     # Picking only the correct trips for now (Changes the logic because of orders that come earlier)
     rongai = rongai[rongai['CorrectTrip']==1] 
     westlands = westlands[westlands['CorrectTrip']==1]
@@ -380,6 +421,7 @@ def receiving():
     karen = karen[karen['CorrectTrip']==1]
     thika = thika[thika['CorrectTrip']==1]
     cbd = cbd[cbd['CorrectTrip']==1]
+    thikatown = thikatown[thikatown['CorrectTrip']==1]
 
     print('picking of correct trip is done')
     
@@ -391,6 +433,7 @@ def receiving():
     karen['karen_time'] = pd.to_datetime(karen['trip_date'].astype(str) + ' ' + karen['karen_time_back_at_hq'].astype(str))
     thika['thika_time'] = pd.to_datetime(thika['trip_date'].astype(str) + ' ' + thika['thika_time_back_at_hq'].astype(str))
     cbd['CBD_time'] = pd.to_datetime(cbd['trip_date'].astype(str) + ' ' + cbd['cbd_time_back_at_hq'].astype(str))
+    thikatown['thikatown_time'] = pd.to_datetime(thikatown['trip_date'].astype(str) + ' ' + thikatown['rider5_thikatown_at_hq'].astype(str))
 
     print('done converting to datetime')
 
@@ -404,6 +447,7 @@ def receiving():
     upcountry.rename(columns={'upcountry_time':'receiving_time'}, inplace=True)
     thika.rename(columns={'thika_time':'receiving_time'}, inplace=True)
     cbd.rename(columns={'CBD_time':'receiving_time'}, inplace=True)
+    thikatown.rename(columns={'thikatown_time':'receiving_time'}, inplace=True)
  
 
     print('adjusting of orders is done')
@@ -416,9 +460,9 @@ def receiving():
     upcountry = upcountry[['doc_entry','odsc_date','odsc_time','odsc_status','odsc_createdby','doc_no','cust_code','ods_outlet','DateTime','trip_date','receiving_time','order_criteria_status','region']]
     thika = thika[['doc_entry','odsc_date','odsc_time','odsc_status','odsc_createdby','doc_no','cust_code','ods_outlet','DateTime','trip_date','receiving_time','order_criteria_status','region']]
     cbd = cbd[['doc_entry','odsc_date','odsc_time','odsc_status','odsc_createdby','doc_no','cust_code','ods_outlet','DateTime','trip_date','receiving_time','order_criteria_status','region']]
+    thikatown = thikatown[['doc_entry','odsc_date','odsc_time','odsc_status','odsc_createdby','doc_no','cust_code','ods_outlet','DateTime','trip_date','receiving_time','order_criteria_status','region']]
 
-
-    receiving = pd.concat([thika,westlands,mombasa,eastlands,karen,upcountry,rongai,cbd], axis=0)   
+    receiving = pd.concat([thika,westlands,mombasa,eastlands,karen,upcountry,rongai,cbd,thikatown], axis=0)   
 
     query = """truncate mabawa_dw.dim_receiving_data;"""
     query = pg_execute(query)

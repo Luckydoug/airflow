@@ -43,14 +43,18 @@ from reports.draft_to_upload.data.fetch_data import (
     fetch_opening_time,
     fetch_daywise_efficiency,
     fetch_insurance_efficiency,
-    fetch_mtd_efficiency
+    fetch_mtd_efficiency,
+    fetch_customers,
+    fetch_daywise_rejections,
+    fetch_mtd_rejections
 )
 
 
 database = "mawingu_staging"
 engine = create_unganda_engine()
 engine2 = createe_engine()
-selection = get_report_frequency()
+# selection = get_report_frequency()
+selection = "Monthly"
 start_date = return_report_daterange(
     selection=selection
 )
@@ -228,6 +232,19 @@ def build_ug_draft_upload():
     )
 
 
+
+daywise_rejections = fetch_daywise_rejections(
+    database=database,
+    view="mawingu_mviews",
+    engine=engine
+)
+
+mtd_rejections = fetch_mtd_rejections(
+    database=database,
+    view="mawingu_mviews",
+    engine=engine
+)
+
 def build_ug_rejections():
     branch_data = fetch_gsheet_data()["ug_srm_rm"]
     create_rejection_report(
@@ -237,9 +254,18 @@ def build_ug_rejections():
         path=uganda_path,
         selection=selection,
         start_date=start_date,
-        sales_orders=sales_orders
+        sales_orders=sales_orders,
+        mtd_data=mtd_rejections,
+        daywise_data=daywise_rejections
     )
 
+
+
+customers = fetch_customers(
+    database="mawingu_mviews",
+    engine=engine,
+    start_date=start_date
+)
 
 def build_ug_sops():
     branch_data = fetch_gsheet_data()["ug_srm_rm"]
@@ -248,10 +274,8 @@ def build_ug_sops():
         branch_data=branch_data,
         sops_info=sops_info,
         start_date=start_date,
-        all_orders=all_orders,
-        registrations=registrations,
-        eyetests=eyetests,
-        path=uganda_path
+        path=uganda_path,
+        customers=customers
     )
 
 
@@ -277,7 +301,7 @@ def trigger_uganda_smtp():
     send_draft_upload_report(
         selection=selection,
         path=uganda_path,
-        country="Uganda",
+        country="Test",
         target=uganda_target
     )
 

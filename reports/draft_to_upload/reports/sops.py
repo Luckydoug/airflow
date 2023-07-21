@@ -34,8 +34,9 @@ checked_sops = [
     'Demo Kit not Used'
 ]
 
-sop_date = pd.to_datetime(get_yesterday_date(
-    truth=True), format="%Y-%m-%d").date()
+sop_date = pd.to_datetime(
+    get_yesterday_date(truth=True), format="%Y-%m-%d"
+).date()
 
 """
 :::::::::::::::::::::::::::::::
@@ -80,41 +81,12 @@ Written and Curated by Douglas
 """
 
 
-def create_ug_sops_report(selection, branch_data, sops_info, start_date, all_orders, registrations, eyetests, path):
-    orders = all_orders.copy()
-    regs = registrations.copy()
-    eyes = eyetests.copy()
-    orders["CreateDate"] = pd.to_datetime(
-        orders["CreateDate"], format="%Y-%m-%d").dt.date
-    orders = orders.drop_duplicates(subset=["DocNum"]).copy()
-    sop_orders = orders[
-        (orders["CreateDate"] >= start_date) &
-        (orders["CreateDate"] <= sop_date)
-    ][["Outlet", "Customer Code", "CreateDate"]].rename(columns={"CreateDate": "Date"})
-
-    regs["Registration Date"] = pd.to_datetime(
-        regs["Registration Date"], format="%Y-%m-%d").dt.date
-    regs = regs.drop_duplicates(subset=["Customer Code"]).copy()
-    sop_registrations = regs[
-        (regs["Registration Date"] >= start_date) &
-        (regs["Registration Date"] <= sop_date)
-    ][["Outlet", "Customer Code", "Registration Date"]].rename(columns={"Registration Date": "Date"})
-
-    eyes["Eyetest Date"] = pd.to_datetime(
-        eyes["Eyetest Date"], format="%Y-%m-%d").dt.date
-    sop_eyetests = eyes[
-        (eyes["Eyetest Date"] >= start_date) &
-        (eyes["Eyetest Date"] <= sop_date)
-    ][["Outlet", "Customer Code", "Eyetest Date"]].rename(columns={"Eyetest Date": "Date"})
-
-
-    all_customers = pd.concat(
-        [sop_orders, sop_eyetests, sop_registrations], ignore_index=True)
-    all_customers["Customer Code"] = all_customers["Customer Code"].astype(str)
-    all_customers["Outlet"] = all_customers["Outlet"].astype(str)
-    unique_customers = all_customers.drop_duplicates(
-        subset=["Outlet", "Customer Code", "Date"], keep='first')
-
+def create_ug_sops_report(selection, branch_data, sops_info, start_date, customers, path):
+    customers = customers[
+        (customers["Date"] >= start_date) &
+        (customers["Date"] <= sop_date)
+    ]
+    print(customers)
     service_key = pygsheets.authorize(service_file=service_file)
     sheet = service_key.open_by_key(
         '1fn8yaI3-1X6uq4Z_Vydxq3vl3F5jLryp09E6po_TJAI')
@@ -144,19 +116,24 @@ def create_ug_sops_report(selection, branch_data, sops_info, start_date, all_ord
             daily_sop_pivot, sops_info[["Branch", "Outlet"]], on="Branch", how="left")
 
         daily_customers_pivot = pd.pivot_table(
-            unique_customers,
+            customers,
             index="Outlet",
             values="Customer Code",
-            aggfunc="count").reset_index()
+            aggfunc="sum").reset_index()
         unique_customers_daily_sops = pd.merge(
             daily_sop_pivot_merge,
             daily_customers_pivot,
             on="Outlet",
-            how="right")[["Outlet", "No of times", "Customer Code"]].merge(
-            branch_data[["Outlet", "RM", "SRM"]], on="Outlet", how="right").fillna(0)[["Outlet", "RM", "SRM", "Customer Code", "No of times"]].rename(
+            how="right"
+        )[["Outlet", "No of times", "Customer Code"]].merge(
+            branch_data[["Outlet", "RM", "SRM"]], 
+            on="Outlet", 
+            how="right"
+        ).fillna(0)[["Outlet", "RM", "SRM", "Customer Code", "No of times"]].rename(
             columns={
                 "Customer Code": "Customers", "No of times": "SOP Count"
-            })
+            }
+        )
 
         unique_customers_daily_sops["% SOP/Customers"] = round(
             (unique_customers_daily_sops["SOP Count"] /
@@ -182,7 +159,7 @@ def create_ug_sops_report(selection, branch_data, sops_info, start_date, all_ord
             (sop_compliance["Date"] <= sop_date)
         ].copy()
 
-        weekly_customers = unique_customers.copy()
+        weekly_customers = customers.copy()
         weekly_customers["Week Range"] = weekly_customers.apply(lambda row: check_date_range(row, "Date"), axis=1)
         weekly_customers = weekly_customers[weekly_customers["Week Range"] != "None"]
         weekly_customers = pd.merge(
@@ -192,9 +169,10 @@ def create_ug_sops_report(selection, branch_data, sops_info, start_date, all_ord
             how = "left"
         )
 
-        weekly_customers_pivot = pd.pivot_table(weekly_customers,index=["Outlet", "RM", "SRM"],
+        weekly_customers_pivot = pd.pivot_table(
+            weekly_customers,index=["Outlet", "RM", "SRM"],
             columns="Week Range",
-            aggfunc="count",
+            aggfunc="sum",
             values="Customer Code"
         )
 
@@ -266,7 +244,7 @@ def create_ug_sops_report(selection, branch_data, sops_info, start_date, all_ord
         monthly_sops_data = monthly_sops[(monthly_sops["Month"] == first_month) | (monthly_sops["Month"] == second_month)].copy()
         monthly_sops_data["RM Name"] = monthly_sops_data["RM Name"].str.replace("Mayanne", "Maryanne")
 
-        monthly_customers = unique_customers.copy()
+        monthly_customers = customers.copy()
         monthly_customers["Month"] = pd.to_datetime(monthly_customers["Date"], format="%Y-%m-%d").dt.month_name()
         monthly_customers = monthly_customers[
             (monthly_customers["Month"] == first_month) | 
@@ -283,7 +261,7 @@ def create_ug_sops_report(selection, branch_data, sops_info, start_date, all_ord
             monthly_customers,
             index=["Outlet", "RM", "SRM"],
             columns="Month",
-            aggfunc="count",
+            aggfunc="sum",
             values="Customer Code"
         )
 
