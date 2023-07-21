@@ -219,3 +219,24 @@ def create_rejections_branches(orders, rejections, branch_data):
 
     return daily_rej_total
 
+
+def return_slade(row):
+    slades = [
+        "JUBILEE",
+        "APA",
+        "MADISON"
+    ]
+
+    if row["Insurance Company"] in slades:
+        return "Yes"
+    else:
+        return "No"
+    
+
+def get_start_end_dates():
+    today = datetime.datetime.today()
+    start_date = today.replace(day=1)
+    end_date = today - timedelta(days=1)
+    return start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")
+
+

@@ -1,6 +1,7 @@
 import pandas as pd
 from airflow.models import variable
 from reports.draft_to_upload.utils.utils import today
+from reports.draft_to_upload.utils.utils import get_start_end_dates
 
 def fetch_orderscreen(database, engine, start_date='2023-01-01'):
     orderscreen_query = f"""
@@ -277,7 +278,38 @@ def fetch_opening_time(database, engine, start_date = '2023-01-01'):
    opening_time = pd.read_sql_query(opening_time_query, con=engine)
    return opening_time
 
-def fetch_daywise_efficiency(database, engine, start_date, end_date):
+def fetch_insurance_efficiency(database, engine, start_date):
+    query = f"""
+    SELECT
+        order_number AS "Order Number",
+        customer_code AS "Customer Code",
+        outlet AS "Outlet",
+        front_desk AS "Front Desk",
+        creator AS "Creator",
+        order_creator AS "Order Creator",
+        draft_time AS "Draft Time",
+        preauth_time AS "Preauth Time",
+        upload_time AS "Upload Time",
+        draft_to_preauth AS "Draft to Preauth",
+        preauth_to_upload AS "Preuth to Upload",
+        draft_to_upload AS "Draft to Upload",
+        insurance_company AS "Insurance Company",
+        slade AS "Slade",
+        insurance_scheme AS "Insurance Scheme",
+        scheme_type AS "Scheme Type",
+        feedback_1 AS "Feedback 1",
+        feedback_2 AS "Feedback 2"
+    FROM
+        {database}.source_insurance_efficiency
+    where upload_time::date between '{start_date}' and '{today}';
+    """
+
+    data = pd.read_sql_query(query, con=engine)
+    return data
+
+
+start_date, end_date = get_start_end_dates()
+def fetch_daywise_efficiency(database, engine):
     daywise_query = f"""
         SELECT
         outlet AS "Outlet",
@@ -295,7 +327,7 @@ def fetch_daywise_efficiency(database, engine, start_date, end_date):
     return data
 
 
-def fetch_mtd_efficiency(database, engine, start_date, end_date):
+def fetch_mtd_efficiency(database, engine):
     mtd_query = f"""
     SELECT
     outlet AS "Outlet",

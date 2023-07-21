@@ -339,13 +339,6 @@ def create_rejection_report(orderscreen, all_orders, sales_orders, branch_data, 
             (monthly_rejections["Month"] == second_month)
         ]
 
-        monthly_rejections_data = pd.merge(
-            monthly_rejections_data, 
-            branch_data[["Outlet", "RM", "SRM"]],
-            on = "Outlet",
-            how = "left"
-        )
-
         monthly_rejection_conversion = monthly_rejections_data[
             monthly_rejections_data["Order Number"].isin(sales_orders["Order Number"])
         ]

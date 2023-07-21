@@ -22,12 +22,13 @@ from reports.draft_to_upload.reports.rejections import create_rejection_report
 from reports.draft_to_upload.reports.plano import (
     create_plano_report
 )
-from reports.draft_to_upload.reports.opening_time import(
-push_branch_opening_time_data, 
-create_opening_time_report
+from reports.draft_to_upload.reports.opening_time import (
+    push_branch_opening_time_data,
+    create_opening_time_report
 )
 from reports.draft_to_upload.reports.sops import create_ug_sops_report
 from reports.draft_to_upload.reports.ratings import create_ratings_report
+from reports.draft_to_upload.data.push_data import push_insurance_efficiency_data
 from reports.draft_to_upload.data.fetch_data import (
     fetch_views,
     fetch_orders,
@@ -41,14 +42,16 @@ from reports.draft_to_upload.data.fetch_data import (
     fetch_planorderscreen,
     fetch_registrations,
     fetch_detractors,
-    fetch_opening_time
+    fetch_opening_time,
+    fetch_insurance_efficiency,
+    fetch_mtd_efficiency,
+    fetch_daywise_efficiency
 )
 
 
 database = "mabawa_staging"
 engine = createe_engine()
-# selection = get_report_frequency()
-selection = "Weekly"
+selection = get_report_frequency()
 start_date = return_report_daterange(
     selection=selection
 )
@@ -157,19 +160,50 @@ opening_data = fetch_opening_time(
 )
 
 
-def build_kenya_draft_upload():
+def push_kenya_efficiency_data():
     branch_data = fetch_gsheet_data()["branch_data"]
     working_hours = fetch_gsheet_data()["working_hours"]
-    create_draft_upload_report(
-        selection=selection,
+    date = return_report_daterange(selection="Daily")
+    date = pd.to_datetime(date, format="%Y-%m-%d").date()
+    push_insurance_efficiency_data(
+        engine=engine,
         orderscreen=orderscreen,
         all_orders=all_orders,
+        start_date=date,
+        branch_data=branch_data,
+        working_hours=working_hours,
+        database=database
+    )
+
+
+data_orders = fetch_insurance_efficiency(
+    database=database,
+    engine=engine,
+    start_date=start_date
+)
+
+daywise_efficiency = fetch_daywise_efficiency(
+    database=database,
+    engine=engine
+)
+
+mtd_efficiency = fetch_mtd_efficiency(
+    database=database,
+    engine=engine
+)
+
+
+def build_kenya_draft_upload():
+    branch_data = fetch_gsheet_data()["branch_data"]
+    create_draft_upload_report(
+        data_orders=data_orders,
+        mtd_data=mtd_efficiency,
+        daywise_data=daywise_efficiency,
+        selection=selection,
         start_date=start_date,
         target=target,
         branch_data=branch_data,
         path=path,
-        working_hours=working_hours,
-        country="Kenya",
         drop="KENYA PIPELINE COMPANY"
     )
 
@@ -229,13 +263,12 @@ def trigger_kenya_smtp():
     send_draft_upload_report(
         selection=selection,
         path=path,
-        country="Test",
+        country="Kenya",
         target=target
     )
 
 
 def trigger_kenya_branches_smtp():
-    return
     branch_data = fetch_gsheet_data()["branch_data"]
     send_to_branches(
         branch_data=branch_data,
@@ -273,4 +306,5 @@ def build_kenya_opening_time():
 
 def clean_kenya_folder():
     clean_folders(path=path)
+
 

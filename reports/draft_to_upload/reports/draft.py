@@ -1,10 +1,8 @@
 import numpy as np
 import pandas as pd
-from pangres import upsert
 from airflow.models import variable
-from sub_tasks.libraries.time_diff import calculate_time_difference
-from reports.draft_to_upload.utils.utils import today, get_comparison_months
-from sub_tasks.libraries.utils import get_rm_srm_total, check_date_range, createe_engine
+from reports.draft_to_upload.utils.utils import get_comparison_months
+from sub_tasks.libraries.utils import get_rm_srm_total, check_date_range
 from reports.draft_to_upload.reports.branch_salesperson_efficiency import create_branch_salesperson_efficiency
 
 """
@@ -28,201 +26,8 @@ When preparing a report for any country, make sure to call the following functio
 
 """
 
-first_month, second_month = get_comparison_months()
-
-def return_slade(row):
-    slades = [
-        "JUBILEE",
-        "APA",
-        "MADISON"
-    ]
-
-    if row["Insurance Company"] in slades:
-        return "Yes"
-    else:
-        return "No"
-
-
-def create_draft_upload_report(selection, orderscreen, all_orders, start_date, target, branch_data, path,working_hours, country = None, drop=''):
-    if not len(all_orders) or not len(orderscreen):
-        return
-
-    draft = ["Draft Order Created"]
-    drafts = orderscreen[orderscreen.Status.isin(draft)].copy()
-    draft_sorted = drafts.sort_values(by=["Date", "Time"], ascending=True)
-    unique_draft = draft_sorted.drop_duplicates(
-        subset="Order Number", keep="first").copy()
-    unique_draft.loc[:, "Draft Time"] = pd.to_datetime(
-        unique_draft["Date"].astype(str) + " " +
-        unique_draft["Time"].astype(str),
-        format="%Y-%m-%d %H:%M:%S"
-    )
-
-    upload = ["Upload Attachment"]
-    upload_attachments = orderscreen[orderscreen.Status.isin(upload)].copy()
-    upload_sorted = upload_attachments.sort_values(
-        by=["Date", "Time"], ascending=True)
-    unique_uploads = upload_sorted.drop_duplicates(
-        subset="Order Number", keep="first").copy()
-    unique_uploads.loc[:, "Upload Time"] = pd.to_datetime(
-        unique_uploads["Date"].astype(str) + " " +
-        unique_uploads["Time"].astype(str),
-        format="%Y-%m-%d %H:%M:%S"
-    )
-
-    initiated = [
-        "Pre-Auth Initiated For Optica Insurance",
-        "Insurance Order Initiated", 
-        "SMART to be captured"
-    ]
-    preauth_initiated = orderscreen[orderscreen.Status.isin(initiated)].copy()
-    preauth_sorted = preauth_initiated.sort_values(
-        by=["Date", "Time"], ascending=True)
-    unique_preauths = preauth_sorted.drop_duplicates(
-        subset="Order Number", keep="first").copy()
-    unique_preauths.loc[:, "Preauth Time"] = pd.to_datetime(
-        unique_preauths["Date"].astype(str) + " "
-        + unique_preauths["Time"].astype(str),
-        format="%Y-%m-%d %H:%M:%S"
-    )
-
-    final_data1 = pd.merge(
-        unique_uploads[["Order Number", "Upload Time"]],
-        unique_preauths[["Order Number", "Preauth Time"]],
-        on="Order Number",
-        how="left"
-    )
-    final_data = pd.merge(
-        unique_draft[["Order Number", "Draft Time"]],
-        final_data1, on="Order Number",
-        how="right"
-    )
-
-    final_data_orders = pd.merge(
-        final_data,
-        all_orders[[
-            "DocNum", "Code", "Customer Code", "Last View Date",
-            "Status", "Outlet", "Insurance Company",
-            "Insurance Scheme", "Scheme Type",
-            "Feedback 1", "Feedback 2",
-            "Creator", "Order Creator"
-        ]].rename(columns={"DocNum": "Order Number"}),
-        on="Order Number",
-        how="left"
-    )
-
-    final_data_orders["Month"] = final_data_orders["Preauth Time"].dt.month_name()
-    final_data_orders = final_data_orders[
-        (final_data_orders["Upload Time"] >= pd.to_datetime(start_date)) &
-        (final_data_orders["Upload Time"] <= pd.to_datetime(today))
-    ]
-
-    final_data_orders = final_data_orders.dropna(subset=["Draft Time"])
-    final_data_orders = final_data_orders.dropna(subset=["Outlet"])
-    final_data_orders = final_data_orders[final_data_orders["Insurance Company"] != drop]
-    final_data_orders = final_data_orders[final_data_orders["Outlet"] != "MUR"]
-    final_data_orders = final_data_orders[final_data_orders["Outlet"] != "MUR"]
-
-    if not len(final_data_orders):
-        return
-
-    final_data_orders["Draft to Preauth"] = final_data_orders.apply(
-        lambda row: calculate_time_difference(
-            row=row,
-            x="Draft Time",
-            y="Preauth Time",
-            working_hours=working_hours
-        ),
-        axis=1
-    )
-
-    final_data_orders["Preuth to Upload"] = final_data_orders.apply(
-        lambda row: calculate_time_difference(
-            row=row,
-            x="Preauth Time",
-            y="Upload Time",
-            working_hours=working_hours
-        ),
-        axis=1
-    )
-
-    final_data_orders["Draft to Upload"] = final_data_orders.apply(
-        lambda row: calculate_time_difference(
-            row=row,
-            x="Draft Time",
-            y="Upload Time",
-            working_hours=working_hours
-        ),
-        axis=1
-    )
-
-    final_data_orders = pd.merge(
-        final_data_orders,
-        branch_data[["Outlet", "RM", "SRM", "Front Desk"]],
-        on = "Outlet",
-        how = "left"
-    )
-
-    final_data_orders["Slade"] = final_data_orders.apply(lambda row: return_slade(row), axis=1)
-    final_data_orders["Date"] = final_data_orders["Upload Time"].dt.date
-    final_data_orders = final_data_orders.drop_duplicates(
-        subset=["Order Number"]
-    )
-
-    data_to_upload = final_data_orders.copy()
-    rename_data_to_upload = data_to_upload.rename(columns= {
-        "Order Number": "order_number",
-        "Customer Code": "customer_code",
-        "Outlet": "outlet",
-        "Front Desk": "front_desk",
-        "Creator": "creator",
-        "Order Creator": "order_creator",
-        "Draft Time": "draft_time",
-        "Preauth Time": "preauth_time",
-        "Upload Time": "upload_time",
-        "Draft to Preauth": "draft_to_preauth",
-        "Preuth to Upload": "preauth_to_upload",
-        "Draft to Upload": "draft_to_upload",
-        "Insurance Company": "insurance_company",
-        "Slade": "slade",
-        "Insurance Scheme": "insurance_scheme",
-        "Scheme Type": "scheme_type",
-        "Feedback 1": "feedback_1",
-        "Feedback 2": "feedback_2"
-    })
-
-    final_data_to_upload = rename_data_to_upload[[
-        "order_number",
-        "customer_code",
-        "outlet",
-        "front_desk",
-        "creator",
-        "order_creator",
-        "draft_time",
-        "preauth_time",
-        "upload_time",
-        "draft_to_preauth",
-        "preauth_to_upload",
-        "draft_to_upload",
-        "insurance_company",
-        "slade",
-        "insurance_scheme",
-        "scheme_type",
-        "feedback_1",
-        "feedback_2"
-    ]].set_index("order_number")
-
-    if country == "Kenya":
-        engine = createe_engine()
-        upsert(
-            engine=engine,
-            df=final_data_to_upload,
-            schema="mabawa_staging",
-            table_name="source_insurance_efficiency",
-            if_row_exists='update',
-            create_table=True
-        )
-
+def create_draft_upload_report(data_orders, daywise_data, mtd_data, selection,start_date, target, branch_data, path, drop = ""):
+    first_month, second_month = get_comparison_months()
     cols_req = [
         "Date",
         "SRM",
@@ -261,15 +66,32 @@ def create_draft_upload_report(selection, orderscreen, all_orders, start_date, t
         "Scheme Type",
         "Feedback 1"
     ]
-    
 
-    """
-    This is the Daily Report. 
-    Since this code will be running on Airflow, we can't afford to enter the dates manually. 
-    There are three reports available: Daily, Weekly, and Monthly reports. 
-    Depending on the day, we want the code to determine whether it should send the daily, weekly or monthly report.
+    final_data_orders = data_orders.copy()
+    final_data_orders = pd.merge(
+        final_data_orders,
+        branch_data[["Outlet", "RM", "SRM"]],
+        on = "Outlet",
+        how = "left"
+    )
+    final_data_orders["Date"] = final_data_orders["Upload Time"].dt.date
+    final_data_orders = final_data_orders[final_data_orders["Insurance Company"] != drop]
+    final_data_orders = final_data_orders.drop_duplicates(subset=["Order Number"])
 
-    """
+    daywise_pivot = pd.pivot_table(
+        daywise_data,
+        index="Outlet",
+        columns="Date",
+        values="Efficiency",
+        aggfunc="sum"
+    ).fillna("-")
+
+    mtd_daywise_pivot = pd.merge(
+        daywise_pivot,
+        mtd_data,
+        on = "Outlet",
+        how = "inner"
+    )
 
     if selection == "Daily":
         daily_data = final_data_orders[final_data_orders["Upload Time"].dt.date == start_date]
@@ -306,14 +128,6 @@ def create_draft_upload_report(selection, orderscreen, all_orders, start_date, t
             on="Outlet", how="outer"
         )   .fillna(0)
 
-        daily_gsheet_update = daily_rm_srm[[
-            "Outlet",
-            f"% Efficiency (Target: {target} mins)"
-        ]].copy()
-
-        daily_gsheet_update = daily_gsheet_update.rename(columns={
-            f"% Efficiency (Target: {target} mins)": start_date.strftime("%Y-%m-%d")
-        })
 
         column_total = get_rm_srm_total(
             daily_rm_srm,
@@ -380,9 +194,9 @@ def create_draft_upload_report(selection, orderscreen, all_orders, start_date, t
                 index=False
             )
 
-            daily_gsheet_update.sort_values(by = "Outlet", ascending=True).to_excel(
+            mtd_daywise_pivot.sort_values(by = "Outlet", ascending=True).to_excel(
                 writer,
-                sheet_name="gsheet-update",
+                sheet_name="mtd-update",
                 index=False
             )
 
@@ -474,18 +288,17 @@ def create_draft_upload_report(selection, orderscreen, all_orders, start_date, t
                 sheet_name="weekly_data", 
                 index=False
             )
+            mtd_daywise_pivot.sort_values(by = "Outlet", ascending=True).to_excel(
+                writer,
+                sheet_name="mtd-update",
+                index=False
+            )
 
     if selection == "Monthly":
         """
         The below code will run when a selection is Monthly
         """
         monthly_data = final_data_orders.copy()
-        monthly_data = pd.merge(
-            monthly_data,
-            branch_data[["Outlet", "RM", "SRM"]],
-            on="Outlet", how="left"
-        )
-
         monthly_data["Month"] = monthly_data["Upload Time"].dt.month_name()
 
         monthly_data = monthly_data[
@@ -530,6 +343,11 @@ def create_draft_upload_report(selection, orderscreen, all_orders, start_date, t
             monthly_data.iloc[:, :-1].to_excel(
                 writer,
                 sheet_name="monthly_data", 
+                index=False
+            )
+            mtd_daywise_pivot.sort_values(by = "Outlet", ascending=True).to_excel(
+                writer,
+                sheet_name="mtd-update",
                 index=False
             )
 

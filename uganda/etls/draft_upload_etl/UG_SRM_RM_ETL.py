@@ -32,6 +32,7 @@ with DAG(
     with TaskGroup('report') as report:
         with TaskGroup('build') as build:
             from uganda.automations.draft_to_upload.report import (
+                push_uganda_efficiency_data,
                 build_ug_draft_upload,
                 build_ug_rejections,
                 build_ug_sops,
@@ -39,6 +40,12 @@ with DAG(
                 push_uganda_opening_time,
                 build_uganda_opening_time
 
+            )
+
+            push_uganda_efficiency_data = PythonOperator(
+                task_id='push_uganda_efficiency_data',
+                python_callable=push_uganda_efficiency_data,
+                provide_context=True
             )
 
             build_ug_draft_upload = PythonOperator(
@@ -78,7 +85,7 @@ with DAG(
             )
 
             
-            build_ug_draft_upload >> build_ug_sops >> build_ug_rejections >> build_plano_report >> push_uganda_opening_time >> build_uganda_opening_time
+            push_uganda_efficiency_data >> build_ug_draft_upload >> build_ug_sops >> build_ug_rejections >> build_plano_report >> push_uganda_opening_time >> build_uganda_opening_time
             
 
     with TaskGroup('smtp') as smtp:

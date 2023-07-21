@@ -100,7 +100,7 @@ def create_plano_report(branch_data, path, registrations, payments, all_planos, 
         branch_data[["Outlet", "RM", "SRM"]].rename(columns = {"Outlet": "Branch"}),
         on = "Branch",
         how = "left"
-    )[columns_order]
+    )
 
     final_plano_data = final_plano_data[
         final_plano_data["Insurance Company"] != "NHIF- COMPREHENSIVE MEDICAL INSURANCE"
@@ -137,7 +137,7 @@ def create_plano_report(branch_data, path, registrations, payments, all_planos, 
             daily_submission_branch.to_excel(writer, sheet_name="daily_submission_branch", index=False)
             daily_submission_optom.to_excel(writer, sheet_name="daily_submission_optom", index=False)
             daily_submission_ewc.to_excel(writer, sheet_name="daily_submission_ewc", index=False)
-            daily_plano_data.sort_values(by="Submission").to_excel(writer, sheet_name="daily_data", index=False)
+            daily_plano_data[columns_order].sort_values(by="Submission").to_excel(writer, sheet_name="daily_data", index=False)
 
     if selection == "Weekly":
         weekly_plano_data = final_plano_data.copy()
@@ -200,7 +200,7 @@ def create_plano_report(branch_data, path, registrations, payments, all_planos, 
             weekly_submission_branch_two.to_excel(writer, sheet_name="weekly_submission_branch", index = False)
             weekly_submission_optom.to_excel(writer, sheet_name="weekly_submission_optom")
             # weekly_submission_ewc.to_excel(writer, sheet_name="weekly_submission_ewc")
-            weekly_plano_data.sort_values(by="Submission").to_excel(writer, sheet_name="weekly_data", index=False)
+            weekly_plano_data[columns_order].sort_values(by="Submission").to_excel(writer, sheet_name="weekly_data", index=False)
             weekly_submission_ewc_two.to_excel(writer, sheet_name="weekly_submission_ewc", index=False)
 
 
@@ -240,7 +240,7 @@ def create_plano_report(branch_data, path, registrations, payments, all_planos, 
             monthly_submission_branch.to_excel(writer, sheet_name = "monthly_submission_branch")
             monthly_submission_optom.to_excel(writer, sheet_name = "monthly_submission_optom")
             monthly_submission_ewc.to_excel(writer, sheet_name = "monthly_submission_ewc")
-            monthly_plano_data.sort_values(by="Submission").to_excel(writer, sheet_name="monthly_data", index=False)
+            monthly_plano_data[columns_order].sort_values(by="Submission").to_excel(writer, sheet_name="monthly_data", index=False)
         
 
 

@@ -18,8 +18,11 @@ from reports.draft_to_upload.reports.draft import (
     create_draft_upload_report
 )
 from reports.draft_to_upload.reports.opening_time import (
-    push_branch_opening_time_data, create_opening_time_report)
+    push_branch_opening_time_data, 
+    create_opening_time_report
+)
 from reports.draft_to_upload.utils.utils import get_report_frequency, return_report_daterange
+from reports.draft_to_upload.data.push_data import push_insurance_efficiency_data
 from reports.draft_to_upload.reports.rejections import create_rejection_report
 from reports.draft_to_upload.reports.plano import (
     create_plano_report
@@ -37,7 +40,10 @@ from reports.draft_to_upload.data.fetch_data import (
     fetch_planos,
     fetch_planorderscreen,
     fetch_registrations,
-    fetch_opening_time
+    fetch_opening_time,
+    fetch_daywise_efficiency,
+    fetch_insurance_efficiency,
+    fetch_mtd_efficiency
 )
 
 
@@ -50,7 +56,6 @@ start_date = return_report_daterange(
 )
 
 start_date = pd.to_datetime(start_date, format="%Y-%m-%d").date()
-
 all_views = fetch_views(
     database=database,
     engine=engine
@@ -176,18 +181,50 @@ def build_uganda_opening_time():
     )
 
 
-def build_ug_draft_upload():
+def push_uganda_efficiency_data():
     branch_data = fetch_gsheet_data()["ug_srm_rm"]
     working_hours = fetch_gsheet_data()["ug_working_hours"]
-    create_draft_upload_report(
-        selection=selection,
+    date = return_report_daterange(selection="Daily")
+    date = pd.to_datetime(date, format="%Y-%m-%d").date()
+    push_insurance_efficiency_data(
+        engine=engine,
         orderscreen=orderscreen,
         all_orders=all_orders,
+        start_date=date,
+        branch_data=branch_data,
+        working_hours=working_hours,
+        database=database
+    )
+
+
+data_orders = fetch_insurance_efficiency(
+    database=database,
+    engine=engine,
+    start_date=start_date
+)
+
+daywise_efficiency = fetch_daywise_efficiency(
+    database=database,
+    engine=engine
+)
+
+mtd_efficiency = fetch_mtd_efficiency(
+    database=database,
+    engine=engine
+)
+
+
+def build_ug_draft_upload():
+    branch_data = fetch_gsheet_data()["ug_srm_rm"]
+    create_draft_upload_report(
+        mtd_data=mtd_efficiency,
+        daywise_data=daywise_efficiency,
+        data_orders=data_orders,
+        selection=selection,
         start_date=start_date,
         target=uganda_target,
         branch_data=branch_data,
         path=uganda_path,
-        working_hours=working_hours
     )
 
 
@@ -240,7 +277,7 @@ def trigger_uganda_smtp():
     send_draft_upload_report(
         selection=selection,
         path=uganda_path,
-        country="Test",
+        country="Uganda",
         target=uganda_target
     )
 
