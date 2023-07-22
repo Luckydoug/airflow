@@ -64,24 +64,20 @@ def create_incentive(all_payments, all_journals, orders, cash_payments, targets)
     branch_insurance_pivot["Creator"] = branch_insurance_pivot["Creator"].astype(
         str)
     branch_insurance_pivot = branch_insurance_pivot.rename(
-        columns={"Creator": "Payroll Number",
-                 "Actual": "MTD Insurance Sales(count)"}
+        columns={"Creator": "Payroll Number","Actual": "MTD Insurance Sales(count)"}
     )
     final_insurance_pivot = branch_insurance_pivot[
-        ["Outlet", "Payroll Number",
-            "MTD Insurance Sales(count)", "Order Creator"]
+        ["Outlet", "Payroll Number","MTD Insurance Sales(count)", "Order Creator"]
     ].rename(columns={"Order Creator": "Name"})
 
-    branch_cash_pivot = pd.pivot_table(cash_payments,
-                                       index=["Outlet", "Creator",
-                                              "Order Creator"],
-                                       aggfunc="sum",
-                                       values="Full Amount").reset_index()
+    branch_cash_pivot = pd.pivot_table(
+        cash_payments,
+        index=["Outlet", "Creator","Order Creator"],
+        aggfunc="sum",
+        values="Full Amount"
+    ).reset_index()
     branch_cash_pivot["Creator"] = branch_cash_pivot["Creator"].astype(str)
-    branch_cash_pivot.rename(
-        columns={"Creator": "Payroll Number",
-                 "Full Amount": "MTD Cash Sales", "Order Creator": "Name"},
-        inplace=True)
+    branch_cash_pivot.rename(columns={"Creator": "Payroll Number","Full Amount": "MTD Cash Sales", "Order Creator": "Name"},inplace=True)
 
     final_insurance_cash = pd.merge(
         final_insurance_pivot,
@@ -89,8 +85,7 @@ def create_incentive(all_payments, all_journals, orders, cash_payments, targets)
         on=["Outlet", "Payroll Number", "Name"],
         how="outer"
     ).fillna(0)
-    final_insurance_cash["MTD Insurance Sales(count)"] = final_insurance_cash["MTD Insurance Sales(count)"].astype(
-        int)
+    final_insurance_cash["MTD Insurance Sales(count)"] = final_insurance_cash["MTD Insurance Sales(count)"].astype(int)
 
     staff["Payroll No"] = staff["Payroll No"].apply(format_payroll_number)
     staff_data = staff.drop_duplicates(subset=["Payroll No"])
@@ -98,26 +93,26 @@ def create_incentive(all_payments, all_journals, orders, cash_payments, targets)
     staff_data["Payroll No"] = staff_data["Payroll No"].astype(str)
     staff_data = staff_data.rename(columns={"Payroll No": "Payroll Number"})
 
-    final_report = pd.merge(final_insurance_cash,
-                            staff_data[["Payroll Number", "Email"]],
-                            on="Payroll Number",
-                            how="left"
-                            )
+    final_report = pd.merge(
+        final_insurance_cash,
+        staff_data[["Payroll Number", "Email"]],
+        on="Payroll Number",
+        how="left"
+    )
     targets = targets.drop_duplicates(subset=["Payroll Number", "Outlet"])
-    sales_and_targets = pd.merge(final_report,
-                                 targets,
-                                 on=["Outlet", "Name", "Payroll Number"],
-                                 how="outer"
-                                 ).fillna(0)
+    sales_and_targets = pd.merge(
+        final_report,
+        targets,
+        on=["Outlet", "Name", "Payroll Number"],
+        how="outer"
+    ).fillna(0)
 
     sales_and_targets["Insurance Target"] = round(
         sales_and_targets["Insurance Target"], 0).fillna(0).astype(int)
     sales_and_targets["Cash Target"] = round(
         sales_and_targets["Cash Target"], 0).fillna(0).astype(int)
-    sales_and_targets["Insurance Target"] = sales_and_targets["Insurance Target"].fillna(
-        0)
-    sales_and_targets["Cash Target"] = sales_and_targets["Cash Target"].fillna(
-        0)
+    sales_and_targets["Insurance Target"] = sales_and_targets["Insurance Target"].fillna(0)
+    sales_and_targets["Cash Target"] = sales_and_targets["Cash Target"].fillna(0)
 
     date = pd.to_datetime(end_date)
     month_number = date.month
@@ -135,16 +130,13 @@ def create_incentive(all_payments, all_journals, orders, cash_payments, targets)
             (sales_and_targets["Outlet"].isin(scheduled_branches))]
         for group, dataframe in branch_sales_targets.groupby('Outlet'):
             name = f'{group}'
-            dataframe["Cash MTD% Target"] = ((
-                (((days * 100) / number_of_days)
-                 ) / 100) * 100)
+            dataframe["Cash MTD% Target"] = (((((days * 100) / number_of_days)) / 100) * 100)
 
             dataframe["Insurance MTD Target"] = (
                 (((days * dataframe["Insurance Target"]) / number_of_days))
             ).fillna(0).round(0).astype(int)
             dataframe["MTD Cash Sales % Achieved"] = (
-                (dataframe["MTD Cash Sales"] / ((days *
-                 dataframe["Cash Target"]) / number_of_days) * 100)
+                (dataframe["MTD Cash Sales"] / ((days *dataframe["Cash Target"]) / number_of_days) * 100)
             )
             dataframe[["Cash MTD% Target", "MTD Cash Sales % Achieved"]] = dataframe[
                 ["Cash MTD% Target", "MTD Cash Sales % Achieved"]
@@ -215,12 +207,10 @@ def create_incentive(all_payments, all_journals, orders, cash_payments, targets)
             for group, dataframe in branch_sales.groupby('Payroll Number'):
                 name = f'{group}'
                 dataframe["MTD Achieved Cash(%)"] = (
-                    (dataframe["MTD Cash Sales"] / ((days *
-                                                     dataframe["Cash Target"]) / number_of_days) * 100)
+                    (dataframe["MTD Cash Sales"] / ((days *dataframe["Cash Target"]) / number_of_days) * 100)
                 ).fillna(0).astype(int).astype(str) + "%"
                 dataframe["MTD Achieved Insurance(%)"] = (
-                    (dataframe["MTD Insurance Sales(count)"] / ((days *
-                                                                 dataframe["Insurance Target"]) / number_of_days) * 100)
+                    (dataframe["MTD Insurance Sales(count)"] / ((days *dataframe["Insurance Target"]) / number_of_days) * 100)
                 ).fillna(0).astype(int).astype(str) + "%"
                 dataframe = dataframe[desired_columns_order]
                 dataframe.to_excel(writer, sheet_name=name, index=False)

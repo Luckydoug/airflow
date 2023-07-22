@@ -78,8 +78,7 @@ def send_to_salespersons():
         # sales_person = load_workbook(
         #     r"/home/opticabi/airflow/{outlet}.xlsx".format(outlet=outlet)
         #)
-        sales_person = load_workbook(
-            r"/home/opticabi/Documents/optica_reports/{outlet}.xlsx".format(outlet=outlet))
+        sales_person = load_workbook(r"/home/opticabi/Documents/optica_reports/{outlet}.xlsx".format(outlet=outlet))
         payroll_numbers = sales_person.sheetnames
         random_salesperson = random.choice(payroll_numbers)
 
@@ -101,15 +100,11 @@ def send_to_salespersons():
         else:
             for payroll in payroll_numbers:
                 if payroll in sales_person.sheetnames:
-                    sales_person_report = pd.read_excel(
-                        sales, sheet_name=payroll).set_index("Payroll Number")
+                    sales_person_report = pd.read_excel(sales, sheet_name=payroll).set_index("Payroll Number")
                     name = sales_person_report.loc[int(payroll), "Name"]
-                    print(name)
-                    sales_person_email = sales_person_report.loc[int(
-                        payroll), "Email"]
+                    sales_person_email = sales_person_report.loc[int(payroll), "Email"]
 
-                    sales_person_report = sales_person_report[[
-                        "Name", "Insurance Target", "Cash Target", "MTD Insurance Sales(count)", "MTD Cash Sales"]]
+                    sales_person_report = sales_person_report[["Name", "Insurance Target", "Cash Target", "MTD Insurance Sales(count)", "MTD Cash Sales"]]
 
                     sales_person_report["MTD Achieved Insurance(%)"] = int(sales_person_report.loc[int(
                         payroll), "MTD Insurance Sales(count)"] / ((sales_person_report.loc[int(payroll), "Insurance Target"] * days) / number_of_days) * 100)
@@ -124,11 +119,8 @@ def send_to_salespersons():
                             "Cash Target": "{:,d}",
                             "MTD Cash Sales": "{:,d}"
                         })
-                    sales_person_report_html = sales_person_report.to_html(
-                        doctype_html=True)
-
-                    branch_achievement = pd.read_excel(
-                        achievement, sheet_name=outlet)
+                    sales_person_report_html = sales_person_report.to_html(doctype_html=True)
+                    branch_achievement = pd.read_excel(achievement, sheet_name=outlet)
                     branch_achievement = branch_achievement.style.hide_index().set_properties(
                         **{"border-spacing": "0px",  "margin-bottom": "0em", "text-align": "left", "white-space": "normal"}).set_table_styles(styles)
                     branch_achievement_html = branch_achievement.to_html(
@@ -193,18 +185,15 @@ def send_to_salespersons():
                         name=name.split(" ")[0].capitalize(),
                         branch_achievement_html=branch_achievement_html,
                         sales_person_report_html=sales_person_report_html,
-                        sender_name=your_email.split(
-                            "@")[0].split('.')[0].capitalize()
+                        sender_name=your_email.split("@")[0].split('.')[0].capitalize()
                     )
 
                     if random_salesperson == payroll:
-                        receiver_email = [
-                            sales_person_email]
+                        receiver_email = ["wazeem@optica.africa", "wairimu@optica.africa", sales_person_email]
 
                     else:
                         receiver_email = [sales_person_email]
 
-                    # receiver_email = ["tstbranch@gmail.com"]
 
                     email_message = MIMEMultipart("alternative")
                     email_message["From"] = your_email
@@ -346,3 +335,4 @@ if __name__ == '__main__':
     send_to_salespersons
     send_branch_version  
     clean_folder
+

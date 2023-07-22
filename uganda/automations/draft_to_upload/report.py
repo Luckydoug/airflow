@@ -53,8 +53,7 @@ from reports.draft_to_upload.data.fetch_data import (
 database = "mawingu_staging"
 engine = create_unganda_engine()
 engine2 = createe_engine()
-# selection = get_report_frequency()
-selection = "Monthly"
+selection = get_report_frequency()
 start_date = return_report_daterange(
     selection=selection
 )
@@ -301,7 +300,7 @@ def trigger_uganda_smtp():
     send_draft_upload_report(
         selection=selection,
         path=uganda_path,
-        country="Test",
+        country="Uganda",
         target=uganda_target
     )
 
