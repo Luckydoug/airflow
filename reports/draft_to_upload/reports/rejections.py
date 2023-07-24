@@ -210,7 +210,7 @@ def create_rejection_report(
                 sheet_name="daily_rejections_data", 
                 index=False
             )
-            final_ewc_pivot.to_excel(
+            final_ewc_pivot.sort_values(by = "%Rejected", ascending = False).to_excel(
                 writer, 
                 sheet_name="ewc_summary", 
                 index=False

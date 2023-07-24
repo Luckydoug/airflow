@@ -86,20 +86,14 @@ def create_ug_sops_report(selection, branch_data, sops_info, start_date, custome
         (customers["Date"] >= start_date) &
         (customers["Date"] <= sop_date)
     ]
-    print(customers)
     service_key = pygsheets.authorize(service_file=service_file)
-    sheet = service_key.open_by_key(
-        '1fn8yaI3-1X6uq4Z_Vydxq3vl3F5jLryp09E6po_TJAI')
-    sop_compliance = pd.DataFrame(sheet[0].get_all_records())[
-        ["Date", "Branch", "RM Name", "SRM Name", "SOP", "No of times"]].replace("", 1).fillna(1).copy()
+    sheet = service_key.open_by_key('1fn8yaI3-1X6uq4Z_Vydxq3vl3F5jLryp09E6po_TJAI')
+    sop_compliance = pd.DataFrame(sheet[0].get_all_records())[["Date", "Branch", "RM Name", "SRM Name", "SOP", "No of times"]].replace("", 1).fillna(1).copy()
     sop_compliance = sop_compliance[sop_compliance.SOP.isin(checked_sops)]
     sop_compliance = sop_compliance.dropna(subset=["Date"])
-    sop_compliance["Date"] = pd.to_datetime(
-        sop_compliance["Date"], dayfirst=True, errors="coerce").dt.date
-    sop_compliance = pd.merge(
-        sop_compliance, sops_info[["Branch", "Outlet"]], on="Branch", how="left")
-    sop_compliance = sop_compliance[sop_compliance["Outlet"].isin(
-        branch_data["Outlet"])]
+    sop_compliance["Date"] = pd.to_datetime(sop_compliance["Date"], dayfirst=True, errors="coerce").dt.date
+    sop_compliance = pd.merge(sop_compliance, sops_info[["Branch", "Outlet"]], on="Branch", how="left")
+    sop_compliance = sop_compliance[sop_compliance["Outlet"].isin(branch_data["Outlet"])]
 
     if not len(sop_compliance):
         return

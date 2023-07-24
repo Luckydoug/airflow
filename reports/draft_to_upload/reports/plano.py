@@ -136,7 +136,7 @@ def create_plano_report(branch_data, path, registrations, payments, all_planos, 
         with pd.ExcelWriter(f"{path}draft_upload/planorx_not_submitted.xlsx") as writer:
             daily_submission_branch.to_excel(writer, sheet_name="daily_submission_branch", index=False)
             daily_submission_optom.to_excel(writer, sheet_name="daily_submission_optom", index=False)
-            daily_submission_ewc.to_excel(writer, sheet_name="daily_submission_ewc", index=False)
+            daily_submission_ewc.sort_values(by = "Not Submitted", ascending = False).to_excel(writer, sheet_name="daily_submission_ewc", index=False)
             daily_plano_data[columns_order].sort_values(by="Submission").to_excel(writer, sheet_name="daily_data", index=False)
 
     if selection == "Weekly":
