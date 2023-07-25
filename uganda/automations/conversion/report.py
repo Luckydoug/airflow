@@ -19,13 +19,22 @@ from reports.conversion.smtp.smtp import (
     clean_views
 )
 
-
+#This is the Basic Configuration of the report
+#database variable is the name of the database
+#engine is returned from utils module. You can change
+#this function to accept just the schema and the password 
+#so it can create the engine for any database
+#selection can be either weekly or Monthly for this report.
+#Automatic selection is not yet implemented,
 database = "mawingu_mviews"
 engine = create_unganda_engine()
-selection = get_report_frequency()
+selection = "Weekly"
 start_date, end_date = return_conversion_daterange(selection=selection)
 
 views_conv = fetch_views_conversion(
+    #This function fetches the views conversion
+    #This fuction is designed to accept any database as long as it exist 
+    #and the view for the conversion also exists.
     database=database,
     engine=engine,
     start_date=start_date,
@@ -110,4 +119,9 @@ Optica Data Team
 Let's keep it flowing
 
 """
+
+
+# Written and Curated by Douglas
+# We shall remember.
+
 

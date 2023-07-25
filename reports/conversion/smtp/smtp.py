@@ -9,6 +9,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from sub_tasks.libraries.styles import (ug_styles, properties)
 from reports.conversion.html.html import (conversion_html, branches_html)
+from reports.conversion.smtp.emails import (uganda, kenya, test)
 from sub_tasks.libraries.utils import (
     save_file,
     get_todate,
@@ -95,6 +96,11 @@ def send_management_report(path, country, selection):
             index_col=[0], 
             header=[0, 1]
         )
+        branch_high_rx = overall_et_report.parse(
+            "high_rx_branch",
+            index_col = [0],
+            header = [0, 1]
+        )
 
         overall_et_html = apply_multiindex_format(
             dataframe=overall_et_conv,
@@ -116,6 +122,14 @@ def send_management_report(path, country, selection):
             dataframe=summary_higrx_conv,
             old="Country",
             new="Country",
+            styles=ug_styles,
+            properties=properties
+        )
+
+        branches_highrx_html = apply_multiindex_format(
+            dataframe=branch_high_rx,
+            old="branch_code",
+            new="Outlet",
             styles=ug_styles,
             properties=properties
         )
@@ -206,6 +220,20 @@ def send_management_report(path, country, selection):
             header=[0, 1]
         )
 
+        branches_highrx_conv = overall_et_report.parse(
+            "branch_highrx",
+            index_col=[0],
+            header=[0, 1]
+        )
+
+        branches_highrx_html = apply_multiindex_format(
+            dataframe=branches_highrx_conv,
+            old="branch_code",
+            new="Outlet",
+            styles=ug_styles,
+            properties=properties
+        )
+
         overall_et_html = apply_multiindex_format(
             dataframe=overall_et_conv,
             new="Country",
@@ -271,24 +299,19 @@ def send_management_report(path, country, selection):
         summary_higrx_html=summary_higrx_html,
         branches_views_html=branches_views_html,
         branches_reg_summary_html=branches_reg_summary_html,
-        weekly_monthly = weekly_monthly
+        weekly_monthly = weekly_monthly,
+        branches_highrx_html = branches_highrx_html
     )
 
 
-    receiver_email = [
-    'kush@optica.africa',
-    'wazeem@optica.africa',
-    'yuri@optica.africa',
-    'naveed@optica.africa',
-    'bravon@optica.africa',
-    'maxwell@optica.africa',
-    'naveed@optica.africa',
-    'cavin@optica.africa',
-    'joseph.oluoch@optica.africa',
-    'kimstone@optica.africa',
-    'wairimu@optica.africa',
-    'ian.gathumbi@optica.africa'
-    ]
+    if country == "Test":
+        receiver_email = test
+    elif country == "Kenya":
+        receiver_email = kenya
+    elif country == "Uganda":
+        receiver_email = uganda
+    else:
+        return
 
 
     email_message = MIMEMultipart("alternative")

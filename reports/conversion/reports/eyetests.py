@@ -45,6 +45,14 @@ def create_eyetests_conversion(data, country, path, selection):
             cols=["%Conversion", "conversion", "code", "ETs"]
         )
 
+        branch_high_rx = create_weeky_branch_conversion(
+            conversions=high_rx_data,
+            index="branch_code",
+            week_range="week range",
+            values=["code", "conversion"],
+            cols=["%Conversion", "conversion", "code", "ETs"]
+        )
+
         last_date_range = summary_weekly_conv.columns.get_level_values(0)[-1]
         non_conversions = conversions[
             (conversions["conversion"] == 0) &
@@ -52,6 +60,7 @@ def create_eyetests_conversion(data, country, path, selection):
         ]
 
         non_conversions_data = non_conversions.rename(columns={
+            #Rename the columns so they can be easy to read.
             "code": "ET Code",
             "cust_code": "Customer Code",
             "create_date": "ET Date",
@@ -74,25 +83,29 @@ def create_eyetests_conversion(data, country, path, selection):
         })
 
         non_conversions_data = non_conversions_data[[
-        "ET Code",
-        "ET Date",
-        "ET Time",
-        "Branch",
-        "Opthom Name",
-        "Customer Code",
-        "ET Type",
-        "RX",
-        "Customer Type",
-        "Handed Over To",
-        "RX Last Viewed By",
-        "View Date",
-        "Order Converted",
-        "Date Converted",
-        "Days to Convert",
-        "Order Created",
-        "Order Created On",
-        "Order Cancelled",
-        "Order Status"
+            #At this point we are selection only the columns that are
+            #necessary to the branches and the management.
+            #You can alway add an extra column whenever requested by the branch
+            # and / or the management.
+            "ET Code",
+            "ET Date",
+            "ET Time",
+            "Branch",
+            "Opthom Name",
+            "Customer Code",
+            "ET Type",
+            "RX",
+            "Customer Type",
+            "Handed Over To",
+            "RX Last Viewed By",
+            "View Date",
+            "Order Converted",
+            "Date Converted",
+            "Days to Convert",
+            "Order Created",
+            "Order Created On",
+            "Order Cancelled",
+            "Order Status"
         ]]
 
         weekly_data = conversions[conversions["week range"] == last_date_range]
@@ -138,8 +151,12 @@ def create_eyetests_conversion(data, country, path, selection):
             summary_weekly_conv.to_excel(writer, sheet_name="Summary_Conversion")
             weekly_et_conv.to_excel(writer, sheet_name="Branches_Conversion")
             weekly_highrx_conv.to_excel(writer, sheet_name="Highrx_Conversion")
+            branch_high_rx.to_excel(writer, sheet_name="high_rx_branch")
             non_conversions_data.sort_values(by="Branch").to_excel(
-                writer, sheet_name="Non Conversions", index=False)
+                writer, 
+                sheet_name="Non Conversions", 
+                index=False
+            )
 
         with pd.ExcelWriter(f"{path}conversion/eyetests/sales_persons.xlsx") as writer:
             for group, dataframe in ewc_conversion.groupby("Outlet"):
@@ -169,9 +186,8 @@ def create_eyetests_conversion(data, country, path, selection):
             (conversions["Month"] == second_month)
         ]
 
-
         country_conversion = create_monthly_summary(
-            data=conversions,
+            data=monthly_data,
             values=["code", "conversion"],
             rename={
                 "code": "ETs",
@@ -181,7 +197,7 @@ def create_eyetests_conversion(data, country, path, selection):
         )
 
         branch_conversion = create_monthly_conversion(
-            data=conversions,
+            data=monthly_data,
             index="branch_code",
             values=["code", "conversion"],
             rename={
@@ -190,7 +206,7 @@ def create_eyetests_conversion(data, country, path, selection):
             }
         )
 
-        high_rx_data = conversions[conversions["RX"] == "High Rx"]
+        high_rx_data = monthly_data[monthly_data["RX"] == "High Rx"]
 
         high_rx_conversion = create_monthly_summary(
             data=high_rx_data,
@@ -202,9 +218,20 @@ def create_eyetests_conversion(data, country, path, selection):
             country="Kenya"
         )
 
-        non_conversions = conversions[
-            (conversions["conversion"] == 0) &
-            (conversions["Month"] == second_month)
+        
+        branch_highrx_conversion = create_monthly_conversion(
+            data=high_rx_data,
+            index="branch_code",
+            values=["code", "conversion"],
+            rename={
+                "code": "ETs",
+                "conversion": "Converted"
+            }
+        )
+
+        non_conversions = monthly_data[
+            (monthly_data["conversion"] == 0) &
+            (monthly_data["Month"] == monthly_data)
         ]
 
         non_conversions_data = non_conversions.rename(columns={
@@ -230,33 +257,37 @@ def create_eyetests_conversion(data, country, path, selection):
         })
 
         non_conversions_data = non_conversions_data[[
-        "ET Code",
-        "ET Date",
-        "ET Time",
-        "Branch",
-        "Opthom Name",
-        "Customer Code",
-        "ET Type",
-        "RX",
-        "Customer Type",
-        "Handed Over To",
-        "RX Last Viewed By",
-        "View Date",
-        "Order Converted",
-        "Date Converted",
-        "Days to Convert",
-        "Order Created",
-        "Order Created On",
-        "Order Cancelled",
-        "Order Status"
+            "ET Code",
+            "ET Date",
+            "ET Time",
+            "Branch",
+            "Opthom Name",
+            "Customer Code",
+            "ET Type",
+            "RX",
+            "Customer Type",
+            "Handed Over To",
+            "RX Last Viewed By",
+            "View Date",
+            "Order Converted",
+            "Date Converted",
+            "Days to Convert",
+            "Order Created",
+            "Order Created On",
+            "Order Cancelled",
+            "Order Status"
         ]]
 
         with pd.ExcelWriter(f"{path}conversion/eyetests/overall.xlsx") as writer:
             country_conversion.to_excel(writer, sheet_name="Monthly_Conversion")
             branch_conversion.to_excel(writer, sheet_name="Branches_Conversion")
             high_rx_conversion.to_excel(writer, sheet_name="Highrx_Conversion")
+            branch_highrx_conversion.to_excel(writer, sheet_name="branch_highrx")
             non_conversions_data.sort_values(by="Branch").to_excel(
-                writer, sheet_name="Non Conversions", index=False)
+                writer, 
+                sheet_name="Non Conversions", 
+                index=False
+            )
             
         with pd.ExcelWriter(f"{path}conversion/eyetests/non_conversions.xlsx") as writer:
             non_conversions_data.to_excel(writer, sheet_name = "Master", index = False)

@@ -80,6 +80,11 @@ conversion_html = """
                                 <br><br>
                                     <table>{summary_higrx_html}</table>
                                 </li>
+                                <br><br>
+                                <li><b>High RX {weekly_monthly} Conversion Comparison per Branch.</b>
+                                <br><br>
+                                <table>{branches_highrx_html}</table>
+                                </li>
                             </ol>
                         </li>
 
