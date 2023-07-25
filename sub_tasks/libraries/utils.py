@@ -59,6 +59,8 @@ def fetch_gsheet_data():
     sheet_orderstodrop = service_key.open_by_key('1cnpNo85Hncf9cdWBfkQ1dn0TYnGfs-PjVGp1XMjk2Wo')
     OrdersWithIssues = pd.DataFrame(sheet_orderstodrop[0].get_all_records())    
     ITRWithIssues = pd.DataFrame(sheet_orderstodrop[2].get_all_records()) 
+    orders_to_drop = service_key.open_by_key("1HQ_y1omRXpV_KxDuUK2kEbgIHmVeIxqM1LxxHH8up4o")
+    orders_drop = pd.DataFrame(orders_to_drop.worksheet_by_title("Kenya").get_all_records())["Order Number"].to_list()
     
     return {
         'staff': staff,
@@ -73,7 +75,8 @@ def fetch_gsheet_data():
         'rw_srm_rm': rw_srm_rm,
         'orders_with_issues': OrdersWithIssues,
         'itrs_with_issues' : ITRWithIssues,
-        'department_emails' : department_emails
+        'department_emails' : department_emails,
+        'orders_drop': orders_drop
         }
 
 

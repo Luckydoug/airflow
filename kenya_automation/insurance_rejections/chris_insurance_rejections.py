@@ -22,6 +22,8 @@ from workalendar.africa import Kenya
 import pygsheets
 import mysql.connector as database
 import urllib.parse
+import dotenv
+import os
 
 ##Others
 import os
@@ -53,8 +55,8 @@ print(start_date)
 print(end_date)
 start_date = return_report_daterange(selection)
 
-# start_date = '2023-07-10'
-# end_date = '2023-07-16'
+# start_date = '2023-07-17'
+# end_date = '2023-07-23'
 
 def rejections():
     branch_data = fetch_gsheet_data()["branch_data"]
@@ -231,9 +233,9 @@ def rejections():
     to_date = get_todate()
     # to_date = '2023-06-01'
     # till_date = '2023-06-30'
-    sender_email = 'wairimu@optica.africa'
+    sender_email = os.getenv("gathumbi_email")
     # receiver_email = 'wairimu@optica.africa'
-    receiver_email = ['wairimu@optica.africa','christopher@optica.africa']
+    receiver_email = ['wairimu@optica.africa','christopher@optica.africa','ian.gathumbi@optica.africa']
     email_message = MIMEMultipart()
     email_message["From"] = sender_email
     email_message["To"] = r','.join(receiver_email)
@@ -249,7 +251,7 @@ def rejections():
 
     smtp_server = smtplib.SMTP("smtp.gmail.com", 587)
     smtp_server.starttls()
-    smtp_server.login(sender_email, "maureen!!3636")
+    smtp_server.login(sender_email, os.getenv("gathumbi_password"))
     text = email_message.as_string()
     smtp_server.sendmail(sender_email, receiver_email, text)
     smtp_server.quit()

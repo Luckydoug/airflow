@@ -28,7 +28,7 @@ drafts_html = """
             </div>
 
             <div class = "draft">
-                <h4>3) Insurance (Draft to Upload) time taken</h4>
+                <h4>3) Insurance Draft to Upload %Efficiency (orders-on-time / total_orders * 100)</h4>
                 <table>{draft_html}</table>
             </div>
 
