@@ -27,7 +27,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 SessionId = login()
 
-# FromDate = '2023/04/01'
+# FromDate = '2023/06/01'
 # ToDate = '2023/04/30'
 
 today = date.today()

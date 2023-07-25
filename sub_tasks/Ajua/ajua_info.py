@@ -15,11 +15,11 @@ from sub_tasks.data.connect import (pg_execute, engine)
 SessionId = login()
 
 
-FromDate = '2023/01/01'
+FromDate = '2023/06/01'
 # ToDate = '2023/12/31'
 
 today = date.today()
-pastdate = today - timedelta(days=1)
+# pastdate = today - timedelta(days=1)
 # FromDate = pastdate.strftime('%Y/%m/%d')
 ToDate = date.today().strftime('%Y/%m/%d')
 
