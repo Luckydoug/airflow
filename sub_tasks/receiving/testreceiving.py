@@ -94,18 +94,25 @@ def receiving():
     thikaroad = riders[['trip_date','trip','thika_time_back_at_hq']]
     thika = thika[['Date','Trip','Thika Branches']].rename(columns={'Date':'trip_date','Trip':'trip'})
     thi = pd.merge(thikaroad, thika, on=['trip_date','trip'], how='left')
-    print(thi)
+    print(thi[thi['trip_date'] == '2023-07-25'])
 
     # Merge based on the date and branch
     thikas = thi['Thika Branches'].to_list()
     thika = receiving[receiving['ods_outlet'].isin(thikas)]
+    print('printed')
+    print(thika)
+    print(thi)
+    print(thi[thi['trip_date'] == '2023-07-25'])
     thika.sort_values(by=['odsc_date'], ascending=True, inplace=True)
-    print(thika['doc_no'].nunique())
+    # print(thika['doc_no'].nunique())
 
 
     # Thika Receiving
     thika = pd.merge(thika, thi, left_on=['odsc_date','ods_outlet'], right_on=['trip_date','Thika Branches'], how='left')
-    print(thika['doc_no'].nunique())
+    # print(thika['doc_no'].nunique())
+    print('Thika orders printed')
+    print('Thika')
+    print(thika[thika['doc_no'] == '232804866'])
 
     # Selecting the trip that came with the orders
     thika['thika_time_back_at_hq2'] = thika.groupby('doc_no', as_index=False)['thika_time_back_at_hq'].shift(-1)
@@ -408,8 +415,9 @@ def receiving():
     thikatown['rider5_thikatown_at_hq2']= pd.to_datetime(thikatown['rider5_thikatown_at_hq2']).dt.time
 
     # Pick the correct trip the orders came with 
+    print(thikatown[thikatown['doc_no'] == 232804874]) 
     thikatown['CorrectTrip'] = np.where((thikatown['odsc_time'] >= thikatown['rider5_thikatown_at_hq']) & (thikatown['odsc_time'] <= thikatown['rider5_thikatown_at_hq2']) | (thikatown['odsc_time'] >= thikatown['rider5_thikatown_at_hq']) & (thikatown['rider5_thikatown_at_hq2'].isnull()),1,0)
-    print(thikatown)
+    print(thikatown)    
     thikatown['region'] = 'Rider 5 - Thika Town'
 
 

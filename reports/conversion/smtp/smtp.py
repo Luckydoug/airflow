@@ -428,35 +428,38 @@ def send_branches_report(path, branch_data, selection):
                 if branch in eyetests_non_conversions.sheet_names:
                     branch_export = eyetests_non_conversions.parse(branch, index_col=False)
                     save_file(
-                        email_message, 
-                        branch_export, 
-                        branch, branch_name, 
-                        "EyeTests Non Conversions.xlsx", 
-                        f"{path}conversion/eyetests/",
+                        email_message=email_message, 
+                        reports = {
+                            "Non Converted": branch_export, 
+                        }, 
+                        branch_name= branch_name, 
+                        file_name="EyeTests Non Conversions.xlsx", 
+                        path = f"{path}conversion/eyetests/",
                     )
-                
                 if branch in registrations_non_conversions.sheet_names:
                     branch_export = registrations_non_conversions.parse(branch, index_col=False)
                     save_file(
-                        email_message, 
-                        branch_export, 
-                        branch, branch_name, 
-                        "Registrations Non Conversions.xlsx", 
-                        f"{path}conversion/registrations/",
+                        email_message=email_message, 
+                        reports = {
+                            "Non Converted": branch_export, 
+                        }, 
+                        branch_name= branch_name, 
+                        file_name="Registrations Non Conversions.xlsx", 
+                        path = f"{path}conversion/registrations/",
                     )
                 
                 if branch in views_non_conversions.sheet_names:
                     branch_export = views_non_conversions.parse(branch, index_col=False)
                     save_file(
-                        email_message, 
-                        branch_export, 
-                        branch, 
-                        branch_name, 
-                        "ViewRX Non Conversions.xlsx",  
+                        email_message=email_message, 
+                        reports = {
+                            "Non Converted": branch_export, 
+                        }, 
+                        branch_name= branch_name, 
+                        file_name="ViewRX Non Conversions.xlsx", 
                         path = f"{path}conversion/viewrx/",
                     )
-                    
-
+    
                 context = ssl.create_default_context()
                 with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
                     server.login(your_email, password)

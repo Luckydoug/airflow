@@ -19,4 +19,8 @@ def get_kpi_dateranges():
     start_date = today - timedelta(days=7)
     end_date = yesterday
     
-    return first_day_of_month, start_date, end_date
+    return (
+        first_day_of_month.strftime("%Y-%m-%d"), 
+        start_date.strftime("%Y-%m-%d"), 
+        end_date.strftime("%Y-%m-%d")
+    )

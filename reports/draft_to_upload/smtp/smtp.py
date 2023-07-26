@@ -700,6 +700,7 @@ def send_to_branches(branch_data, selection, path, filename):
                     rm_email,
                     "duncan.muchai@optica.africa",
                     "susan@optica.africa",
+                    "insuranceoh@optica.africa",
                     branch_email
                 ]
 
