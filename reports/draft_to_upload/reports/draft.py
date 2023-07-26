@@ -79,6 +79,8 @@ def create_draft_upload_report(data_orders, daywise_data, mtd_data, selection,st
     final_data_orders = final_data_orders[final_data_orders["Insurance Company"] != drop]
     final_data_orders = final_data_orders.drop_duplicates(subset=["Order Number"])
 
+    daywise_data["Date"] = pd.to_datetime(daywise_data["Date"], format="%Y-%m-%d").dt.date
+    daywise_data["Date"] = daywise_data["Date"].astype(str)
     daywise_pivot = pd.pivot_table(
         daywise_data,
         index="Outlet",

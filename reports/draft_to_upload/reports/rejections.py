@@ -125,7 +125,7 @@ def create_rejection_report(
             index=["Outlet", "Order Creator"],
             aggfunc="count",
             values="Order Number"
-        ).reset_index().rename(columns={"Order Number": "Total Orders"})
+        ).reset_index().rename(columns={"Order Number": "Total Insurance Orders"})
 
         daily_rejections = rejections_orders[rejections_orders["Date"] == start_date]
         if not len(daily_rejections):
@@ -155,7 +155,7 @@ def create_rejection_report(
             how="outer"
         ).fillna(0)
 
-        final_ewc_pivot["%Rejected"] = round((final_ewc_pivot["Count of Rejections"] / final_ewc_pivot["Total Orders"])* 100, 0).replace([np.inf, -np.inf], np.nan).fillna(0).astype(int)
+        final_ewc_pivot["%Rejected"] = round((final_ewc_pivot["Count of Rejections"] / final_ewc_pivot["Total Insurance Orders"])* 100, 0).replace([np.inf, -np.inf], np.nan).fillna(0).astype(int)
         daily_rejections_branches = pd.merge(
             branch_data[["Outlet", "RM", "SRM"]],
             daily_rejections_pivot,

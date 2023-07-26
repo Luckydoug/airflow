@@ -281,13 +281,15 @@ def attach_file(email_message, filename, name):
     email_message.attach(file_attachment)
 
 
-def save_file(email_message, non_converted, branch, branch_name, report, path):
-    filename = f"{path}{branch_name} {report}"
-    writer = pd.ExcelWriter(filename, engine='xlsxwriter')
-    non_converted.to_excel(writer, sheet_name='Data', index=False)
+def save_file(email_message, reports, branch_name, file_name, path):
+    filename = f"{path}{branch_name} {file_name}"
+    with pd.ExcelWriter(filename) as writer:
+       for report_name, report in reports.items():
+           report.to_excel(writer, sheet_name = report_name, index = False)
+        
     writer.save()
     writer.close()
-    attach_file(email_message, filename, name=f"{branch_name} {report}")
+    attach_file(email_message, filename, name=f"{branch_name} {file_name}")
 
 
 def get_comparison_months():
@@ -672,8 +674,6 @@ def apply_multiindex_format(dataframe, styles, properties, new, old):
     #     dataframe = dataframe.set_index(existing_columns)
     dataframe_html = dataframe.to_html()
     return dataframe_html
-
-
 
 
 def style_dataframe(dataframe, styles, properties):

@@ -116,6 +116,7 @@ def update_calculated_field():
     controldelay = pd.pivot_table(control_delay, index=['Hour', 'Doc No'], values='Time Min', aggfunc='mean', fill_value=0)
     print('Let us print controldelay')
     print(controldelay)
+
     """Cut Off"""
     control['Time Taken'] = control.apply 
     control['15 min'] = control['Time Min'].apply(lambda x: 1 if x > 15 else 0)
@@ -331,13 +332,13 @@ def update_calculated_field():
     cutlensstore = pd.merge(cutlensstore, cuttoff4, on='dept')
     print(cutlensstore)
     print('lens Store Calculated')
-
+    print(controldelay)
 
     """Save In Excel """
     with pd.ExcelWriter(r"/home/opticabi/Documents/optica_reports/order_efficiency/order efficiency results.xlsx", engine='xlsxwriter') as writer:
         controlpivot.to_excel(writer, sheet_name='Control', index=True)
         controldelay.to_excel(writer, sheet_name='Control',
-                            index=False, startrow=15)
+                            index=True, startrow=15)
         cutcontrol.to_excel(writer, sheet_name='Control', index=True, startrow=9)
         designerpivot.to_excel(writer, sheet_name='Designer', index=True)
         designerdelay.to_excel(writer, sheet_name='Designer',
@@ -369,4 +370,4 @@ def update_calculated_field():
 
 
 
-update_calculated_field()    
+# update_calculated_field()    

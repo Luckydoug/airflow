@@ -43,10 +43,12 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection):
     sales_persons = f"{path}draft_upload/draft_to_upload_sales_efficiency.xlsx"
     branches = f"{path}draft_upload/draft_to_upload_branch_efficiency.xlsx"
     branches_data = f"{path}/draft_upload/efficiency_raw_data.xlsx"
+    branches_mtd = f"{path}draft_upload/draft_to_upload.xlsx"
 
     sales_persons_report = pd.ExcelFile(sales_persons)
     branches_report = pd.ExcelFile(branches)
     export_data = pd.ExcelFile(branches_data)
+    mtd_report = pd.ExcelFile(branches_mtd)
 
     if not assert_date_modified([sales_persons, branches, branches_data]):
         return
@@ -64,6 +66,8 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection):
 
                 sales_report = pd.DataFrame(sales_persons_report.parse(branch, index_col=False))
                 branch_report = pd.DataFrame(branches_report.parse(branch, index_col=False))
+                all_mtd = mtd_report.parse("mtd-update", index_col=False)
+                branch_mtd = all_mtd[all_mtd["Outlet"] == branch]
 
                 sales_style = sales_report.style.hide_index().applymap(
                     highlight_efficiency, subset=[f"% Efficiency (Target: {target} mins)"]
@@ -80,7 +84,7 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection):
                 
                 if not len(branch_export):
                     color = "green"
-                    message = "You have no late orders for the above period. Thanks for maintaining 100% efficiency"
+                    message = "You have no late orders for the above period. Thanks for maintaining 100% efficiency."
                 else:
                     color = "red"
                     message = "Please find the attached late orders data."
@@ -118,6 +122,8 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection):
                 else:
                     receiver_email = [rm_email, branch_email]
 
+                receiver_email = ["tstbranch@gmail.com"]
+
                 if selection == "Daily":
                     subject = f"{branch_name} Draft to Upload Efficiency Report for {todate}"
                 elif selection == "Weekly":
@@ -133,7 +139,17 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection):
                 email_message.attach(MIMEText(html, "html"))
 
                 if len(branch_export):
-                    save_file(email_message, branch_export, branch, branch_name, "Late Orders.xlsx", f"{path}draft_upload/")
+                    save_file(
+                        email_message=email_message, 
+                        reports = {
+                            "MTD-Update": branch_mtd, 
+                            "Late Orders": branch_export
+                        }, 
+                        branch_name= branch_name, 
+                        file_name="Insurance Efficiency.xlsx", 
+                        path=f"{path}draft_upload/",
+                    )
+
                 else:
                     continue
 

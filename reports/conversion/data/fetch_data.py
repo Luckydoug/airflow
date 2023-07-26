@@ -24,6 +24,7 @@ def fetch_eyetests_conversion(engine, database, start_date, end_date, users, use
         and a.create_date::date >=  %(From)s
         and a.create_date::date <= %(To)s
         and a.branch_code not in ('0MA','HOM','null', 'MUR')
+        and a.cust_code <> 'U10000002';
 
         """
 
@@ -60,8 +61,9 @@ def fetch_registrations_conversion(engine, database, start_date, end_date, users
     where
     conv.cust_createdon::date >=  %(From)s
     and conv.cust_createdon::date <= %(To)s
-    and conv.cust_outlet not in ('0MA','HOM','null', 'MUR')
+    and conv.cust_outlet not in ('0MA','HOM','null')
     and conv.cust_code <> 'U10000825'
+    and conv.cust_code <> 'U10000002'
     """
 
     data = pd.read_sql_query(
