@@ -438,7 +438,7 @@ def create_net_sales():
 
     smtp_server = smtplib.SMTP("smtp.gmail.com", 587)
     smtp_server.starttls()
-    smtp_server.login(sender_email, "maureen!!3636")
+    smtp_server.login(sender_email, "maureen@@3636")
     text = email_message.as_string()
     smtp_server.sendmail(sender_email, receiver_email, text)
     smtp_server.quit()

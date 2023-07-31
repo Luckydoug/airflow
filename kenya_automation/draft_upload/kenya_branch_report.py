@@ -102,6 +102,7 @@ mtd_efficiency = fetch_mtd_efficiency(
 
 def build_branches_efficiency():
     branch_data = fetch_gsheet_data()["branch_data"]
+    orders = fetch_gsheet_data()["orders_drop"]
     create_draft_upload_report(
         data_orders=data_orders,
         mtd_data=mtd_efficiency,
@@ -111,6 +112,7 @@ def build_branches_efficiency():
         target=target,
         branch_data=branch_data,
         path=path,
+        orders_drop=orders,
         drop="KENYA PIPELINE COMPANY"
     )
 

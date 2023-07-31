@@ -9,7 +9,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from sub_tasks.libraries.styles import (ug_styles, properties)
 from reports.conversion.html.html import (conversion_html, branches_html)
-from reports.conversion.smtp.emails import (uganda, kenya, test)
+from reports.conversion.smtp.emails import (uganda, kenya, test, rwanda)
 from sub_tasks.libraries.utils import (
     save_file,
     get_todate,
@@ -310,6 +310,8 @@ def send_management_report(path, country, selection):
         receiver_email = kenya
     elif country == "Uganda":
         receiver_email = uganda
+    elif country == "Rwanda":
+        receiver_email = rwanda
     else:
         return
 
@@ -418,6 +420,7 @@ def send_branches_report(path, branch_data, selection):
                         branch_rm,
                         branch_email
                     ]
+
 
                 email_message = MIMEMultipart("alternative")
                 email_message["From"] = your_email

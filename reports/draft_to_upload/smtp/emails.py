@@ -22,6 +22,7 @@ kenya_daily = [
     'cavin@optica.africa',
     'joseph.oluoch@optica.africa',
     'kimstone@optica.africa',
+    'larry.larsen@optica.africa',
     'wairimu@optica.africa',
     'peter.maina@optica.africa' 
 ]
@@ -38,6 +39,7 @@ kenya_weekly = [
     'cavin@optica.africa',
     'joseph.oluoch@optica.africa',
     'kimstone@optica.africa',
+    'larry.larsen@optica.africa',
     'wairimu@optica.africa',
     'peter.maina@optica.africa' 
 ]
@@ -54,6 +56,7 @@ kenya_monthly = [
     'cavin@optica.africa',
     'joseph.oluoch@optica.africa',
     'kimstone@optica.africa',
+    'larry.larsen@optica.africa',
     'wairimu@optica.africa',
     'peter.maina@optica.africa' 
 ]

@@ -22,7 +22,7 @@ from reports.conversion.smtp.smtp import (
 
 database = "mabawa_mviews"
 engine = createe_engine()
-selection = "Weekly"
+selection = get_report_frequency()
 start_date, end_date = return_conversion_daterange(selection=selection)
 
 views_conv = fetch_views_conversion(
@@ -112,4 +112,3 @@ Optica Data Team
 Let's keep it flowing
 
 """
-

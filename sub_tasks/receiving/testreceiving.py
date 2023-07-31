@@ -38,7 +38,8 @@ def create_receivingdata():
     truncate mabawa_staging.source_receiving;
     insert into mabawa_staging.source_receiving
     SELECT "DocEntry", "Order No.", odsc_date::date, odsc_time, "Customer Code", "Normal(Or)Repair Order", "Status", odsc_status, "Order Criteria Status", odsc_createdby, "Order Total Amount", "Outlet"
-    FROM mabawa_mviews.v_receivingdata;     
+    FROM mabawa_mviews.v_receivingdata
+    where "Order Criteria Status" not in ('Spare Part from HQ');     
     """   
     query = pg_execute(query)
 
@@ -46,10 +47,13 @@ def create_receivingdata():
 
 
 def receiving():
+    today = datetime.date.today()
+    yesterday = today - datetime.timedelta(days=2)
 
     receiving = pd.read_sql("""
     SELECT "DocEntry", "Order No.", odsc_date::date, odsc_time, "Customer Code", "Normal(Or)Repair Order", "Status", odsc_status,"Order Criteria Status",odsc_createdby, "Order Total Amount", "Outlet"
-    FROM mabawa_staging.source_receiving;
+    FROM mabawa_staging.source_receiving
+    where "Order Criteria Status" not in ('Spare Part from HQ');
     """,con=engine)
 
     print(receiving)
@@ -94,25 +98,25 @@ def receiving():
     thikaroad = riders[['trip_date','trip','thika_time_back_at_hq']]
     thika = thika[['Date','Trip','Thika Branches']].rename(columns={'Date':'trip_date','Trip':'trip'})
     thi = pd.merge(thikaroad, thika, on=['trip_date','trip'], how='left')
-    print(thi[thi['trip_date'] == '2023-07-25'])
+    thi['trip_date'] = pd.to_datetime(thi['trip_date']).dt.date
+    thi['Thika Branches'] = thi['Thika Branches'].str.strip()
+    # print(thi[thi['trip_date'] == '2023-07-27'])
 
     # Merge based on the date and branch
-    thikas = thi['Thika Branches'].to_list()
+    thikabranches = thi[thi['trip_date'] == yesterday]
+    thikas = thikabranches['Thika Branches'].to_list()
     thika = receiving[receiving['ods_outlet'].isin(thikas)]
+    thika['odsc_date'] = pd.to_datetime(thika['odsc_date']).dt.date
     print('printed')
     print(thika)
     print(thi)
-    print(thi[thi['trip_date'] == '2023-07-25'])
+    print('order')
     thika.sort_values(by=['odsc_date'], ascending=True, inplace=True)
-    # print(thika['doc_no'].nunique())
 
 
     # Thika Receiving
-    thika = pd.merge(thika, thi, left_on=['odsc_date','ods_outlet'], right_on=['trip_date','Thika Branches'], how='left')
-    # print(thika['doc_no'].nunique())
+    thika = pd.merge(thika, thi, left_on=['odsc_date','ods_outlet'], right_on=['trip_date','Thika Branches'], how='right')
     print('Thika orders printed')
-    print('Thika')
-    print(thika[thika['doc_no'] == '232804866'])
 
     # Selecting the trip that came with the orders
     thika['thika_time_back_at_hq2'] = thika.groupby('doc_no', as_index=False)['thika_time_back_at_hq'].shift(-1)
@@ -124,8 +128,15 @@ def receiving():
     thika['thika_time_back_at_hq']= pd.to_datetime(thika['thika_time_back_at_hq']).dt.time
     thika['thika_time_back_at_hq2']= pd.to_datetime(thika['thika_time_back_at_hq2']).dt.time
 
+    thika['trip'] = thika['trip'].str.strip()
+    thika['thika_time_back_at_hq'] = np.where((thika['odsc_time'] < thika['thika_time_back_at_hq']) & (thika['trip'] == "Trip 1"),
+                                                      (pd.to_datetime('09:00:00').time()),thika['thika_time_back_at_hq'])
+
     # Pick the correct trip the orders came with 
-    thika['CorrectTrip'] = np.where((thika['odsc_time'] >= thika['thika_time_back_at_hq']) & (thika['odsc_time'] <= thika['thika_time_back_at_hq2']) | (thika['odsc_time'] >= thika['thika_time_back_at_hq']) & (thika['thika_time_back_at_hq2'].isnull()),1,0)
+    thika['CorrectTrip'] = np.where((thika['odsc_time'] >= thika['thika_time_back_at_hq']) & 
+                                    (thika['odsc_time'] <= thika['thika_time_back_at_hq2']) | 
+                                    (thika['odsc_time'] >= thika['thika_time_back_at_hq']) & 
+                                    (thika['thika_time_back_at_hq2'].isnull()),1,0)
 
     # Number of trips with a correct trip
     correct = thika[thika['CorrectTrip']==1]
@@ -141,15 +152,19 @@ def receiving():
     upcountry['Upcountry Branches'] = upcountry['Upcountry'].str.split(',')
     upcountry = upcountry.explode('Upcountry Branches')
 
-    # Thika Time back at Hq based on the full/partial trips
+    # Upcountry Time back at Hq based on the full/partial trips
     uproad = riders[['trip_date','trip','upcountry']]
     upcountry = upcountry[['Date','Trip','Upcountry Branches']].rename(columns={'Date':'trip_date','Trip':'trip'})
     up = pd.merge(uproad, upcountry, on=['trip_date','trip'], how='left')
+    up['trip_date'] = pd.to_datetime(up['trip_date']).dt.date
+    up['Upcountry Branches'] = up['Upcountry Branches'].str.strip()
 
     # Merge based on the date and branch
-    ups = up['Upcountry Branches'].to_list()
+    upcountrybranches = up[up['trip_date'] == yesterday]
+    ups = upcountrybranches['Upcountry Branches'].to_list()
     upcountry = receiving[receiving['ods_outlet'].isin(ups)]
     upcountry.sort_values(by=['odsc_date'], ascending=True, inplace=True)
+    upcountry['odsc_date'] = pd.to_datetime(upcountry['odsc_date']).dt.date
     print(upcountry['doc_no'].nunique())
 
     # Upcountry Receiving
@@ -158,7 +173,6 @@ def receiving():
 
     # Upcountry Time
     upcountry['upcountry_time'] = pd.to_datetime(upcountry['trip_date'].astype(str) + ' ' + upcountry['upcountry'].astype(str),errors = 'coerce')
-
     upcountry['region'] = 'Upcountry'
 
     # Karen Route
@@ -170,15 +184,21 @@ def receiving():
     karenroad = riders[['trip_date','trip','karen_time_back_at_hq']]
     karen = karen[['Date','Trip','Karen Branches']].rename(columns={'Date':'trip_date','Trip':'trip'})
     kar = pd.merge(karenroad, karen, on=['trip_date','trip'], how='left')
+    kar['trip_date'] = pd.to_datetime(kar['trip_date']).dt.date
+    kar['Karen Branches'] = kar['Karen Branches'].str.strip()
 
     # Merge based on the date and branch
-    karens = kar['Karen Branches'].to_list()
+    karenbranches = kar[kar['trip_date'] == yesterday]
+    karens = karenbranches['Karen Branches'].to_list()
     karen = receiving[receiving['ods_outlet'].isin(karens)]
     karen.sort_values(by=['odsc_date'], ascending=True, inplace=True)
+    karen['odsc_date'] = pd.to_datetime(karen['odsc_date']).dt.date
     print(karen['doc_no'].nunique())
 
-    # Thika Receiving
+
+    # Karen Receiving
     karen = pd.merge(karen, kar, left_on=['odsc_date','ods_outlet'], right_on=['trip_date','Karen Branches'], how='left')
+    karen['odsc_date'] = pd.to_datetime(karen['odsc_date']).dt.date
     print(karen['doc_no'].nunique())
 
     # Selecting the trip that came with the orders
@@ -187,16 +207,19 @@ def receiving():
     # Fill the nulls with the closing time for OHO 
     karen['karen_time_back_at_hq2'] = karen['karen_time_back_at_hq2'].fillna('19:00:00')
 
-    # thika['odsc_time']= pd.to_datetime(thika['odsc_time']).dt.time
     karen['karen_time_back_at_hq']= pd.to_datetime(karen['karen_time_back_at_hq'], errors='coerce').dt.time
     karen['karen_time_back_at_hq2']= pd.to_datetime(karen['karen_time_back_at_hq2'], errors='coerce').dt.time
+    
+    karen['trip'] = karen['trip'].str.strip()
+    karen['karen_time_back_at_hq'] = np.where((karen['odsc_time'] < karen['karen_time_back_at_hq']) & (karen['trip'] == "Trip 1"),
+                                                      (pd.to_datetime('09:00:00').time()),karen['karen_time_back_at_hq'])
 
     # Pick the correct trip the orders came with 
     karen['CorrectTrip'] = np.where((karen['odsc_time'] >= karen['karen_time_back_at_hq']) & (karen['odsc_time'] <= karen['karen_time_back_at_hq2']) | (karen['odsc_time'] >= karen['karen_time_back_at_hq']) & (karen['karen_time_back_at_hq2'].isnull()),1,0)
 
     karen['region'] = 'Karen'
 
-    # Thika Route
+    # EastLands Route
     eastlands = routes[['Date','Trip','Eastlands']]
     eastlands['Eastlands Branches'] = eastlands['Eastlands'].str.split(',')
     eastlands = eastlands.explode('Eastlands Branches')
@@ -205,50 +228,66 @@ def receiving():
     eastroad = riders[['trip_date','trip','eastlands_time_back_at_hq']]
     eastlands = eastlands[['Date','Trip','Eastlands Branches']].rename(columns={'Date':'trip_date','Trip':'trip'})
     east = pd.merge(eastroad, eastlands, on=['trip_date','trip'], how='left')
+    east['trip_date'] = pd.to_datetime(east['trip_date']).dt.date
+    east['Eastlands Branches'] = east['Eastlands Branches'].str.strip()
 
     # Merge based on the date and branch
-    easts = east['Eastlands Branches'].to_list()
+    eastlandsbranches = east[east['trip_date'] == yesterday]
+    easts = eastlandsbranches['Eastlands Branches'].to_list()
     eastlands = receiving[receiving['ods_outlet'].isin(easts)]
     eastlands.sort_values(by=['odsc_date'], ascending=True, inplace=True)
+    eastlands['odsc_date'] = pd.to_datetime(eastlands['odsc_date']).dt.date
     print(eastlands['doc_no'].nunique())
 
     # Thika Receiving
     eastlands = pd.merge(eastlands, east, left_on=['odsc_date','ods_outlet'], right_on=['trip_date','Eastlands Branches'], how='left')
     print(eastlands['doc_no'].nunique())
-
+    
     # Selecting the trip that came with the orders
     eastlands['eastlands_time_back_at_hq2'] = eastlands.groupby('doc_no', as_index=False)['eastlands_time_back_at_hq'].shift(-1)
 
     # Fill the nulls with the closing time for OHO 
     eastlands['eastlands_time_back_at_hq2'] = eastlands['eastlands_time_back_at_hq2'].fillna('19:00:00')
 
+
     # thika['odsc_time']= pd.to_datetime(thika['odsc_time']).dt.time
     eastlands['eastlands_time_back_at_hq']= pd.to_datetime(eastlands['eastlands_time_back_at_hq']).dt.time
     eastlands['eastlands_time_back_at_hq2']= pd.to_datetime(eastlands['eastlands_time_back_at_hq2']).dt.time
 
+    eastlands['trip'] = eastlands['trip'].str.strip()
+    eastlands['eastlands_time_back_at_hq'] = np.where((eastlands['odsc_time'] < eastlands['eastlands_time_back_at_hq']) & (eastlands['trip'] == "Trip 1"),
+                                                      (pd.to_datetime('09:00:00').time()),eastlands['eastlands_time_back_at_hq'])
     # Pick the correct trip the orders came with 
-    eastlands['CorrectTrip'] = np.where((eastlands['odsc_time'] >= eastlands['eastlands_time_back_at_hq']) & (eastlands['odsc_time'] <= eastlands['eastlands_time_back_at_hq2']) | (eastlands['odsc_time'] >= eastlands['eastlands_time_back_at_hq']) & (eastlands['eastlands_time_back_at_hq2'].isnull()),1,0)
+    eastlands['CorrectTrip'] = np.where((eastlands['odsc_time'] >= eastlands['eastlands_time_back_at_hq']) & 
+                                        (eastlands['odsc_time'] <= eastlands['eastlands_time_back_at_hq2']) | 
+                                        (eastlands['odsc_time'] >= eastlands['eastlands_time_back_at_hq']) & 
+                                        (eastlands['eastlands_time_back_at_hq2'].isnull())
+                                        ,1,0)    
 
     eastlands['region'] = 'Eastlands'
 
-    # Thika Route
+    # Mombasa Route
     mombasa = routes[['Date','Trip','Mombasa Road']]
     mombasa['Mombasa Road Branches'] = mombasa['Mombasa Road'].str.split(',')
     mombasa = mombasa.explode('Mombasa Road Branches')
 
-    # Thika Time back at Hq based on the full/partial trips
+    # Mombasa Time back at Hq based on the full/partial trips
     mombasaroad = riders[['trip_date','trip','mombasa_time_back_at_hq']]
     mombasa = mombasa[['Date','Trip','Mombasa Road Branches']].rename(columns={'Date':'trip_date','Trip':'trip'})
     msa = pd.merge(mombasaroad, mombasa, on=['trip_date','trip'], how='left')
+    msa['trip_date'] = pd.to_datetime(msa['trip_date']).dt.date
+    msa['Mombasa Road Branches'] = msa['Mombasa Road Branches'].str.strip()
 
     # Merge based on the date and branch
-    msas = msa['Mombasa Road Branches'].to_list()
+    mombasabranches = msa[msa['trip_date'] == yesterday]
+    msas = mombasabranches['Mombasa Road Branches'].to_list()
     mombasa = receiving[receiving['ods_outlet'].isin(msas)]
     mombasa.sort_values(by=['odsc_date'], ascending=True, inplace=True)
+    mombasa['odsc_date'] = pd.to_datetime(mombasa['odsc_date']).dt.date
     print(mombasa['doc_no'].nunique())
 
 
-    # Thika Receiving
+    # Mombasa Receiving
     mombasa = pd.merge(mombasa, msa, left_on=['odsc_date','ods_outlet'], right_on=['trip_date','Mombasa Road Branches'], how='left')
     print(mombasa['doc_no'].nunique())
 
@@ -261,6 +300,10 @@ def receiving():
     # thika['odsc_time']= pd.to_datetime(thika['odsc_time']).dt.time
     mombasa['mombasa_time_back_at_hq']= pd.to_datetime(mombasa['mombasa_time_back_at_hq']).dt.time
     mombasa['mombasa_time_back_at_hq2']= pd.to_datetime(mombasa['mombasa_time_back_at_hq2']).dt.time
+
+    mombasa['trip'] = mombasa['trip'].str.strip()
+    mombasa['mombasa_time_back_at_hq'] = np.where((mombasa['odsc_time'] < mombasa['mombasa_time_back_at_hq']) & (mombasa['trip'] == "Trip 1"),
+                                                      (pd.to_datetime('09:00:00').time()),mombasa['mombasa_time_back_at_hq'])
 
     # Pick the correct trip the orders came with 
     mombasa['CorrectTrip'] = np.where((mombasa['odsc_time'] >= mombasa['mombasa_time_back_at_hq']) & (mombasa['odsc_time'] <= mombasa['mombasa_time_back_at_hq2']) | (mombasa['odsc_time'] >= mombasa['mombasa_time_back_at_hq']) & (mombasa['mombasa_time_back_at_hq2'].isnull()),1,0)
@@ -276,12 +319,16 @@ def receiving():
     westlandsroad = riders[['trip_date','trip','westlands_time_back_at_hq']]
     west = westlands[['Date','Trip','Westlands Branches']].rename(columns={'Date':'trip_date','Trip':'trip'})
     we = pd.merge(westlandsroad, west, on=['trip_date','trip'], how='left')
+    we['trip_date'] = pd.to_datetime(we['trip_date']).dt.date
+    we['Westlands Branches'] = we['Westlands Branches'].str.strip()
 
 
     # Merge based on the date and branch
-    wes = we['Westlands Branches'].to_list()
+    westlandsbranches = we[we['trip_date'] == yesterday]
+    wes = westlandsbranches['Westlands Branches'].to_list()
     westlands = receiving[receiving['ods_outlet'].isin(wes)]
     westlands.sort_values(by=['odsc_date'], ascending=True, inplace=True)
+    westlands['odsc_date'] = pd.to_datetime(westlands['odsc_date']).dt.date
     print(westlands['doc_no'].nunique())
 
     # Thika Receiving
@@ -298,6 +345,10 @@ def receiving():
     westlands['westlands_time_back_at_hq']= pd.to_datetime(westlands['westlands_time_back_at_hq']).dt.time
     westlands['westlands_time_back_at_hq2']= pd.to_datetime(westlands['westlands_time_back_at_hq2']).dt.time
 
+    westlands['trip'] = westlands['trip'].str.strip()
+    westlands['westlands_time_back_at_hq'] = np.where((westlands['odsc_time'] < westlands['westlands_time_back_at_hq']) & (westlands['trip'] == "Trip 1"),
+                                                      (pd.to_datetime('09:00:00').time()),westlands['westlands_time_back_at_hq'])
+
     # Pick the correct trip the orders came with 
     westlands['CorrectTrip'] = np.where((westlands['odsc_time'] >= westlands['westlands_time_back_at_hq']) & (westlands['odsc_time'] <= westlands['westlands_time_back_at_hq2']) | (westlands['odsc_time'] >= westlands['westlands_time_back_at_hq']) & (westlands['westlands_time_back_at_hq2'].isnull()),1,0)
 
@@ -312,11 +363,15 @@ def receiving():
     rongairoad = riders[['trip_date','trip','rongai_time_back_at_hq']]
     rong = rongai[['Date','Trip','Rongai Branches']].rename(columns={'Date':'trip_date','Trip':'trip'})
     ron = pd.merge(rongairoad, rong, on=['trip_date','trip'], how='left')
+    ron['trip_date'] = pd.to_datetime(ron['trip_date']).dt.date
+    ron['Rongai Branches'] = ron['Rongai Branches'].str.strip()
 
     # Merge based on the date and branch
-    rons = ron['Rongai Branches'].to_list()
+    rongaibranches = ron[ron['trip_date'] == yesterday]
+    rons = rongaibranches['Rongai Branches'].to_list()
     rongai = receiving[receiving['ods_outlet'].isin(rons)]
     rongai.sort_values(by=['odsc_date'], ascending=True, inplace=True)
+    rongai['odsc_date'] = pd.to_datetime(rongai['odsc_date']).dt.date
     print(rongai['doc_no'].nunique())
 
     # Thika Receiving
@@ -332,6 +387,10 @@ def receiving():
     # thika['odsc_time']= pd.to_datetime(thika['odsc_time']).dt.time
     rongai['rongai_time_back_at_hq']= pd.to_datetime(rongai['rongai_time_back_at_hq']).dt.time
     rongai['rongai_time_back_at_hq2']= pd.to_datetime(rongai['rongai_time_back_at_hq2']).dt.time
+
+    rongai['trip'] = rongai['trip'].str.strip()
+    rongai['rongai_time_back_at_hq'] = np.where((rongai['odsc_time'] < rongai['rongai_time_back_at_hq']) & (rongai['trip'] == "Trip 1"),
+                                                      (pd.to_datetime('09:00:00').time()),rongai['rongai_time_back_at_hq'])
 
     # Pick the correct trip the orders came with 
     rongai['CorrectTrip'] = np.where((rongai['odsc_time'] >= rongai['rongai_time_back_at_hq']) & (rongai['odsc_time'] <= rongai['rongai_time_back_at_hq2']) | (rongai['odsc_time'] >= rongai['rongai_time_back_at_hq']) & (rongai['rongai_time_back_at_hq2'].isnull()),1,0)
@@ -350,32 +409,37 @@ def receiving():
     cbdtrip = pd.concat([cbdtrip1,cbdtrip2])
     cbd1 = cbd[['Date','Trip','CBD Branches']].rename(columns={'Date':'trip_date','Trip':'trip'})
     cbd11 = pd.merge(cbdtrip, cbd1, on=['trip_date','trip'], how='left')
-    print(cbd11)
-    print('cbd11 printed')
+    cbd11['trip_date'] = pd.to_datetime(cbd11['trip_date']).dt.date
+    cbd11['CBD Branches'] = cbd11['CBD Branches'].str.strip()
     
     # Merge based on the date and branch
-    cbds = cbd11['CBD Branches'].to_list()
+    cbdbranches = cbd11[cbd11['trip_date'] == yesterday]
+    cbds = cbdbranches['CBD Branches'].to_list()
     cbds = list(set(cbds))
-    print(cbds)
     cbd = receiving[receiving['ods_outlet'].isin(cbds)]
     cbd.sort_values(by=['odsc_date'], ascending=True, inplace=True)
+    cbd['odsc_date'] = pd.to_datetime(cbd['odsc_date']).dt.date
     print(cbd['doc_no'].nunique())
-    print(cbd)    
-    print('cbd printed')
     
     # CBD Receiving
     cbd = pd.merge(cbd, cbd11, left_on=['odsc_date','ods_outlet'], right_on=['trip_date','CBD Branches'], how='left')
     print(cbd['doc_no'].nunique())
-    print(cbd)
+    print('cdb')
+    print(cbd[cbd['doc_no'] == '23227492'])
+
     # Selecting the trip that came with the orders
     cbd['cbd_time_back_at_hq2'] = cbd.groupby('doc_no', as_index=False)['cbd_time_back_at_hq'].shift(-1)
-    print(cbd)
+
     # Fill the nulls with the closing time for OHO 
     cbd['cbd_time_back_at_hq2'] = cbd['cbd_time_back_at_hq2'].fillna('19:00:00')
 
     # thika['odsc_time']= pd.to_datetime(thika['odsc_time']).dt.time
     cbd['cbd_time_back_at_hq']= pd.to_datetime(cbd['cbd_time_back_at_hq']).dt.time
     cbd['cbd_time_back_at_hq2']= pd.to_datetime(cbd['cbd_time_back_at_hq2']).dt.time
+
+    cbd['trip'] = cbd['trip'].str.strip()
+    cbd['cbd_time_back_at_hq'] = np.where((cbd['odsc_time'] < cbd['cbd_time_back_at_hq']) & (cbd['trip'] == "Trip 1"),
+                                                      (pd.to_datetime('09:00:00').time()),cbd['cbd_time_back_at_hq'])
 
     # Pick the correct trip the orders came with 
     cbd['CorrectTrip'] = np.where((cbd['odsc_time'] >= cbd['cbd_time_back_at_hq']) & (cbd['odsc_time'] <= cbd['cbd_time_back_at_hq2']) | (cbd['odsc_time'] >= cbd['cbd_time_back_at_hq']) & (cbd['cbd_time_back_at_hq2'].isnull()),1,0)
@@ -393,16 +457,23 @@ def receiving():
     thikatownroad = riders[['trip_date','trip','rider5_thikatown_at_hq']]
     thika_town = thikatown[['Date','Trip','Thika_Town Branches']].rename(columns={'Date':'trip_date','Trip':'trip'})
     thika_trip = pd.merge(thikatownroad, thika_town, on=['trip_date','trip'], how='left')
+    thika_trip['trip_date'] = pd.to_datetime(thika_trip['trip_date']).dt.date
+    thika_trip['Thika_Town Branches'] = thika_trip['Thika_Town Branches'].str.strip()
 
     # Merge based on the date and branch
-    thika_townlist = thika_trip['Thika_Town Branches'].to_list()
+    thikatownbranches = thika_trip[thika_trip['trip_date'] == yesterday]
+    thika_townlist = thikatownbranches['Thika_Town Branches'].to_list()
+    print('thika_townlist')   
+    print(thika_townlist)
     thikatown = receiving[receiving['ods_outlet'].isin(thika_townlist)]
     thikatown.sort_values(by=['odsc_date'], ascending=True, inplace=True)
+    thikatown['odsc_date'] = pd.to_datetime(thikatown['odsc_date']).dt.date
     print(thikatown['doc_no'].nunique())
 
     # Thika Receiving
     thikatown = pd.merge(thikatown, thika_trip, left_on=['odsc_date','ods_outlet'], right_on=['trip_date','Thika_Town Branches'], how='left')
-    print(rongai['doc_no'].nunique())
+    print(thikatown[thikatown['doc_no'] == '232506685'])
+    print(thikatown['doc_no'].nunique())
 
     # Selecting the trip that came with the orders
     thikatown['rider5_thikatown_at_hq2'] = thikatown.groupby('doc_no', as_index=False)['rider5_thikatown_at_hq'].shift(-1)
@@ -414,8 +485,12 @@ def receiving():
     thikatown['rider5_thikatown_at_hq']= pd.to_datetime(thikatown['rider5_thikatown_at_hq']).dt.time
     thikatown['rider5_thikatown_at_hq2']= pd.to_datetime(thikatown['rider5_thikatown_at_hq2']).dt.time
 
+    thikatown['trip'] = thikatown['trip'].str.strip()
+    thikatown['rider5_thikatown_at_hq'] = np.where((thikatown['odsc_time'] < thikatown['rider5_thikatown_at_hq']) & (thikatown['trip'] == "Trip 1"),
+                                                      (pd.to_datetime('09:00:00').time()),thikatown['rider5_thikatown_at_hq'])
+
     # Pick the correct trip the orders came with 
-    print(thikatown[thikatown['doc_no'] == 232804874]) 
+    # print(thikatown[thikatown['doc_no'] == 232804874]) 
     thikatown['CorrectTrip'] = np.where((thikatown['odsc_time'] >= thikatown['rider5_thikatown_at_hq']) & (thikatown['odsc_time'] <= thikatown['rider5_thikatown_at_hq2']) | (thikatown['odsc_time'] >= thikatown['rider5_thikatown_at_hq']) & (thikatown['rider5_thikatown_at_hq2'].isnull()),1,0)
     print(thikatown)    
     thikatown['region'] = 'Rider 5 - Thika Town'
@@ -557,7 +632,7 @@ def create_time_difference():
 #     print(reviseddata)
     
 
-create_receivingdata()
-receiving()
-create_time_difference()
+# create_receivingdata()
+# receiving()
+# create_time_difference()
 # update_source_receiving_data()

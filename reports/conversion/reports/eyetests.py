@@ -193,7 +193,7 @@ def create_eyetests_conversion(data, country, path, selection):
                 "code": "ETs",
                 "conversion": "Converted"
             },
-            country="Kenya"
+            country=country
         )
 
         branch_conversion = create_monthly_conversion(
@@ -215,7 +215,7 @@ def create_eyetests_conversion(data, country, path, selection):
                 "code": "ETs",
                 "conversion": "Converted"
             },
-            country="Kenya"
+            country=country
         )
 
         
@@ -231,8 +231,10 @@ def create_eyetests_conversion(data, country, path, selection):
 
         non_conversions = monthly_data[
             (monthly_data["conversion"] == 0) &
-            (monthly_data["Month"] == monthly_data)
+            (monthly_data["Month"] == second_month)
         ]
+
+        print(non_conversions)
 
         non_conversions_data = non_conversions.rename(columns={
             "code": "ET Code",

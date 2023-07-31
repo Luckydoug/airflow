@@ -263,7 +263,7 @@ def daily_netsales_email_uganda_rwanda():
         )
 
     to_date = get_todate()
-    sender_email = 'wairimu@optica.africa'
+    sender_email = os.getenv("wairimu_email")
     # receiver_email = ['wairimu@optica.africa']
     receiver_email = ['wairimu@optica.africa','yuri@optica.africa','kush@optica.africa','raghav@optica.africa']
     email_message = MIMEMultipart()
@@ -286,7 +286,7 @@ def daily_netsales_email_uganda_rwanda():
 
     smtp_server = smtplib.SMTP("smtp.gmail.com", 587)
     smtp_server.starttls()
-    smtp_server.login(sender_email, "maureen!!3636")
+    smtp_server.login(sender_email, os.getenv("wairimu_password"))
     text = email_message.as_string()
     smtp_server.sendmail(sender_email, receiver_email, text)
     smtp_server.quit()

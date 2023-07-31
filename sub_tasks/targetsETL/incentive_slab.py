@@ -122,3 +122,5 @@ def fetch_sap_incentive_slab():
         create_table=False)
 
         return "insert incentive_slabs successfull"
+
+fetch_sap_incentive_slab()

@@ -111,7 +111,7 @@ def create_registrations_conversion(data, country, path, selection):
                 "Customer Code": "Customers",
                 "Conversion": "Converted"
             },
-            country="Kenya"
+            country=country
         )
 
         branch_conversion = create_monthly_conversion(

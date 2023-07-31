@@ -5,7 +5,7 @@ from reports.conversion.data.fetch_data import (
     fetch_registrations_conversion,
 )
 
-from sub_tasks.libraries.utils import (create_unganda_engine, uganda_path, fetch_gsheet_data)
+from sub_tasks.libraries.utils import (create_rwanda_engine, rwanda_path, fetch_gsheet_data)
 from reports.draft_to_upload.utils.utils import (get_report_frequency)
 from reports.conversion.reports.viewrx import (create_views_conversion)
 from reports.conversion.utils.utils import (return_conversion_daterange)
@@ -26,8 +26,8 @@ from reports.conversion.smtp.smtp import (
 #so it can create the engine for any database
 #selection can be either weekly or Monthly for this report.
 #Automatic selection is not yet implemented,
-database = "mawingu_mviews"
-engine = create_unganda_engine()
+database = "voler_mviews"
+engine = create_rwanda_engine()
 selection = get_report_frequency()
 start_date, end_date = return_conversion_daterange(selection=selection)
 
@@ -39,7 +39,7 @@ views_conv = fetch_views_conversion(
     engine=engine,
     start_date=start_date,
     end_date=end_date,
-    users="mawingu_staging",
+    users="voler_staging",
     users_table="source_users",
     view = "v_view_rx_conv"
 )
@@ -49,7 +49,7 @@ eyetests_conv = fetch_eyetests_conversion(
     engine=engine,
     start_date=start_date,
     end_date=end_date,
-    users="mawingu_staging",
+    users="voler_staging",
     users_table="source_users"
 )
 
@@ -58,63 +58,63 @@ registrations_conv = fetch_registrations_conversion(
     engine=engine,
     start_date=start_date,
     end_date=end_date,
-    users="mawingu_staging",
+    users="voler_staging",
     users_table="source_users",
     view="v_reg_conv"
 )
 
-def build_uganda_et_conversion():
+def build_rwanda_et_conversion():
     create_eyetests_conversion(
         eyetests_conv,
-        country="Uganda",
+        country="Rwanda",
         selection=selection,
-        path=f"{uganda_path}"
+        path=f"{rwanda_path}"
     )
 
-def build_uganda_reg_conversion():
+def build_rwanda_reg_conversion():
     create_registrations_conversion(
         registrations_conv,
-        country="Uganda",
-        path = f"{uganda_path}",
+        country="Rwanda",
+        path = f"{rwanda_path}",
         selection=selection
     )
 
 
-def build_uganda_viewrx_conversion():
+def build_rwanda_viewrx_conversion():
     create_views_conversion(
         views_conv,
-        country="Uganda",
+        country="Rwanda",
         selection=selection,
-        path=f"{uganda_path}"
+        path=f"{rwanda_path}"
     )
 
-def trigger_uganda_management_smtp():
+def trigger_rwanda_management_smtp():
     send_management_report(
-        path=uganda_path,
-        country="Uganda",
+        path=rwanda_path,
+        country="Rwanda",
         selection=selection
     )
 
-def trigger_uganda_branches_smtp():
-    branch_data = fetch_gsheet_data()["ug_srm_rm"]
+def trigger_rwanda_branches_smtp():
+    branch_data = fetch_gsheet_data()["rw_srm_rm"]
     send_branches_report(
-        path=uganda_path,
+        path=rwanda_path,
         branch_data=branch_data,
         selection=selection
     )
 
-def clean_uganda_registrations():
-    clean_registrations(path=uganda_path)
+def clean_rwanda_registrations():
+    clean_registrations(path=rwanda_path)
 
-def clean_uganda_eyetests():
-    clean_eyetests(path=uganda_path)
+def clean_rwanda_eyetests():
+    clean_eyetests(path=rwanda_path)
 
-def clean_uganda_views():
-    clean_views(path=uganda_path)
+def clean_rwanda_views():
+    clean_views(path=rwanda_path)
 
 
 """
-Uganda Conversion Report Airflow Automation
+Rwanda Conversion Report Airflow Automation
 Optica Data Team
 Let's keep it flowing
 

@@ -437,8 +437,8 @@ def order_efficiency_smtp():
         ##############################################################
             
         # Set up the email addresses and password. Please replace below with your email address and password
-        sender_email = 'wairimu@optica.africa'
-        yourpassword = 'maureen@@3636'
+        sender_email = os.getenv("wairimu_email")
+        yourpassword = os.getenv("wairimu_password")
         email_from = sender_email
         password = yourpassword
 
@@ -457,7 +457,7 @@ def order_efficiency_smtp():
 
         smtp_server = smtplib.SMTP("smtp.gmail.com", 587)
         smtp_server.starttls()
-        smtp_server.login(sender_email, "maureen@@3636")
+        smtp_server.login(sender_email, os.getenv("wairimu_password"))
         text = email_message.as_string()
         smtp_server.sendmail(sender_email, receiver_email, text)
         smtp_server.quit()

@@ -55,8 +55,8 @@ print(start_date)
 print(end_date)
 start_date = return_report_daterange(selection)
 
-# start_date = '2023-07-17'
-# end_date = '2023-07-23'
+# start_date = '2023-07-24'
+# end_date = '2023-07-30'
 
 def rejections():
     branch_data = fetch_gsheet_data()["branch_data"]
@@ -133,7 +133,7 @@ def rejections():
     
     branch_rejections = pd.merge(rejection,orders_pivot,on = 'Outlet',how = 'left')
     branch_rejections['% Rejected Orders'] = (branch_rejections['Rejected Orders']/branch_rejections['Total Ins Orders'])*100
-    branch_rejections['% Converted Orders'] = (branch_rejections['Rejected Orders']/branch_rejections['Converted Orders'])*100
+    branch_rejections['% Converted Orders'] = (branch_rejections['Converted Orders']/branch_rejections['Rejected Orders'])*100
     branch_rejections = branch_rejections[['Outlet','RM','SRM','Total Ins Orders','Rejected Orders','% Rejected Orders','Converted Orders','% Converted Orders']]
     branch_rejections = branch_rejections.fillna(0).replace(np.inf,0)
     print(branch_rejections)
@@ -150,7 +150,7 @@ def rejections():
 
     approvals_rej = pd.merge(approvals_rej,orders_pivot,on = 'Outlet',how = 'left')
     approvals_rej['% Rejected Orders'] = (approvals_rej['Rejected Orders']/approvals_rej['Total Ins Orders'])*100
-    approvals_rej['% Converted Orders'] = (approvals_rej['Rejected Orders']/approvals_rej['Converted Orders'])*100
+    approvals_rej['% Converted Orders'] = (approvals_rej['Converted Orders']/approvals_rej['Rejected Orders'])*100
     approvals_rej = approvals_rej[['Outlet','RM','SRM','Total Ins Orders','Rejected Orders','% Rejected Orders','Converted Orders','% Converted Orders']]
     approvals_rej = approvals_rej.fillna(0).replace(np.inf,0)
     print(approvals_rej)
@@ -167,7 +167,7 @@ def rejections():
 
     insurance_desk_rej = pd.merge(insurance_desk_rej,orders_pivot,on = 'Outlet',how = 'left')
     insurance_desk_rej['% Rejected Orders'] = (insurance_desk_rej['Rejected Orders']/insurance_desk_rej['Total Ins Orders'])*100
-    insurance_desk_rej['% Converted Orders'] = (insurance_desk_rej['Rejected Orders']/insurance_desk_rej['Converted Orders'])*100
+    insurance_desk_rej['% Converted Orders'] = (insurance_desk_rej['Converted Orders']/insurance_desk_rej['Rejected Orders'])*100
     insurance_desk_rej = insurance_desk_rej[['Outlet','RM','SRM','Total Ins Orders','Rejected Orders','% Rejected Orders','Converted Orders','% Converted Orders']]
     insurance_desk_rej = insurance_desk_rej.fillna(0).replace(np.inf,0)
     print(insurance_desk_rej)
@@ -231,15 +231,15 @@ def rejections():
         """
 
     to_date = get_todate()
-    # to_date = '2023-06-01'
-    # till_date = '2023-06-30'
+    # to_date = '2023-07-24'
+    # till_date = '2023-07-30'
     sender_email = os.getenv("gathumbi_email")
     # receiver_email = 'wairimu@optica.africa'
-    receiver_email = ['wairimu@optica.africa','christopher@optica.africa','ian.gathumbi@optica.africa']
+    receiver_email = ['wairimu@optica.africa','christopher@optica.africa','ian.gathumbi@optica.africa','andrew@optica.africa']
     email_message = MIMEMultipart()
     email_message["From"] = sender_email
     email_message["To"] = r','.join(receiver_email)
-    email_message["Subject"] = f"Insurance Desk and Approval's Rejections for {to_date}"
+    email_message["Subject"] = f"Weekly Insurance Desk and Approval's Rejections for {to_date}"
     email_message.attach(MIMEText(html, "html"))
 
     # Open the Excel file and attach it to the email

@@ -6,7 +6,8 @@ def create_google_reviews_kpi(
     pw_reviews,
     reviews_data,
     mtd_counts,
-    pw_counts
+    pw_counts,
+    path
 ):
     mtd_reviews_pivot = pd.pivot_table(
         mtd_reviews,
@@ -52,8 +53,10 @@ def create_google_reviews_kpi(
         how="right"
     ).fillna("-")
 
-    return (
-        pw_mtd_google_reviews,
-        review_count_pw_mtd,
-        reviews_data
-    )
+    with pd.ExcelWriter(f"{path}kpi/google_reviews.xlsx") as writer:
+        pw_mtd_google_reviews.to_excel(writer, sheet_name="branch_mtd_pw")
+        review_count_pw_mtd.to_excel(writer, sheet_name="count_mtd_pw")
+        reviews_data.to_excel(writer, sheet_name = "data", index = False)
+
+  
+    

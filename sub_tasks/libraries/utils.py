@@ -52,6 +52,7 @@ def fetch_gsheet_data():
     uganda_opening = pd.DataFrame(sheet.worksheet_by_title("Uganda Opening Time").get_all_records())
     ug_srm_rm = pd.DataFrame(sheet.worksheet_by_title("UG_SRM_RM").get_all_records())
     ug_working_hours = pd.DataFrame(sheet.worksheet_by_title("UG_Working_Hours").get_all_records())
+    rw_working_hours = pd.DataFrame(sheet.worksheet_by_title("RW_Working_Hours").get_all_records())
     itr_cutoff = pd.DataFrame(sheet.worksheet_by_title("ITR_Cutoffs").get_all_records())
     orders_cutoff = pd.DataFrame(sheet.worksheet_by_title("Order_Cutoffs").get_all_records())
     rw_srm_rm = pd.DataFrame(sheet.worksheet_by_title("RW_SRM_RM").get_all_records())
@@ -61,6 +62,7 @@ def fetch_gsheet_data():
     ITRWithIssues = pd.DataFrame(sheet_orderstodrop[2].get_all_records()) 
     orders_to_drop = service_key.open_by_key("1HQ_y1omRXpV_KxDuUK2kEbgIHmVeIxqM1LxxHH8up4o")
     orders_drop = pd.DataFrame(orders_to_drop.worksheet_by_title("Kenya").get_all_records())["Order Number"].to_list()
+    rwanda_opening = pd.DataFrame(sheet.worksheet_by_title("Rwanda Opening Time").get_all_records())
     
     return {
         'staff': staff,
@@ -76,7 +78,9 @@ def fetch_gsheet_data():
         'orders_with_issues': OrdersWithIssues,
         'itrs_with_issues' : ITRWithIssues,
         'department_emails' : department_emails,
-        'orders_drop': orders_drop
+        'orders_drop': orders_drop,
+        'rwanda_opening': rwanda_opening,
+        'rw_working_hours': rw_working_hours
         }
 
 
@@ -86,6 +90,7 @@ def return_sunday_truth():
     if today.weekday() == 6:
         return True
     return False
+    
 
 
 def get_yesterday_date(truth = False):

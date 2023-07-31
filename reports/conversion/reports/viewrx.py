@@ -106,7 +106,7 @@ def create_views_conversion(data, country, path, selection):
                 "DocEntry": "Views",
                 "Conversion": "Converted"
             },
-            country="Kenya"
+            country=country
         )
 
         branch_conversion = create_monthly_conversion(

@@ -5,10 +5,10 @@ def fetch_eyetests_conversion(engine, database, start_date, end_date, users, use
     et_q = f"""           
         select 
                 code, create_date, trim(to_char(create_date::date, 'Month')) as "Month", create_time, optom, optom_name, rx_type, branch_code, cust_code, status, 
-                patient_to_ophth, "RX",plano_rx, sales_employees, handed_over_to, view_doc_entry, view_date, view_creator, 
-                last_viewed_by, branch_viewed, order_converted, ods_insurance_order, order_converted_mode, date_converted, 
-                days, on_after, on_after_createdon, on_after_cancelled, on_after_status, on_after_mode, on_after_days,
-                on_before, on_before_cancelled, on_before_createdon, on_before_prescription_order, on_before_mode, reg_cust_type, mode_of_pay,
+                patient_to_ophth, "RX",plano_rx, sales_employees, handed_over_to, view_date, view_creator, 
+                last_viewed_by, branch_viewed, order_converted,  date_converted, 
+                days, on_after, on_after_createdon, on_after_cancelled, on_after_status,
+                on_before_prescription_order, on_before_mode, reg_cust_type, mode_of_pay,
                 case when "RX" = 'High Rx' then 1 else 0 end as high_rx,
                 case when "RX" = 'Low Rx' then 1 else 0 end as low_rx,
                 case when a.days <= %(Days)s then 1 else 0 end as conversion,
@@ -64,6 +64,7 @@ def fetch_registrations_conversion(engine, database, start_date, end_date, users
     and conv.cust_outlet not in ('0MA','HOM','null')
     and conv.cust_code <> 'U10000825'
     and conv.cust_code <> 'U10000002'
+    and conv.cust_campaign_master <> 'GMC'
     """
 
     data = pd.read_sql_query(

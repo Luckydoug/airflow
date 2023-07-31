@@ -1,5 +1,4 @@
 import smtplib
-import pygsheets
 from airflow.models import variable
 import ssl
 import os
@@ -7,7 +6,6 @@ import random
 from dotenv import load_dotenv
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.mime.application import MIMEApplication
 import pandas as pd
 from reports.draft_to_upload.html.html import (branch_efficiency_html)
 
@@ -120,9 +118,8 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection):
                     ]
                 
                 else:
-                    receiver_email = [rm_email, branch_email]
+                    receiver_email = [rm_email, branch_email]  
 
-                receiver_email = ["tstbranch@gmail.com"]
 
                 if selection == "Daily":
                     subject = f"{branch_name} Draft to Upload Efficiency Report for {todate}"
@@ -138,6 +135,9 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection):
                 email_message["Subject"] = subject
                 email_message.attach(MIMEText(html, "html"))
 
+                if not len(branch_export) and selection == "Daily":
+                    continue
+
                 if len(branch_export):
                     save_file(
                         email_message=email_message, 
@@ -150,8 +150,6 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection):
                         path=f"{path}draft_upload/",
                     )
 
-                else:
-                    continue
 
                 if branch_email not in return_sent_emails(log_file):
                     context = ssl.create_default_context()
