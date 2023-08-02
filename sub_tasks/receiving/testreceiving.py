@@ -48,7 +48,7 @@ def create_receivingdata():
 
 def receiving():
     today = datetime.date.today()
-    yesterday = today - datetime.timedelta(days=2)
+    yesterday = today - datetime.timedelta(days=1)
 
     receiving = pd.read_sql("""
     SELECT "DocEntry", "Order No.", odsc_date::date, odsc_time, "Customer Code", "Normal(Or)Repair Order", "Status", odsc_status,"Order Criteria Status",odsc_createdby, "Order Total Amount", "Outlet"

@@ -38,9 +38,9 @@ def return_report_daterange(selection):
     if selection == "Daily":
         today = datetime.date.today()
         if today.weekday() == 0:
-            days_to_subtract = 1
-        else:
             days_to_subtract = 2
+        else:
+            days_to_subtract = 1
         start_date = (
             today - datetime.timedelta(days=days_to_subtract)).strftime("%Y-%m-%d")
     if selection == "Weekly":

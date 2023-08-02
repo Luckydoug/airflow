@@ -45,6 +45,7 @@ conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", p
 
 
 selection = get_report_frequency()
+print(selection)
 if selection == 'Daily':
     start_date = return_report_daterange(selection)
     end_date = start_date
@@ -55,8 +56,10 @@ print(start_date)
 print(end_date)
 start_date = return_report_daterange(selection)
 
-# start_date = '2023-07-24'
-# end_date = '2023-07-30'
+print(datetime.datetime.today())
+print(end_date)
+# start_date = '2023-08-01'
+# end_date = '2023-08-01'
 
 def rejections():
     branch_data = fetch_gsheet_data()["branch_data"]
@@ -231,15 +234,15 @@ def rejections():
         """
 
     to_date = get_todate()
-    # to_date = '2023-07-24'
-    # till_date = '2023-07-30'
-    sender_email = os.getenv("gathumbi_email")
-    # receiver_email = 'wairimu@optica.africa'
-    receiver_email = ['wairimu@optica.africa','christopher@optica.africa','ian.gathumbi@optica.africa','andrew@optica.africa']
+    # to_date = '2023-07-01'
+    # till_date = '2023-07-31'
+    sender_email = os.getenv("wairimu_email")
+    receiver_email = 'wairimu@optica.africa'
+    # receiver_email = ['wairimu@optica.africa','christopher@optica.africa','andrew@optica.africa']
     email_message = MIMEMultipart()
     email_message["From"] = sender_email
     email_message["To"] = r','.join(receiver_email)
-    email_message["Subject"] = f"Weekly Insurance Desk and Approval's Rejections for {to_date}"
+    email_message["Subject"] = f" Insurance Desk and Approval's Rejections for {to_date}"
     email_message.attach(MIMEText(html, "html"))
 
     # Open the Excel file and attach it to the email
@@ -251,7 +254,7 @@ def rejections():
 
     smtp_server = smtplib.SMTP("smtp.gmail.com", 587)
     smtp_server.starttls()
-    smtp_server.login(sender_email, os.getenv("gathumbi_password"))
+    smtp_server.login(sender_email, os.getenv("wairimu_password"))
     text = email_message.as_string()
     smtp_server.sendmail(sender_email, receiver_email, text)
     smtp_server.quit()

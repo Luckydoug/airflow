@@ -123,4 +123,4 @@ def fetch_sap_incentive_slab():
 
         return "insert incentive_slabs successfull"
 
-fetch_sap_incentive_slab()
+# fetch_sap_incentive_slab()

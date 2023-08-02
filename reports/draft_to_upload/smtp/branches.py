@@ -8,7 +8,6 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import pandas as pd
 from reports.draft_to_upload.html.html import (branch_efficiency_html)
-
 from sub_tasks.libraries.utils import (
     save_file,
     get_yesterday_date,
@@ -23,7 +22,6 @@ from sub_tasks.libraries.utils import (
 from reports.draft_to_upload.utils.utils import (
     highlight_efficiency
 )
-
 from sub_tasks.libraries.styles import (properties, ug_styles)
 
 load_dotenv()
@@ -127,7 +125,7 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection):
                     subject = f"{branch_name} Draft to Upload Efficiency Report from {start_date} to {end_date}."
 
                 elif selection == "Monthly":
-                    subject = f"{branch_name} Draft to Upload Efficiency Report for {first_month} and {second_month}"
+                    subject = f"{branch_name} Draft to Upload Efficiency Report for {second_month}"
                 
                 email_message = MIMEMultipart("alternative")
                 email_message["From"] = your_email

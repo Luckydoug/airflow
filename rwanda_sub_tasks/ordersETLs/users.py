@@ -101,5 +101,5 @@ def fetch_sap_users():
 
         print('Update successful')
 
-# fetch_sap_users()
+fetch_sap_users()
 

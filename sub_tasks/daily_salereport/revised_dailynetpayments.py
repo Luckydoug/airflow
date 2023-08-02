@@ -55,6 +55,7 @@ def daily_net_payments():
 
     """.format(yesterday = yesterday)
     payments = pd.read_sql_query(payments, con=conn)
+    print(payments)
     
     ###Select the required columns
     payments = payments[['branch_code','draft_orderno','createdon', 'Create_Time','full_doc_type','mode_of_pay','total_advance_amt',
@@ -88,6 +89,7 @@ def daily_net_payments():
     print(payment_summary)
 
    #-------------------------------END OF DAILY------------------------------------
+    print('end of daily')
 
     paymentsmtd = """
     SELECT doc_entry, doc_no, user_sign, createdon, createdat,case
@@ -106,7 +108,8 @@ def daily_net_payments():
     and status <> 'Cancel';
 
     """.format(start_month = start_month,yesterday = yesterday)
-
+    print(start_month)
+    print(yesterday)
     paymentsmtd = pd.read_sql_query(paymentsmtd, con=conn)
 
     print('get size')
@@ -116,7 +119,10 @@ def daily_net_payments():
     ###Rename columns
     paymentsmtd = paymentsmtd.rename(columns = {'branch_code':'Branch','draft_orderno':'Order No.','createdon':'Create_Date'})
     ###Create a new column and rename 
+    print(paymentsmtd)
     paymentsmtd["mode_of_pay1"] = paymentsmtd.apply(lambda row: 'Insurance' if row['mode_of_pay'] == 'Insurance' else 'Cash/Mpesa/CC',axis =1)
+    
+
     paymentsmtd["mode_of_pay2"] = paymentsmtd.apply(lambda row: 'Registration' if row['full_doc_type'] == 'Registration Payment' else row["mode_of_pay1"],axis =1)
     paymentsmtd['advance_amt'] = pd.to_numeric(paymentsmtd['advance_amt'])
   
@@ -202,6 +208,7 @@ def mtd_daily_net_payments():
     ###Rename columns
     paymentsmtd_daily = paymentsmtd_daily.rename(columns = {'branch_code':'Branch','draft_orderno':'Order No.','createdon':'Create_Date'})
     ###Create a new column and rename 
+    print(paymentsmtd_daily)
     paymentsmtd_daily["mode_of_pay1"] = paymentsmtd_daily.apply(lambda row: 'Insurance' if row['mode_of_pay'] == 'Insurance' else 'Cash/Mpesa/CC',axis =1)
     paymentsmtd_daily["mode_of_pay2"] = paymentsmtd_daily.apply(lambda row: 'Registration' if row['full_doc_type'] == 'Registration Payment' else row["mode_of_pay1"],axis =1)
     paymentsmtd_daily['advance_amt'] = pd.to_numeric(paymentsmtd_daily['advance_amt'])

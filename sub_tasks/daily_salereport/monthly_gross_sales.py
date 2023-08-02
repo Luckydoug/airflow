@@ -107,9 +107,11 @@ def summary_gross_payments():
 
     #Add the column Total
     for month in grosspaymentsall_pivot1.columns.levels[0][:-1]:
+        print(month)
         col_name = (month, 'Total')
         result = (grosspaymentsall_pivot1[(month, 'Cash')] + grosspaymentsall_pivot1[(month, 'Insurance')])
         grosspaymentsall_pivot1.insert(grosspaymentsall_pivot1.columns.get_loc((month, 'Insurance')) + 1, col_name, result)
+        print(grosspaymentsall_pivot1)
     month = ['Branch name',"year","Jan","Feb","Mar","Apr","May","June","July","Aug","Sep","Oct","Nov","Dec"]
     grosspaymentsall_pivot1 = grosspaymentsall_pivot1.reindex(level=0,columns = month)
 
@@ -128,6 +130,8 @@ def summary_gross_payments():
 
     # create a list of month names for the current year and months up to and including the current month
     month_names = [datetime.date(lastyear, month_num, 1).strftime('%b') for month_num in range(1, current_month)]
+    month_names = [month.replace('Jun', 'June') for month in month_names]
+    print(month_names)
 
     ##add a column to your list
     extra_column = 'year'
@@ -135,6 +139,8 @@ def summary_gross_payments():
 
     ##Sum all the months we have covered so far
     grosspaymentsall_pivotnew = grosspaymentsall_pivot[month_names]
+    print('grosspaymentsall_pivotnew')
+    print(grosspaymentsall_pivotnew)
     grosspaymentsall_pivotnew['year'] = grosspaymentsall_pivotnew['year'].astype('object').astype('object')
     grosspaymentsall_pivotnew["Year to Date"] = grosspaymentsall_pivotnew.iloc[:, grosspaymentsall_pivotnew.columns != ('year',          '')].sum(axis=1)
 

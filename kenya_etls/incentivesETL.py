@@ -18,6 +18,7 @@ from airflow.sensors.time_sensor import TimeSensor
 from sub_tasks.paymentsETLs.payments import (fetch_sap_payments)
 from sub_tasks.paymentsETLs.ojdt import (fetch_sap_ojdt)
 from sub_tasks.ordersETLs.ordersscreendetails import (fetch_sap_orderscreendetails, update_to_source_orderscreen)
+from sub_tasks.ordersETLs.salesorders import (fetch_sap_orders)
 from sub_tasks.ordersETLs.discounts import (fetch_sap_discounts)
 from sub_tasks.paymentsETLs.incentives import (create_incentive_cash,create_incentive_insurance)
 from sub_tasks.pentaho.cache import (clear_cache)
@@ -86,6 +87,12 @@ with DAG(
         provide_context = True
     )
 
+    fetch_sap_orders = PythonOperator(
+            task_id = 'fetch_sap_orders',
+            python_callable = fetch_sap_orders,
+            provide_context = True
+    )
+
     with TaskGroup('incentives') as incentives:
 
         create_incentive_cash = PythonOperator(
@@ -112,7 +119,7 @@ with DAG(
         task_id = "finish"
     )
 
-    start >> fetch_sap_payments >> fetch_sap_ojdt >> orderscreen_details  >> fetch_sap_discounts >> incentives >> clear_cache >> finish
+    start >> fetch_sap_payments >> fetch_sap_ojdt >> orderscreen_details  >> fetch_sap_orders >> fetch_sap_discounts >> incentives >> clear_cache >> finish
 
 
 

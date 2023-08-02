@@ -46,8 +46,12 @@ SessionId = login()
 
 def create_net_sales():
     net = """
-    SELECT branch_code,warehouse_name as "Branch name", month_year, "year", case when month like '%March%' then replace(month,'March','Mar')
-        when month like '%Sept%' then replace(month,'Sept','Sep') else month end as month, new_mode_of_payment, amount
+    SELECT branch_code,warehouse_name as "Branch name", month_year, "year", 
+    case when month like '%March%' then replace(month,'March','Mar')
+    when month like '%Sept%' then replace(month,'Sept','Sep')
+    when month like '%June%' then replace (month,'June','Jun')
+    when month like '%July%' then replace (month,'July','Jul')
+    else month end as month, new_mode_of_payment, amount
     FROM mabawa_dw.gross_payments
     where "year" >= 2020;
     """
@@ -68,6 +72,8 @@ def create_net_sales():
     last_month = last_month1.strftime('%b')
     ##Create a df with only the months we have covered in the current year
     net= net[net['month'].isin(month_names)]
+    print(month_names)
+    print('printed months from net')
     
 
     ##GET THE YTD NET SALES
@@ -82,6 +88,9 @@ def create_net_sales():
 
     ##GET THE CURRENT MONTH SUMMARY
     currentmonth = net[net["month"] == last_month]
+    print('Current month printed Unique')
+    print(net["month"].unique())
+    print(last_month)
     currentmonthnet = currentmonth.pivot_table(index = 'year',columns = 'new_mode_of_payment',aggfunc = {'net amount':np.sum}) 
     print(currentmonthnet)
     currentmonthnet = currentmonthnet.droplevel([0],axis = 1).reset_index()
@@ -120,8 +129,7 @@ def create_net_sales():
     yoy_growth = shopnetcomp_samemnth_summary.pct_change(periods=1) * 100
     shopnetcomp_samemnth_summary = shopnetcomp_samemnth_summary.assign(YoY_GrowthCash=yoy_growth['Cash'],YoY_GrowthInsurance=yoy_growth['Insurance'],YoY_Growth = yoy_growth['Month Total'])
     shopnetcomp_samemnth_summary = shopnetcomp_samemnth_summary.rename(columns={"YoY_GrowthCash":"% Cash Gain (Drop)","YoY_GrowthInsurance":"% Insurance Gain (Drop)","YoY_Growth":"% Overall Gain (Drop)"}).fillna(0)
-    shopnetcomp_samemnth_summary = shopnetcomp_samemnth_summary.astype('int64')
-   
+    shopnetcomp_samemnth_summary = shopnetcomp_samemnth_summary.astype('int64')   
     
 
     ##GET SHOPS WHOSE YTD DROPPED BY 10% - SAVE THIS OUTPUT IN EXCEL
@@ -402,9 +410,8 @@ def create_net_sales():
         )
     
     to_date = get_todate()
-    sender_email = 'wairimu@optica.africa'    
+    sender_email = os.getenv("wairimu_email") 
     receiver_email = ['yuri@optica.africa','kush@optica.africa','wazeem@optica.africa','giri@optica.africa']
-    # receiver_email = ['yuri@optica.africa','shyam@optica.africa']
     # receiver_email = ['wairimu@optica.africa']
     email_message = MIMEMultipart()
     email_message["From"] = sender_email
@@ -438,7 +445,7 @@ def create_net_sales():
 
     smtp_server = smtplib.SMTP("smtp.gmail.com", 587)
     smtp_server.starttls()
-    smtp_server.login(sender_email, "maureen@@3636")
+    smtp_server.login(sender_email, os.getenv("wairimu_password"))
     text = email_message.as_string()
     smtp_server.sendmail(sender_email, receiver_email, text)
     smtp_server.quit()

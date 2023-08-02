@@ -332,8 +332,9 @@ def create_draft_upload_report(data_orders, daywise_data, mtd_data, selection,st
         final_month_report = monthly_unstack_two.reindex([first_month, second_month], level = 0, axis = 1)
         final_month_report = final_month_report.reindex(["Total Orders", f"Orders <= {target}", "Efficiency"], level = 1, axis = 1)
 
+        second_month_data = monthly_data[monthly_data["Month"] == second_month]
         create_branch_salesperson_efficiency(
-            data = monthly_data,
+            data =  second_month_data,
             target=target,
             path=path,
             cols_req=sales_cols

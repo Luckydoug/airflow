@@ -24,7 +24,7 @@ conn = psycopg2.connect(host="10.40.16.19",database="mawingu", user="postgres", 
 
 SessionId = login()
 
-# FromDate = '2021/01/01'
+# FromDate = '2023/06/01'
 # ToDate = '2020/12/31'
 
 today = date.today()
