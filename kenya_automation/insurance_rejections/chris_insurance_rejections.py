@@ -237,8 +237,8 @@ def rejections():
     # to_date = '2023-07-01'
     # till_date = '2023-07-31'
     sender_email = os.getenv("wairimu_email")
-    receiver_email = 'wairimu@optica.africa'
-    # receiver_email = ['wairimu@optica.africa','christopher@optica.africa','andrew@optica.africa']
+    # receiver_email = 'wairimu@optica.africa'
+    receiver_email = ['wairimu@optica.africa','christopher@optica.africa','andrew@optica.africa']
     email_message = MIMEMultipart()
     email_message["From"] = sender_email
     email_message["To"] = r','.join(receiver_email)

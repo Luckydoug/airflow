@@ -94,7 +94,8 @@ def create_ug_sops_report(selection, branch_data, sops_info, start_date, custome
     sop_compliance = sop_compliance.dropna(subset=["Date"])
     sop_compliance["Date"] = pd.to_datetime(sop_compliance["Date"], dayfirst=True, errors="coerce").dt.date
     sop_compliance = pd.merge(sop_compliance, sops_info[["Branch", "Outlet"]], on="Branch", how="left")
-    sop_compliance = sop_compliance[sop_compliance["Outlet"].isin(branch_data["Outlet"])]
+    sop_compliance = sop_compliance[sop_compliance["Outlet"].str.strip().isin(branch_data["Outlet"])]
+
 
     if not len(sop_compliance):
         return

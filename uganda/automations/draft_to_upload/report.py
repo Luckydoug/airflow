@@ -311,5 +311,3 @@ def clean_uganda_folder():
 
 
 
-
-

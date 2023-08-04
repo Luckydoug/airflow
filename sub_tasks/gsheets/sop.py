@@ -20,7 +20,7 @@ def fetch_sop_branch_info():
     
     gc = pygsheets.authorize(service_file='/home/opticabi/airflow/dags/sub_tasks/gsheets/keys2.json')
     sh = gc.open_by_key('1fn8yaI3-1X6uq4Z_Vydxq3vl3F5jLryp09E6po_TJAI')
-    sh = sh[0]
+    sh = sh[1]
     values = sh.get_all_values()
     sh = pd.DataFrame(values)
     csv_string = sh.to_csv(index=False,header=False)
@@ -43,7 +43,7 @@ def fetch_sop_branch_info():
 def fetch_sop():
     gc = pygsheets.authorize(service_file='/home/opticabi/airflow/dags/sub_tasks/gsheets/keys2.json')
     sh = gc.open_by_key('1fn8yaI3-1X6uq4Z_Vydxq3vl3F5jLryp09E6po_TJAI')
-    sh = sh[1]
+    sh = sh[0]
     sh = pd.DataFrame(sh.get_all_records())
 
     sh.rename(columns={
