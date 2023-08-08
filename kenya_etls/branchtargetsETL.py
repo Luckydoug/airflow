@@ -8,17 +8,21 @@ from airflow.operators.bash_operator import BashOperator
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.example_dags.subdags.subdag import subdag
 from airflow.utils.task_group import TaskGroup
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 # from tmp.python_test
 DAG_ID = 'BranchTargets_ETLs_Pipeline'
 
 default_args = {
-    'owner': 'Iconia ETLs',
+    'owner': 'Data Team',
     # 'depends_on_past': False,
-    'start_date': datetime(2021, 12, 13)
-    
+    'retries': 3,
+    'retry_delay': timedelta(seconds=15),
+    'start_date': datetime(2021, 12, 13),
+    'email': ['ian.gathumbi@optica.africa','wairimu@optica.africa','douglas.kathurima@optica.africa'],
+    'email_on_failure': True,
+    'email_on_retry': False,
 }
 
 with DAG(
@@ -214,6 +218,6 @@ with DAG(
         task_id = "finish"
     )
     
-    # start >> sales >> gr >> sg >> nps_det >> create_all_activity >> ins_rej >> sop >> ins_conv >>  finish
-    start >> gr >> sg >> nps_det >> create_all_activity >> ins_rej >> sop >> ins_conv >>  finish
+    start >> sales >> gr >> sg >> nps_det >> create_all_activity >> ins_rej >> sop >> ins_conv >>  finish
+    # start >> gr >> sg >> nps_det >> create_all_activity >> ins_rej >> sop >> ins_conv >>  finish
     

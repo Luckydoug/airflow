@@ -36,7 +36,12 @@ DAG_ID = 'RW_Main_Pipeline'
 default_args = {
     'owner': 'Iconia ETLs',
     # 'depends_on_past': False,
-    'start_date': datetime(2021, 12, 13)    
+    'retries': 3,
+    'retry_delay': timedelta(seconds=15),
+    'start_date': datetime(2021, 12, 13),
+    'email': ['ian.gathumbi@optica.africa','wairimu@optica.africa','douglas.kathurima@optica.africa'],
+    'email_on_failure': True,
+    'email_on_retry': False,
 }
 
 

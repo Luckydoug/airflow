@@ -53,7 +53,7 @@ from reports.draft_to_upload.data.fetch_data import (
 database = "voler_staging"
 engine = create_rwanda_engine()
 engine2 = createe_engine()
-selection = "Monthly"
+selection = "Weekly"
 start_date = return_report_daterange(
     selection=selection
 )

@@ -228,6 +228,7 @@ mtd_rejections = fetch_mtd_rejections(
 
 def build_kenya_rejections():
     branch_data = fetch_gsheet_data()["branch_data"]
+    to_drop = fetch_gsheet_data()["rejections_drop"]
     create_rejection_report(
         orderscreen=orderscreen,
         all_orders=all_orders,
@@ -237,7 +238,8 @@ def build_kenya_rejections():
         start_date=start_date,
         sales_orders=sales_orders,
         mtd_data=mtd_rejections,
-        daywise_data=daywise_rejections
+        daywise_data=daywise_rejections,
+        drop = to_drop
     )
 
 customers = fetch_customers(
@@ -329,6 +331,7 @@ def build_kenya_opening_time():
 
 def clean_kenya_folder():
     clean_folders(path=path)
+
 
 
 

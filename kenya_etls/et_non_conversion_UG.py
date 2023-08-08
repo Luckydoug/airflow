@@ -14,9 +14,13 @@ DAG_ID = 'ET_Non_converstions_UG_ETL'
 
 default_args = {
     'owner': 'Data Team',
-    'start_date': datetime.now().date().strftime('%Y-%m-%d'),
-     'retries': 2,
-    'retry_delay': timedelta(seconds=30)
+    # 'depends_on_past': False,
+    'retries': 3,
+    'retry_delay': timedelta(seconds=15),
+    'start_date': datetime(2021, 12, 13),
+    'email': ['ian.gathumbi@optica.africa','wairimu@optica.africa','douglas.kathurima@optica.africa'],
+    'email_on_failure': True,
+    'email_on_retry': False,
 }
 
 

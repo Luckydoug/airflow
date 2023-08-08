@@ -41,11 +41,7 @@ def create_incentive_cash():
 
 def create_incentive_insurance():
     query = """
-    truncate mawingu_mviews.incentive_insurance;
-    insert into mawingu_mviews.incentive_insurance
-    SELECT origin_no, posting_date, je_type, remarks, draft_order_no, doc_no, ods_creator, user_name, 
-    ods_outlet, ods_status, ods_normal_repair_order, "month", "year"
-    FROM mawingu_mviews.v_incentive_insurance;
+    refresh materialized view mawingu_mviews.incentive_insurance2;
     insert into mawingu_dw.update_log(table_name, update_time) values('incentives', default);
     """
 

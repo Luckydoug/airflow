@@ -25,7 +25,7 @@ rejected_orders, approvals_not_rejected, approvals_rejected_once, approvals_reje
 DAG_ID = 'Approvals_ETLs_Pipeline'
 
 default_args = {
-    'owner': 'Iconia ETLs',
+    'owner': 'Data Team',
     # 'depends_on_past': False,
     'start_date': datetime(2021, 12, 13)
     

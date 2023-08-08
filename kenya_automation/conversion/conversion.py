@@ -22,7 +22,7 @@ from reports.conversion.smtp.smtp import (
 
 database = "mabawa_mviews"
 engine = createe_engine()
-selection = get_report_frequency()
+selection = "Weekly"
 start_date, end_date = return_conversion_daterange(selection=selection)
 
 views_conv = fetch_views_conversion(
@@ -107,7 +107,7 @@ def clean_kenya_views():
 
 
 """
-Uganda Conversion Report Airflow Automation
+Kenya Conversion Report Airflow Automation
 Optica Data Team
 Let's keep it flowing
 

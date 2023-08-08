@@ -211,6 +211,7 @@ def fetch_planos(database, engine, schema, users, customers, table, views, start
             AND a.plano_rx = 'Y'
             AND a.create_date::date >= %s
             AND a.create_date::date <= %s
+            AND a.cust_code <> '10026902'
     """
 
     all_planos = pd.read_sql_query(

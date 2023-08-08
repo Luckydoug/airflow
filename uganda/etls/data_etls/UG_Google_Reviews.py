@@ -8,7 +8,7 @@ from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python_operator import PythonOperator
 
 from airflow.utils.task_group import TaskGroup
-from datetime import datetime
+from datetime import datetime,timedelta
 
 
 from uganda_sub_tasks.googlereviews.locations import (fetch_locations,update_store_code)
@@ -21,8 +21,12 @@ DAG_ID = 'UG_Google_Reviews'
 default_args = {
     'owner': 'Iconia ETLs',
     # 'depends_on_past': False,
-    'start_date': datetime(2022, 2, 16)
-    
+    'retries': 3,
+    'retry_delay': timedelta(seconds=15),
+    'start_date': datetime(2021, 12, 13),
+    'email': ['ian.gathumbi@optica.africa','wairimu@optica.africa','douglas.kathurima@optica.africa'],
+    'email_on_failure': True,
+    'email_on_retry': False,
 }
 
 

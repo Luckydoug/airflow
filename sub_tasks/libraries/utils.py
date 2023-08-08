@@ -63,6 +63,9 @@ def fetch_gsheet_data():
     orders_to_drop = service_key.open_by_key("1HQ_y1omRXpV_KxDuUK2kEbgIHmVeIxqM1LxxHH8up4o")
     orders_drop = pd.DataFrame(orders_to_drop.worksheet_by_title("Kenya").get_all_records())["Order Number"].to_list()
     rwanda_opening = pd.DataFrame(sheet.worksheet_by_title("Rwanda Opening Time").get_all_records())
+    rejections = service_key.open_by_key("16oFwly1sKlX48xL3LXLZKfHv7ClI-84o7DZzmlxCZeE")
+    rejections_drop = pd.DataFrame(rejections.worksheet_by_title("Sheet1").get_all_records())["Order Number"].to_list()
+
     
     return {
         'staff': staff,
@@ -80,7 +83,8 @@ def fetch_gsheet_data():
         'department_emails' : department_emails,
         'orders_drop': orders_drop,
         'rwanda_opening': rwanda_opening,
-        'rw_working_hours': rw_working_hours
+        'rw_working_hours': rw_working_hours,
+        'rejections_drop': rejections_drop
         }
 
 

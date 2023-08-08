@@ -1,7 +1,7 @@
 import sys, os
 sys.path.insert(0,os.path.abspath(os.path.dirname(__file__)))
 from airflow import DAG
-from datetime import datetime
+from datetime import datetime, timedelta
 from airflow.utils.task_group import TaskGroup
 # from airflow.example_dags.subdags.subdag import subdag
 # from airflow.operators.bash_operator import BashOperator
@@ -13,10 +13,14 @@ from airflow.operators.python_operator import PythonOperator
 DAG_ID = 'Main_ETLs_Pipeline'
 
 default_args = {
-    'owner': 'Iconia ETLs',
+    'owner': 'Data Team',
     # 'depends_on_past': False,
-    'start_date': datetime(2021, 12, 13)
-    
+    'retries': 3,
+    'retry_delay': timedelta(seconds=15),
+    'start_date': datetime(2021, 12, 13),
+    'email': ['ian.gathumbi@optica.africa','wairimu@optica.africa','douglas.kathurima@optica.africa'],
+    'email_on_failure': True,
+    'email_on_retry': False,
 }
 
 

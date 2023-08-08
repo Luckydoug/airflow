@@ -8,7 +8,7 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.operators.dummy_operator import DummyOperator
 # from airflow.example_dags.subdags.subdag import subdag
 from airflow.utils.task_group import TaskGroup
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sub_tasks.ticketing_data.departments import (fetch_source_depts, fetch_emails, create_dept_live)
 from sub_tasks.ticketing_data.tickets import (fetch_source_tickets, fetch_source_ticket_data,
@@ -33,8 +33,12 @@ DAG_ID = 'Ticketing_ETLs_Pipeline'
 default_args = {
     'owner': 'Iconia ETLs',
     # 'depends_on_past': False,
-    'start_date': datetime(2021, 12, 13)
-    
+    'retries': 3,
+    'retry_delay': timedelta(seconds=15),
+    'start_date': datetime(2021, 12, 13),
+    'email': ['ian.gathumbi@optica.africa','wairimu@optica.africa','douglas.kathurima@optica.africa'],
+    'email_on_failure': True,
+    'email_on_retry': False,
 }
 
 

@@ -83,7 +83,11 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection):
                     message = "You have no late orders for the above period. Thanks for maintaining 100% efficiency."
                 else:
                     color = "red"
-                    message = "Please find the attached late orders data."
+                    message = """Please find the attached late orders data. <br>
+                    On the attachment, there are two sheets named as follows; <br> <br>
+                    1) MTD - Update - This sheet will show the %Efficiency for your branch organized in days <br>
+                    2) Late Orders - This sheet contains all orders that took more than 8 minutes from Draft Order Created to Upload Attachment.
+                    """
 
                 html = branch_efficiency_html.format(
                     branch_name = branch_name,
@@ -117,6 +121,7 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection):
                 
                 else:
                     receiver_email = [rm_email, branch_email]  
+                
 
 
                 if selection == "Daily":

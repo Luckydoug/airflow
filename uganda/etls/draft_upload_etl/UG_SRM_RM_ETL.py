@@ -11,10 +11,14 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 DAG_ID = 'UG_SRM_RM_ETL'
 
 default_args = {
-    'owner': 'Optica Data Team',
-    'start_date': datetime.now().date().strftime('%Y-%m-%d'),
-     'retries': 2,
-    'retry_delay': timedelta(seconds=5)
+    'owner': 'Iconia ETLs',
+    # 'depends_on_past': False,
+    'retries': 3,
+    'retry_delay': timedelta(seconds=15),
+    'start_date': datetime(2021, 12, 13),
+    'email': ['ian.gathumbi@optica.africa','wairimu@optica.africa','douglas.kathurima@optica.africa'],
+    'email_on_failure': True,
+    'email_on_retry': False,
 }
 
 with DAG(
@@ -85,7 +89,6 @@ with DAG(
             )
 
             push_uganda_efficiency_data >> build_ug_draft_upload >> build_ug_sops >> build_ug_rejections >> build_plano_report >> push_uganda_opening_time >> build_uganda_opening_time
-            
 
     with TaskGroup('smtp') as smtp:
         with TaskGroup('send') as sends:

@@ -4,6 +4,7 @@ kenya = [
     'kush@optica.africa',
     'wazeem@optica.africa',
     'yuri@optica.africa',
+    'shehan@optica.africa',
     'naveed@optica.africa',
     'bravon@optica.africa',
     'maxwell@optica.africa',

@@ -41,7 +41,7 @@ def create_incentive_cash():
 
 def create_incentive_insurance():
     query = """
-    refresh materialized view voler_mviews.incentive_insurance; 
+    refresh materialized view voler_mviews.incentive_insurance2; 
     """
 
     query = pg_execute(query)

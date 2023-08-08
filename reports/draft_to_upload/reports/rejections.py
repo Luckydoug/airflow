@@ -25,7 +25,8 @@ def create_rejection_report(
     selection,
     start_date,
     mtd_data,
-    daywise_data
+    daywise_data,
+    drop = []
 ):
     """
     When the data is empty for any of the dataset that is passed as an argument, we want our function to return.
@@ -33,6 +34,7 @@ def create_rejection_report(
     It's just Accuracy emphasize.
 
     """
+
     if not len(orderscreen) or not len(all_orders) or not len(sales_orders):
         return
     insurance_status = ["Draft Order Created"]
@@ -59,8 +61,8 @@ def create_rejection_report(
         "Rejected by Approvals Team",
         "Rejected by Optica Insurance"
     ]
-    rejections = orderscreen[orderscreen.Status.isin(rejections_status)]
 
+    rejections = orderscreen[orderscreen.Status.isin(rejections_status)]
     rejections_orders = pd.merge(
         rejections,
         all_orders[[
@@ -72,6 +74,8 @@ def create_rejection_report(
         how="left"
     )
 
+    rejections_orders =  rejections_orders[~rejections_orders["Order Number"].isin(drop)]
+   
     rejections_orders = pd.merge(
         rejections_orders,
         branch_data[["Outlet", "SRM", "RM", "Front Desk"]],

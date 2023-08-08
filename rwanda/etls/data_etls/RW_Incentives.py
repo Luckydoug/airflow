@@ -19,6 +19,7 @@ from rwanda_sub_tasks.ordersETLs.payments import (fetch_sap_payments)
 from rwanda_sub_tasks.ordersETLs.ojdt import (fetch_sap_ojdt)
 from rwanda_sub_tasks.ordersETLs.ordersscreendetails import (fetch_sap_orderscreendetails, update_to_source_orderscreen)
 from rwanda_sub_tasks.ordersETLs.discounts import (fetch_sap_discounts)
+from rwanda_sub_tasks.ordersETLs.salesorders import (fetch_sap_orders)
 from rwanda_sub_tasks.postgres.incentives import (create_incentive_cash,create_incentive_insurance)
 from rwanda_sub_tasks.pentaho.cache import (clear_cache)
 
@@ -30,16 +31,10 @@ default_args = {
     'retries': 3,
     'retry_delay': timedelta(seconds=15),
     'start_date': datetime(2021, 12, 13),
-    # 'email': ['ian.gathumbi@optica.africa','wairimu@optica.africa'],
-    # 'email_on_failure': True,
-    # 'email_on_retry': True,
+    'email': ['ian.gathumbi@optica.africa','wairimu@optica.africa','douglas.kathurima@optica.africa'],
+    'email_on_failure': True,
+    'email_on_retry': False,
 }
-
-# default_args = {
-#     'owner': 'Iconia ETLs',
-#     'start_date': datetime(2021, 12, 13)
-# }
-
 
 with DAG(
     DAG_ID, 
@@ -86,6 +81,12 @@ with DAG(
         provide_context = True
     )
 
+    fetch_sap_orders = PythonOperator(
+            task_id = 'fetch_sap_orders',
+            python_callable = fetch_sap_orders,
+            provide_context = True
+    )
+
     with TaskGroup('incentives') as incentives:
 
         create_incentive_cash = PythonOperator(
@@ -112,7 +113,7 @@ with DAG(
         task_id = "finish"
     )
 
-    start >> fetch_sap_payments >> fetch_sap_ojdt >> orderscreen_details  >> fetch_sap_discounts >> incentives >> clear_cache >> finish
+    start >> fetch_sap_payments >> fetch_sap_ojdt >> orderscreen_details  >> fetch_sap_orders >> fetch_sap_discounts >> incentives >> clear_cache >> finish
 
 
 
