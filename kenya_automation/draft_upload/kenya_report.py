@@ -4,6 +4,7 @@ from sub_tasks.libraries.utils import (
     path,
     createe_engine,
     fourth_week_start,
+    first_week_start,
     fetch_gsheet_data,
     target
 )
@@ -17,7 +18,7 @@ from reports.draft_to_upload.smtp.smtp import (
 from reports.draft_to_upload.reports.draft import (
     create_draft_upload_report
 )
-from reports.draft_to_upload.utils.utils import get_report_frequency, return_report_daterange
+from reports.draft_to_upload.utils.utils import get_report_frequency, return_report_daterange, get_start_end_dates
 from reports.draft_to_upload.reports.rejections import create_rejection_report
 from reports.draft_to_upload.reports.plano import (
     create_plano_report
@@ -26,6 +27,8 @@ from reports.draft_to_upload.reports.opening_time import (
     push_branch_opening_time_data,
     create_opening_time_report
 )
+from reports.insurance_conversion.data.fetch_data import FetchData
+from reports.insurance_conversion.reports.conversion import create_insurance_conversion
 from reports.draft_to_upload.reports.sops import create_ug_sops_report
 from reports.draft_to_upload.reports.ratings import create_ratings_report
 from reports.draft_to_upload.data.push_data import push_insurance_efficiency_data
@@ -69,6 +72,8 @@ all_orders = fetch_orders(
     database=database,
     engine=engine
 )
+
+orders = all_orders.copy()
 
 eyetests = fetch_eyetests(
     database=database,
@@ -153,7 +158,11 @@ if selection == "Daily":
 if selection == "Weekly":
     date = fourth_week_start
 if selection == "Monthly":
-    date = '2023-07-01'
+    date = '2023-08-01'
+
+pstart_date, pend_date = get_start_end_dates(
+    selection=selection
+)
 
 
 opening_data = fetch_opening_time(
@@ -185,14 +194,20 @@ data_orders = fetch_insurance_efficiency(
     start_date=start_date
 )
 
+
+
 daywise_efficiency = fetch_daywise_efficiency(
     database=database,
-    engine=engine
+    engine=engine,
+    start_date=pstart_date,
+    end_date=pend_date
 )
 
 mtd_efficiency = fetch_mtd_efficiency(
     database=database,
-    engine=engine
+    engine=engine,
+    start_date=pstart_date,
+    end_date=pend_date
 )
 
 
@@ -216,13 +231,17 @@ def build_kenya_draft_upload():
 daywise_rejections = fetch_daywise_rejections(
     database=database,
     view="mabawa_mviews",
-    engine=engine
+    engine=engine,
+    start_date=pstart_date,
+    end_date=pend_date
 )
 
 mtd_rejections = fetch_mtd_rejections(
     database=database,
     view="mabawa_mviews",
-    engine=engine
+    engine=engine,
+    start_date=pstart_date,
+    end_date=pend_date
 )
 
 
@@ -331,6 +350,41 @@ def build_kenya_opening_time():
 
 def clean_kenya_folder():
     clean_folders(path=path)
+
+
+data_fetcher = FetchData(
+    engine=engine,
+    database="mabawa_staging"
+)
+
+orderscreen = data_fetcher.fetch_orderscreen(
+    start_date=start_date
+)
+insurance_companies = data_fetcher.fetch_insurance_companies()
+orders = data_fetcher.fetch_orders()
+sales_orders = data_fetcher.fetch_sales_orders(
+    start_date=first_week_start
+)
+
+
+def build_kenya_insurance_conversion() -> None:
+    branch_data = fetch_gsheet_data()["branch_data"]
+    working_hours = fetch_gsheet_data()["working_hours"]
+    create_insurance_conversion(
+        path=path,
+        all_orders=orders,
+        orderscreen=orderscreen,
+        branch_data=branch_data,
+        sales_orders=sales_orders,
+        insurance_companies=insurance_companies,
+        selection=selection,
+        date = start_date,
+        working_hours=working_hours
+    )
+
+
+
+
 
 
 

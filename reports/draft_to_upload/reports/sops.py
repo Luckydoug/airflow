@@ -81,7 +81,14 @@ Written and Curated by Douglas
 """
 
 
-def create_ug_sops_report(selection, branch_data, sops_info, start_date, customers, path):
+def create_ug_sops_report(
+    selection: str, 
+    branch_data: pd.DataFrame, 
+    sops_info: pd.DataFrame, 
+    start_date: str, 
+    customers: pd.DataFrame, 
+    path: str
+) -> None:
     customers = customers[
         (customers["Date"] >= start_date) &
         (customers["Date"] <= sop_date)
@@ -209,7 +216,6 @@ def create_ug_sops_report(selection, branch_data, sops_info, start_date, custome
         ]
         
         final_weeky_sops = final_weeky_sops.reindex(colst, axis =1, fill_value=0)
-        print(final_weeky_sops)
         for date in final_weeky_sops.columns.levels[0]:
             col_name = (date, '%Sops/Customers')
             final_weeky_sops.insert(
@@ -219,7 +225,7 @@ def create_ug_sops_report(selection, branch_data, sops_info, start_date, custome
 
         sorted_columns = arrange_dateranges(final_weeky_sops)
         final_weeky_sops_report = final_weeky_sops.reindex(sorted_columns,axis = 1, level = 0)
-        weekly_sops_export_data = weekly_sops[weekly_sops["Week Range"] == final_weeky_sops.columns.get_level_values(0).values[-1]]
+        weekly_sops_export_data = weekly_sops#[weekly_sops["Week Range"] == final_weeky_sops.columns.get_level_values(0).values[-1]]
 
         final_weeky_sops_report = get_rm_srm_total_multiindex(
             final_weeky_sops_report,
@@ -230,9 +236,18 @@ def create_ug_sops_report(selection, branch_data, sops_info, start_date, custome
             report = final_weeky_sops_report
         )
 
+        column_sop = pd.pivot_table(
+            weekly_sops,
+            index="Outlet",
+            columns=["Week Range","SOP"],
+            values = "No of times",
+            aggfunc="sum"
+        ).fillna(0).reindex(sorted_columns, level = 0, axis = 1)
+
         with pd.ExcelWriter(f"{path}draft_upload/sop_compliance.xlsx") as writer:
             final_weeky_sops_report.to_excel(writer, sheet_name="weekly_summary")
             weekly_sops_export_data.iloc[:, :-2].to_excel(writer, sheet_name="weekly_sops_data", index=False)
+            column_sop.to_excel(writer, sheet_name="sop_wise")
 
     if selection == "Monthly":
         monthly_sops = sop_compliance.copy()
@@ -269,6 +284,14 @@ def create_ug_sops_report(selection, branch_data, sops_info, start_date, custome
             aggfunc="sum"           
         )
 
+        column_sop = pd.pivot_table(
+            monthly_sops_data,
+            index="Outlet",
+            columns=["Month","SOP"],
+            values = "No of times",
+            aggfunc="sum"
+        ).fillna(0).reindex([first_month, second_month], level = 0, axis = 1)
+
         monthly_customers_pivot.columns = pd.MultiIndex.from_product([["Customers"], monthly_customers_pivot.columns])
         monthly_sops_pivot.columns = pd.MultiIndex.from_product([["Sops"], monthly_sops_pivot.columns])
         final_monthly_sops = pd.merge(monthly_sops_pivot, monthly_customers_pivot, right_index=True, left_index=True).fillna(0)
@@ -294,6 +317,7 @@ def create_ug_sops_report(selection, branch_data, sops_info, start_date, custome
 
         with pd.ExcelWriter(f"{path}draft_upload/sop_compliance.xlsx") as writer:
             final_monthly_sops.to_excel(writer, sheet_name="monthly_summary")
+            column_sop.to_excel(writer, sheet_name = "sop_wise")
             monthly_sops_data.iloc[:, :-2].to_excel(writer, sheet_name = "monthly_sops_data", index = False)
 
 

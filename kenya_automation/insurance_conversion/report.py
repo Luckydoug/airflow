@@ -8,9 +8,11 @@ from sub_tasks.libraries.utils import (
     fetch_gsheet_data,
     path
 )
+from reports.draft_to_upload.utils.utils import return_report_daterange
 
 engine = createe_engine()
 selection = "Weekly"
+start_date = return_report_daterange(selection=selection)
 data_fetcher = FetchData(
     engine=engine,
     database="mabawa_staging"
@@ -28,19 +30,23 @@ sales_orders = data_fetcher.fetch_sales_orders(
 
 def build_kenya_insurance_conversion() -> None:
     branch_data = fetch_gsheet_data()["branch_data"]
+    working_hours = fetch_gsheet_data()["working_hours"]
     create_insurance_conversion(
         path=path,
+        selection=selection,
+        working_hours=working_hours,
         all_orders=orders,
         orderscreen=orderscreen,
         branch_data=branch_data,
         sales_orders=sales_orders,
         insurance_companies=insurance_companies,
+        date = start_date
     )
 
 def send_to_kenya_management() -> None:
     send_to_management(
         selection=selection,
-        country = "Test",
+        country = "Kenya",
         path=path
     )
 

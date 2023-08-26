@@ -25,7 +25,7 @@ from sub_tasks.api_login.api_login import(login_uganda)
 
 SessionId = login_uganda()
 
-# FromDate = '2023/05/01'
+# FromDate = '2023/01/01'
 # ToDate = '2023/05/04'
 
 today = date.today()
@@ -139,4 +139,4 @@ def fetch_sap_web_payments():
 
         print('Update successful')
 
-       
+# fetch_sap_web_payments()

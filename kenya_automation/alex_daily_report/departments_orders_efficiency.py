@@ -305,11 +305,13 @@ def update_calculated_field():
     lensstorepivot['Time Min'] = lensstorepivot['Time Min'].round(2)
     lensstorepivot['% of Efficiency'] = lensstorepivot['% of Efficiency'].map('{:.2%}'.format)
     lensstorepivot = np.transpose(lensstorepivot)
-    print(packagingpivot)
+    print(lensstorepivot)
 
     """ Delayed Orders"""
     lensstore_delay = lensstore[lensstore['Delay'] == 1]
     lensstoredelay = pd.pivot_table(lensstore_delay, index=['Hour', 'Doc No'], values='Time Min', aggfunc='mean', fill_value=0)
+    print(lensstoredelay)
+
 
     """Cut Off"""
     lensstore['Time Taken'] = lensstore.apply 
@@ -327,38 +329,29 @@ def update_calculated_field():
     cuttoff4 = pd.pivot_table(lensstore, index='dept', values=[
                             '6 min'], aggfunc='sum', fill_value=0)
 
-    cutlensstore = pd.merge(cuttoff1, cuttoff2, on='dept')
-    cutlensstore = pd.merge(cutlensstore, cuttoff3, on='dept')
-    cutlensstore = pd.merge(cutlensstore, cuttoff4, on='dept')
-    print(cutlensstore)
+    cutt = pd.merge(cuttoff1, cuttoff2, on='dept')
+    cutt = pd.merge(cutt, cuttoff3, on='dept')
+    cutt = pd.merge(cutt, cuttoff4, on='dept')
+    # cuttlens2 = cutt.copy()
     print('lens Store Calculated')
-    print(controldelay)
 
     """Save In Excel """
     with pd.ExcelWriter(r"/home/opticabi/Documents/optica_reports/order_efficiency/order efficiency results.xlsx", engine='xlsxwriter') as writer:
         controlpivot.to_excel(writer, sheet_name='Control', index=True)
-        controldelay.to_excel(writer, sheet_name='Control',
-                            index=True, startrow=15)
+        controldelay.to_excel(writer, sheet_name='Control',index=True, startrow=15)
         cutcontrol.to_excel(writer, sheet_name='Control', index=True, startrow=9)
         designerpivot.to_excel(writer, sheet_name='Designer', index=True)
-        designerdelay.to_excel(writer, sheet_name='Designer',
-                            index=True, startrow=15)
-        cutdesigner.to_excel(writer, sheet_name='Designer',
-                            index=True, startrow=9)
+        designerdelay.to_excel(writer, sheet_name='Designer',index=True, startrow=15)
+        cutdesigner.to_excel(writer, sheet_name='Designer',index=True, startrow=9)
         mainstorepivot.to_excel(writer, sheet_name='Main store', index=True)
-        mainstoredelay.to_excel(
-            writer, sheet_name='Main store', index=True, startrow=15)
-        cutmainstore.to_excel(
-            writer, sheet_name='Main store', index=True, startrow=9)
+        mainstoredelay.to_excel(writer, sheet_name='Main store', index=True, startrow=15)
+        cutmainstore.to_excel(writer, sheet_name='Main store', index=True, startrow=9)
         packagingpivot.to_excel(writer, sheet_name='Packaging', index=True)
-        packagingdelay.to_excel(
-            writer, sheet_name='Packaging', index=True, startrow=15)
-        cutpackaging.to_excel(
-            writer, sheet_name='Packaging', index=True, startrow=9)
+        packagingdelay.to_excel(writer, sheet_name='Packaging', index=True, startrow=15)
+        cutpackaging.to_excel(writer, sheet_name='Packaging', index=True, startrow=9)
         lensstorepivot.to_excel(writer, sheet_name='Lens store', index=True)
-        lensstoredelay.to_excel(
-            writer, sheet_name='Lens store', index=True, startrow=15)
-        cutlensstore.to_excel(writer, sheet_name='Lens store', index=True, startrow=9)
+        lensstoredelay.to_excel(writer, sheet_name='Lens store', index=True, startrow=15)
+        cutt.to_excel(writer, sheet_name='Lens store', index=True, startrow=9)
 
 
     def save_xls(list_dfs, xls_path):
@@ -366,8 +359,5 @@ def update_calculated_field():
             for n, df in enumerate(list_dfs):
                 df.to_excel(writer, 'sheet%s' % n)
             writer.save()
-
-
-
-
+            
 # update_calculated_field()    

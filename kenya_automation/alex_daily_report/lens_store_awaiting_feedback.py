@@ -46,29 +46,38 @@ formatted_date = yesterday.strftime('%Y-%m-%d')
 
 
 def awaiting_feedback():
-    status = """ select odsc_createdby as "Created User",odsc_date as "Date", odsc_time,
+    status = """ 
+                select odsc_createdby as "Created User",odsc_date::date as "Date", odsc_time,
                 to_char(odsc_time, 'FM999:09:99'::text)::time without time zone AS "Time",
                 odsc_status as "Status", so.doc_entry as "DocEntry", so.odsc_doc_no,so2.doc_no as "DocNum",so2.ods_ordercriteriastatus as "OrderCriteria Status"
                 from mabawa_staging.source_orderscreenc1 so
                 left join mabawa_staging.source_orderscreen so2 on so2.doc_entry = so.doc_entry 
-                where odsc_date::date between '{yesterday}'and '{yesterday}'
-                """.format(yesterday=yesterday)
+                where odsc_date::date >= '2023-08-01'
+                """.format(yesterday=yesterday)    
     
     status = pd.read_sql_query(status,con=conn) 
-    printed = status[status['Status']=='Repair Order Printed']
-    printed["Date"]=pd.to_datetime(printed["Date"],dayfirst = True).dt.date
+    print(status)
+    print('data printed')
+    dateyesterday = pd.to_datetime(yesterday)
+    printed = status[status['Status']=='PF & PL Sent to Lens Store']
+    printed["Date"]=pd.to_datetime(printed["Date"],dayfirst = True).dt.date    
     printed['Date Time order printed'] = printed['Date'].astype(str)+' '+printed['Time'].astype(str)
-    printed = printed.sort_values(by = ["Date Time order printed"],ascending=True)
+    printed = printed.sort_values(by = ["Date Time order printed"],ascending=False)
     printed['Date Time order printed'] = pd.to_datetime(printed['Date Time order printed'], format = '%Y/%m/%d %H:%M:%S')
+    print(printed)
 
-    awaiting = status[status['Status']== 'Lens Store Awaiting Branch feedback from Client']
-    awaiting['Date'] = pd.to_datetime(awaiting['Date'],dayfirst=True).dt.date
+    status['Date'] = pd.to_datetime(status['Date'],dayfirst=True).dt.date
+    awaiting = status[status["Date"] == dateyesterday] 
+    awaiting = awaiting[awaiting['Status']== 'Lens Store Awaiting Branch feedback from Client']
+    print(awaiting)     
     awaiting['Date Time Awaiting feedback'] = awaiting['Date'].astype(str)+' '+awaiting['Time'].astype(str)
-    awaiting = awaiting.sort_values(by = ["Date Time Awaiting feedback"],ascending=True)
+    # awaiting = awaiting.sort_values(by = ["Date Time Awaiting feedback"],ascending=True)
     awaiting['Date Time Awaiting feedback'] = pd.to_datetime(awaiting['Date Time Awaiting feedback'], format = '%Y/%m/%d %H:%M:%S')
 
     final = pd.merge(awaiting,printed[['DocNum','Date Time order printed']], on='DocNum', how='left')
     final = final[final['Date Time order printed'] !='']
+    print(final)
+    print('lets calculate the time taken')
 
     ##Define a working day
     ####Days of the week
@@ -104,24 +113,30 @@ def awaiting_feedback():
         else:
             ""
 
-    RejectedSentSat_hrs=final.apply(lambda row: BusHrs(row['Date Time order printed'], row['Date Time Awaiting feedback']), axis=1)
+    RejectedSentSat_hrs=final.apply(lambda row: BusHrs(row['Date Time order printed'], row['Date Time Awaiting feedback']), axis=1)                
 
-    final["delay"]=(RejectedSentWk_hrs+RejectedSentSat_hrs)*60
-    final.drop(columns={'Created User','Date','Time','DocEntry'}, inplace=True)
-    final = final.rename(columns={'delay':'Time taken'})
-    final =final.sort_values(by=['Time taken'],ascending=False)
-    print(final)
-    print('Awaiting Feedback Orders Calculated')
+    if not final.empty:
+        final["delay"] = (RejectedSentWk_hrs + RejectedSentSat_hrs) * 60
+        final.drop(columns={'Created User', 'Date', 'Time', 'DocEntry'}, inplace=True)
+        final = final.rename(columns={'delay': 'Time taken'})
+        final = final.sort_values(by=['Time taken'], ascending=False)
 
-    import xlsxwriter
-    with pd.ExcelWriter(r"/home/opticabi/Documents/optica_reports/order_efficiency/lensstoreawaiting.xlsx", engine='xlsxwriter') as writer:    
-        final.to_excel(writer, sheet_name='Awaiting feedback',index=False)
-            
-    writer.save()
+    else:
+        columns = ['Status', 'DocNum', 'OrderCriteria Status', 'Datetime', 'Datetimeout']
+        final = pd.DataFrame(columns=columns) 
+
+
+    with pd.ExcelWriter("/home/opticabi/Documents/optica_reports/order_efficiency/lensstoreawaiting.xlsx", engine='xlsxwriter') as writer:
+        final.to_excel(writer, sheet_name='Awaiting feedback', index=False)
+
+    writer.save()    
 
     def save_xls(list_dfs, xls_path):
         with ExcelWriter(xls_path) as writer:
             for n, df in enumerate(list_dfs):
                 df.to_excel(writer,'sheet%s' % n)
-            writer.save() 
+            writer.save()
+
+
+  
 # awaiting_feedback()

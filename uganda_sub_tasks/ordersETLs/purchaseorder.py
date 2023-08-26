@@ -17,23 +17,23 @@ from pangres import upsert, DocsExampleTable
 from sqlalchemy import create_engine, text, VARCHAR
 from pandas.io.json._normalize import nested_to_record 
 
-from sub_tasks.data.connect import (pg_execute, engine) 
+from sub_tasks.data.connect_mawingu import (pg_execute, engine) 
 from sub_tasks.api_login.api_login import(login)
 
 
 SessionId = login()
 
-# FromDate = '2023/05/01'
+FromDate = '2023/01/01'
 # ToDate = '2023/03/31'
 
 today = date.today()
-pastdate = today - timedelta(days=1)
-FromDate = pastdate.strftime('%Y/%m/%d')
+# pastdate = today - timedelta(days=1)
+# FromDate = pastdate.strftime('%Y/%m/%d')
 ToDate = date.today().strftime('%Y/%m/%d')
 
 # api details
 
-pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetPurchaseOrders&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+pagecount_url = f"https://10.40.16.9:4300/UGANDA_BI/XSJS/BI_API.xsjs?pageType=GetPurchaseOrders&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
 pagecount_payload={}
 pagecount_headers = {}
 
@@ -54,7 +54,7 @@ def fetch_purchase_orders():
     for i in range(1, pages+1):
         page = i
         print(page)
-        url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetPurchaseOrders&pageNo={page}&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+        url = f"https://10.40.16.9:4300/UGANDA_BI/XSJS/BI_API.xsjs?pageType=GetPurchaseOrders&pageNo={page}&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
         response = requests.request("GET", url, headers=headers, data=payload, verify=False)
         response = response.json()
         response = response['result']['body']['recs']['Results']
@@ -96,7 +96,7 @@ def fetch_purchase_orders():
 
     upsert(engine=engine,
     df=orders_header,
-    schema='mabawa_staging',
+    schema='mawingu_staging',
     table_name='source_purchase_orders_header',
     if_row_exists='update',
     create_table=True)
@@ -130,7 +130,7 @@ def fetch_purchase_orders():
 
     # upsert(engine=engine,
     #    df=orders_line,
-    #    schema='mabawa_staging',
+    #    schema='mawingu_staging',
     #    table_name='source_purchase_orders_line',
     #    if_row_exists='update',
     #    create_table=True)

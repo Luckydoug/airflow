@@ -10,7 +10,8 @@ from sub_tasks.libraries.utils import (
 from reports.draft_to_upload.utils.utils import (
     today,
     create_rejections_ewc,
-    create_rejections_branches
+    create_rejections_branches,
+    create_monthly_rejections
 )
 from sub_tasks.libraries.utils import check_date_range
 first_month, second_month = get_comparison_months()
@@ -202,6 +203,7 @@ def create_rejection_report(
         )
 
         rejections_daily_data = daily_unique_rejections[cols_rej]
+        rejections_daily_data["Date"] = rejections_daily_data["Date"].astype(str)
 
         with pd.ExcelWriter(f"{path}draft_upload/rejections_report.xlsx") as writer:
             final_daily_rejections_report.to_excel(
@@ -380,6 +382,8 @@ def create_rejection_report(
             branch_data=branch_data
         )
 
+        weekly_rejections_data["Date"] = weekly_rejections_data["Date"].astype(str)
+
         with pd.ExcelWriter(f"{path}draft_upload/rejections_report.xlsx") as writer:
             final_weekly_rejections_report.to_excel(
                 writer, 
@@ -407,6 +411,16 @@ def create_rejection_report(
             )
 
     if selection == "Monthly":
+
+        staff_monthly_summary = create_monthly_rejections(
+            insurance=unique_insurance_merge,
+            first_month=first_month,
+            second_month=second_month,
+            branch_data=branch_data,
+            sales_orders=sales_orders,
+            rejections=rejections_orders
+        )
+
         monthly_insurance_orders = unique_insurance_merge.copy()
         monthly_insurance_orders["Month"] = monthly_insurance_orders["CreateDate"].dt.month_name(
         )
@@ -527,6 +541,10 @@ def create_rejection_report(
             final_monthly_rejections.to_excel(
                 writer,
                 sheet_name="monthly_summary"
+            )
+            staff_monthly_summary.to_excel(
+                writer,
+                sheet_name = "staff_summary"
             )
             monthly_rejections_data.to_excel(
                 writer, 

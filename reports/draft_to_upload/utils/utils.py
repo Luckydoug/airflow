@@ -11,7 +11,6 @@ import pygsheets
 import pandas as pd
 from sub_tasks.libraries.utils import arrange_dateranges
 import warnings
-
 warnings.simplefilter(action='ignore', category=UserWarning)
 target = 8
 uganda_target = 8
@@ -86,10 +85,13 @@ def create_daily_submission_pivot(plano_data, index, cols, cols_order):
     daily_submission_branch = pd.pivot_table(plano_data,
         index=index,
         values=["Code","Submission", "Conversion"],
-        aggfunc = {"Code": "count","Submission": [
-            lambda x: ((x == "Submitted") | (x == "Submitted: (Cash/Direct)")).sum(), lambda x: (x == "Not Submitted").sum()
-        ],
-                "Conversion": "sum"}
+        aggfunc = {
+            "Code": "count","Submission": [
+                lambda x: ((x == "Submitted") | (x == "Submitted: (Cash/Direct)")).sum(), 
+                lambda x: (x == "Not Submitted").sum()
+            ],
+            "Conversion": "sum"
+        }
     ).reset_index()
 
     try:
@@ -233,10 +235,170 @@ def return_slade(row):
         return "No"
     
 
-def get_start_end_dates():
-    today = datetime.datetime.today()
-    start_date = today.replace(day=1)
-    end_date = today - timedelta(days=1)
-    return start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")
+def get_start_end_dates(selection):
+    if selection == "Monthly":
+        today = datetime.date.today()
+        if today.month <= 2:
+            target_month = today.month + 10
+            target_year = today.year - 1
+        else:
+            target_month = today.month - 1
+            target_year = today.year
+        
+        start_date = datetime.date(target_year, target_month, 1).strftime("%Y-%m-%d")
+        month_days  = calendar.monthrange(target_year, target_month)[1]
+        end_date = datetime.date(target_year, target_month, month_days).strftime("%Y-%m-%d")
+        return start_date, end_date
+
+    else:
+        today = datetime.datetime.today()
+        start_date = today.replace(day=1)
+        end_date = today - timedelta(days=1)
+        return start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")
+    
+
+def create_monthly_draft(dataframe, first_month, second_month):
+    monthly_stack = dataframe.stack()
+    monthly_stack["Efficiency"] = round((monthly_stack[(
+        'Draft to Upload', '<lambda>')] / monthly_stack[('Upload Time',    'count')]) * 100, 0)
+    monthly_unstack = monthly_stack.unstack()
+    monthly_unstack_two = monthly_unstack.swaplevel(0, 2, 1).droplevel(1, axis = 1)
+    monthly_unstack_two = monthly_unstack_two.rename(columns={"Draft to Upload": f"Orders <= {target}", "Upload Time": "Total Orders"})
+    final_month_report = monthly_unstack_two.reindex([first_month, second_month], level = 0, axis = 1)
+    final_month_report = final_month_report.reindex(["Total Orders", f"Orders <= {target}", "Efficiency"], level = 1, axis = 1)
+
+    return final_month_report
+
+
+
+
+
+def create_monthly_rejections(
+    insurance: pd.DataFrame, 
+    first_month: str, 
+    second_month: str, 
+    branch_data: pd.DataFrame, 
+    sales_orders: pd.DataFrame,
+    rejections: pd.DataFrame
+) -> pd.MultiIndex:
+    monthly_insurance_orders = insurance.copy()
+    monthly_insurance_orders["Month"] = monthly_insurance_orders["CreateDate"].dt.month_name(
+    )
+    monthly_insu_orders_data = monthly_insurance_orders[
+        (monthly_insurance_orders["Month"] == first_month) |
+        (monthly_insurance_orders["Month"] == second_month)
+    ]
+
+    monthly_insu_orders_data = pd.merge(
+        monthly_insu_orders_data,
+        branch_data[["Outlet", "RM", "SRM"]],
+        on="Outlet",
+        how="left"
+    )
+
+    monthly_rejections = rejections.copy()
+    monthly_rejections = monthly_rejections.drop_duplicates(subset=["DocEntry", "Date", "Time"])
+    monthly_rejections["Month"] = pd.to_datetime(monthly_rejections["Date"], dayfirst=True).dt.month_name()
+    monthly_rejections_data = monthly_rejections[
+        (monthly_rejections["Month"] == first_month) |
+        (monthly_rejections["Month"] == second_month)
+    ]
+
+    monthly_rejection_conversion = monthly_rejections_data[
+        monthly_rejections_data["Order Number"].isin(
+            sales_orders["Order Number"]
+        )
+    ]
+    monthly_conversion_pivot = pd.pivot_table(
+        monthly_rejection_conversion,
+        index=["Outlet", "RM", "SRM", "Order Creator"],
+        columns="Month",
+        values="Order Number",
+        aggfunc="count"
+    )
+
+    monthly_insu_orders_pivot = pd.pivot_table(
+        monthly_insu_orders_data,
+        index=["Outlet", "RM", "SRM", "Order Creator"],
+        columns="Month",
+        values="Order Number",
+        aggfunc="count"
+    )
+
+    monthly_rejections_pivot = pd.pivot_table(
+        monthly_rejections_data,
+        index=[
+            "Outlet", 
+            "RM", 
+            "SRM", 
+            "Order Creator"
+        ],
+        columns="Month",
+        values="Order Number",
+        aggfunc="count"
+    )
+
+    monthly_insu_orders_pivot.columns = pd.MultiIndex.from_product([["Total Orders"], monthly_insu_orders_pivot.columns])
+    monthly_rejections_pivot.columns = pd.MultiIndex.from_product([["Rejected"], monthly_rejections_pivot.columns])
+    monthly_conversion_pivot.columns = pd.MultiIndex.from_product([["Conversion"], monthly_conversion_pivot.columns])
+
+    final_monthly_rejections = pd.merge(
+        monthly_insu_orders_pivot, 
+        monthly_rejections_pivot, 
+        right_index=True, 
+        left_index=True, 
+        how="left"
+    ).fillna(0)
+
+    final_monthly_rejections = pd.merge(
+        final_monthly_rejections, 
+        monthly_conversion_pivot, 
+        right_index=True, 
+        left_index=True, 
+        how="left"
+    ).fillna(0)
+
+    final_monthly_rejections = final_monthly_rejections.swaplevel(0, 1, axis=1).sort_index(axis=1, level=0)
+    final_monthly_rejections = final_monthly_rejections.reindex(
+        ["Total Orders", "Rejected", "Conversion"], 
+        axis=1, 
+        level=1
+    )
+
+    columns = [
+        (first_month, "Total Orders"),
+        (first_month, "Rejected"),
+        (first_month, "Conversion"),
+        (second_month, "Total Orders"),
+        (second_month, "Rejected"),
+        (second_month, "Conversion")
+    ]
+    final_monthly_rejections = final_monthly_rejections.reindex(
+        columns, 
+        axis=1, 
+        fill_value=0
+    )
+
+    for date in final_monthly_rejections.columns.levels[0]:
+        col_name = (date, '%Rejected')
+        result = (final_monthly_rejections[(date, 'Rejected')] / final_monthly_rejections[(
+            date, 'Total Orders')] * 100).round(0).replace([np.inf, -np.inf], np.nan).fillna(0).astype(int)
+        final_monthly_rejections.insert(final_monthly_rejections.columns.get_loc(
+            (date, 'Rejected')) + 1, col_name, result)
+
+    for date in final_monthly_rejections.columns.levels[0]:
+        col_name = (date, '%Conversion')
+        result = (final_monthly_rejections[(date, 'Conversion')] / final_monthly_rejections[(
+            date, 'Rejected')] * 100).round(0).replace([np.inf, -np.inf], np.nan).fillna(0).astype(int)
+        final_monthly_rejections.insert(final_monthly_rejections.columns.get_loc(
+            (date, 'Conversion')) + 1, col_name, result)
+
+    final_monthly_rejections = final_monthly_rejections.reindex(
+        ["Total Orders", "Rejected", "%Rejected"], 
+        level=1, 
+        axis=1
+    )
+
+    return final_monthly_rejections
 
 

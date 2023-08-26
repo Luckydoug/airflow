@@ -49,3 +49,12 @@ def create_incentive_insurance():
     print('insurance incentive done')
     
    
+def refresh_lens_silh():
+
+    query = """
+    refresh materialized view mawingu_mviews.lens_incentive; 
+    refresh materialized view mawingu_mviews.silh_incentive;
+    """
+
+    query = pg_execute(query)
+    print('lens_silh done')

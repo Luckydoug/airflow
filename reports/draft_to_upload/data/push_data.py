@@ -64,6 +64,7 @@ def push_insurance_efficiency_data(database, engine, orderscreen, all_orders, st
         on="Order Number",
         how="left"
     )
+
     final_data = pd.merge(
         unique_draft[["Order Number", "Draft Time"]],
         final_data1, on="Order Number",

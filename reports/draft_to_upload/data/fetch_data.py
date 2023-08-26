@@ -1,7 +1,6 @@
 import pandas as pd
 from airflow.models import variable
 from reports.draft_to_upload.utils.utils import today
-from reports.draft_to_upload.utils.utils import get_start_end_dates
 
 
 def fetch_orderscreen(database, engine, start_date='2023-01-01'):
@@ -52,6 +51,7 @@ def fetch_orders(database, engine, start_date='2023-01-01'):
 
 
 def fetch_views(database, engine, start_date='2023-01-01'):
+    print(start_date, today)
     views_query = f"""
     SELECT visit_id::text  as "Code", create_date::date as "Create Date", 
     case
@@ -69,7 +69,7 @@ def fetch_views(database, engine, start_date='2023-01-01'):
     all_views = all_views.drop_duplicates(subset=["Code"], keep="last")
     all_views.loc[:, "Last View Date"] = pd.to_datetime(
         all_views["Create Date"].astype(str) + " " +
-        all_views["Create Time"].astype(str), format="%Y-%m-%d %H:%M:%S"
+        all_views["Create Time"].astype(str), format="%Y-%m-%d %H:%M:%S", errors="coerce"
     )
     return all_views
 
@@ -316,10 +316,7 @@ def fetch_insurance_efficiency(database, engine, start_date):
     return data
 
 
-start_date, end_date = get_start_end_dates()
-
-
-def fetch_daywise_efficiency(database, engine):
+def fetch_daywise_efficiency(database, engine, start_date, end_date):
     daywise_query = f"""
         SELECT
         outlet AS "Outlet",
@@ -337,24 +334,26 @@ def fetch_daywise_efficiency(database, engine):
     return data
 
 
-def fetch_mtd_efficiency(database, engine):
+def fetch_mtd_efficiency(database, engine, start_date, end_date):
     mtd_query = f"""
     SELECT
-    outlet AS "Outlet",
-    ROUND((SUM(CASE WHEN draft_to_upload::int <= 8 THEN 1 ELSE 0 END)::DECIMAL 
-    / COUNT(upload_time))::DECIMAL * 100) AS "Grand Total"
+        outlet AS "Outlet",
+        ROUND(
+            (SUM(CASE WHEN draft_to_upload::int <= 8 THEN 1 ELSE 0 END)::DECIMAL 
+            / COUNT(upload_time))::DECIMAL * 100
+        ) AS "Grand Total"
     FROM
         {database}.source_insurance_efficiency sie
-        where upload_time::date between '{start_date}' and '{end_date}'
+    WHERE
+        upload_time::date BETWEEN '{start_date}' AND '{end_date}'
     GROUP BY
-    outlet
+        outlet
     """
-
     data = pd.read_sql_query(mtd_query, con=engine)
     return data
 
 
-def fetch_daywise_rejections(view, database, engine):
+def fetch_daywise_rejections(view, database, engine, start_date, end_date):
     daywise_query = f"""
     WITH rej AS (
     SELECT
@@ -408,7 +407,7 @@ def fetch_daywise_rejections(view, database, engine):
     return data
 
 
-def fetch_mtd_rejections(engine, database, view):
+def fetch_mtd_rejections(engine, database, view, start_date, end_date):
     query_two = f"""
     WITH rej AS (
         SELECT

@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from airflow.models import variable
-from reports.draft_to_upload.utils.utils import get_comparison_months
+from reports.draft_to_upload.utils.utils import get_comparison_months, create_monthly_draft
 from sub_tasks.libraries.utils import get_rm_srm_total, check_date_range
 from reports.draft_to_upload.reports.branch_salesperson_efficiency import create_branch_salesperson_efficiency
 
@@ -312,25 +312,25 @@ def create_draft_upload_report(data_orders, daywise_data, mtd_data, selection,st
             (monthly_data["Month"] == second_month)
         ]
 
-        monthly_report_pivot = pd.pivot_table(monthly_data,
+        monthly_report_pivot = pd.pivot_table(
+            monthly_data,
             index=["Outlet", "RM", "SRM"],
-            values=["Upload Time",
-                    "Draft to Upload"],
+            values=[
+                "Upload Time",
+                "Draft to Upload"
+            ],
             columns="Month",
             aggfunc={
                 "Upload Time": pd.Series.count,
                 "Draft to Upload": [lambda x: (x <= target).sum()]
             }
         )
-
-        monthly_stack = monthly_report_pivot.stack()
-        monthly_stack["Efficiency"] = round((monthly_stack[(
-            'Draft to Upload', '<lambda>')] / monthly_stack[('Upload Time',    'count')]) * 100, 0)
-        monthly_unstack = monthly_stack.unstack()
-        monthly_unstack_two = monthly_unstack.swaplevel(0, 2, 1).droplevel(1, axis = 1)
-        monthly_unstack_two = monthly_unstack_two.rename(columns={"Draft to Upload": f"Orders <= {target}", "Upload Time": "Total Orders"})
-        final_month_report = monthly_unstack_two.reindex([first_month, second_month], level = 0, axis = 1)
-        final_month_report = final_month_report.reindex(["Total Orders", f"Orders <= {target}", "Efficiency"], level = 1, axis = 1)
+        
+        final_month_report = create_monthly_draft(
+            dataframe=monthly_report_pivot,
+            first_month=first_month,
+            second_month=second_month
+        )
 
         second_month_data = monthly_data[monthly_data["Month"] == second_month]
         create_branch_salesperson_efficiency(
@@ -340,12 +340,36 @@ def create_draft_upload_report(data_orders, daywise_data, mtd_data, selection,st
             cols_req=sales_cols
         )
 
+        monthly_salesperson = pd.pivot_table(
+            monthly_data,
+            index=["Outlet", "RM", "SRM", "Order Creator"],
+            values=[
+                "Upload Time",
+                "Draft to Upload"
+            ],
+            columns="Month",
+            aggfunc={
+                "Upload Time": pd.Series.count,
+                "Draft to Upload": [lambda x: (x <= target).sum()]
+            }
+        )
+
+        final_salesperson = create_monthly_draft(
+            dataframe=monthly_salesperson,
+            first_month=first_month,
+            second_month=second_month
+        )
+
         monthly_data = monthly_data[cols_req]
 
         with pd.ExcelWriter(f"{path}draft_upload/draft_to_upload.xlsx") as writer:
             final_month_report.to_excel(
                 writer, 
                 sheet_name="monthly_summary"
+            )
+            final_salesperson.to_excel(
+                writer,
+                sheet_name = "staff_summary"
             )
             monthly_data.iloc[:, :-1].to_excel(
                 writer,

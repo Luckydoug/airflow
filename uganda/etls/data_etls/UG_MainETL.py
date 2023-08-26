@@ -32,6 +32,7 @@ from uganda_sub_tasks.ordersETLs.items import (fetch_sap_items, fetch_item_group
 from uganda_sub_tasks.ordersETLs.insurance import (fetch_sap_insurance)
 from uganda_sub_tasks.ordersETLs.branch_targets import fetch_sap_branch_targets
 from uganda_sub_tasks.ordersETLs.incentive_slab import fetch_sap_incentive_slab
+from uganda_sub_tasks.ordersETLs.purchaseorder import fetch_purchase_orders
 
 DAG_ID = 'UG_Main_Pipeline'
 
@@ -178,6 +179,7 @@ with DAG(
         )
 
     with TaskGroup('users') as users:
+
         fetch_sap_users = PythonOperator(
             task_id = 'fetch_sap_users',
             python_callable = fetch_sap_users,
@@ -185,6 +187,7 @@ with DAG(
         )  
 
     with TaskGroup('items') as items:
+
         fetch_sap_items = PythonOperator(
             task_id = 'fetch_sap_items',
             python_callable = fetch_sap_items,
@@ -199,20 +202,21 @@ with DAG(
 
         fetch_sap_items >> fetch_item_groups
     
-    # with TaskGroup('targets') as targets:
-    #     fetch_sap_branch_targets = PythonOperator(
-    #         task_id = 'fetch_sap_branch_targets',
-    #         python_callable = fetch_sap_branch_targets,
-    #         provide_context = True
-    #     ) 
+    with TaskGroup('targets') as targets:
 
-    #     fetch_sap_incentive_slab = PythonOperator(
-    #         task_id = 'fetch_sap_incentive_slab',
-    #         python_callable = fetch_sap_incentive_slab,
-    #         provide_context = True
-    #     )
+        fetch_sap_branch_targets = PythonOperator(
+            task_id = 'fetch_sap_branch_targets',
+            python_callable = fetch_sap_branch_targets,
+            provide_context = True
+        ) 
 
-    #     fetch_sap_branch_targets >> fetch_sap_incentive_slab
+        fetch_sap_incentive_slab = PythonOperator(
+            task_id = 'fetch_sap_incentive_slab',
+            python_callable = fetch_sap_incentive_slab,
+            provide_context = True
+        )
+
+        fetch_sap_branch_targets >> fetch_sap_incentive_slab
 
     # with TaskGroup('invoices') as invoices:
 
@@ -233,8 +237,16 @@ with DAG(
     finish = DummyOperator(
         task_id = "finish"
     )
+
+    with TaskGroup('purchaseorders') as purchaseorders:
+
+        fetch_purchase_orders = PythonOperator(
+            task_id = 'fetch_purchase_orders',
+            python_callable = fetch_purchase_orders,
+            provide_context = True
+        )
     
     # start >> orders >> orderlog >> payments >> customers >> prescriptions >> view >> salesorders >> discounts >> users >>invoices >> finish
-    start >> orders >> orderlog >> payments >> customers >> prescriptions >> view >> salesorders >> discounts >> users >> items >> insurance >> finish
+    start >> orders >> orderlog >> payments >> customers >> prescriptions >> view >> salesorders >> discounts >> users >> items >> insurance >> targets >> purchaseorders >>finish
 
 

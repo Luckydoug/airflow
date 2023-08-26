@@ -40,7 +40,7 @@ def order_efficiency_smtp():
     departmentlist = fetch_gsheet_data()["department_emails"]
     print(departmentlist.head())
     deptemail = departmentlist['Email']
-    emaillist = deptemail.tolist()
+    emaillist = deptemail.tolist()  
 
     #order efficiency
     order_efficiency =pd.ExcelFile(r"/home/opticabi/Documents/optica_reports/order_efficiency/order efficiency results.xlsx")  
@@ -55,6 +55,16 @@ def order_efficiency_smtp():
         
     order1 = order_efficiency_dfs[0].iloc[:4, :10]
 
+    maine = order_efficiency_dfs[0].iloc[:4, :].rename(columns = {'Unnamed: 0':''})
+    mainefficiency = pd.to_numeric((maine['Total'].iloc[-1]).replace("%",""))
+    deignere = order_efficiency_dfs[3].iloc[:4, :].rename(columns = {'Unnamed: 0':''})
+    designerefficiency = pd.to_numeric((deignere['Total'].iloc[-1]).replace("%",""))
+    lense = order_efficiency_dfs[6].iloc[:4, :].rename(columns = {'Unnamed: 0':''})
+    lensstoreefficiency = pd.to_numeric((lense['Total'].iloc[-1]).replace("%",""))
+    packe = order_efficiency_dfs[12].iloc[:4, :].rename(columns = {'Unnamed: 0':''})
+    packagingefficiency = pd.to_numeric((packe['Total'].iloc[-1]).replace("%",""))
+    controle = order_efficiency_dfs[9].iloc[:4, :].rename(columns = {'Unnamed: 0':''})
+    controlefficiency = pd.to_numeric((controle['Total'].iloc[-1]).replace("%",""))
 
     #damage supply efficiency
     damage_supply_efficiency = r"/home/opticabi/Documents/optica_reports/order_efficiency\newdamagesupplytime.xlsx"
@@ -64,8 +74,7 @@ def order_efficiency_smtp():
         print(sheet_name)
         df = pd.read_excel(damage_supply_efficiency, sheet_name=sheet_name)
         damage_supply_dfs.append(df)
-        
-    damage_supply1 = damage_supply_dfs[0]
+    
 
     #control_damge_supply
     control_to_store_damge_supply = pd.read_excel(damage_supply_efficiency, sheet_name="control to store")
@@ -124,7 +133,7 @@ def order_efficiency_smtp():
     i=0
     j=0
 
-    #Compiling data for each branch
+    #Compiling data for each department
     for department, email in zip(departments,emaillist):
         if departmentlist.isin([email]).any().any():
             # dept = departmentlist['Department'].iloc[i]
@@ -371,6 +380,7 @@ def order_efficiency_smtp():
                 table8heading = """<p style="color:blue">Damage Supply Time</p>
                             <p style="font_weight:italic">Rejected frame sent to frame to reissued frame for order</p>"""
                 table8html = table8.to_html(index=False)
+                
 
         # Define the HTML document
         html = '''
@@ -407,11 +417,11 @@ def order_efficiency_smtp():
                         <p><u><b>{table7heading}</b></u></p>
                         <table>{table7html}</table>
                         <br>
-                        <!-- <p><u><b>{table8heading}</b></u></p>
+                        <p><u><b>{table8heading}</b></u></p>
                         <table>{table8html}</table>
                         <br>
                         <p><u><b>{table9heading}</b></u></p>
-                        <table>{table9html}</table> -->
+                        <table>{table9html}</table>
                         <br>
                 </body>
             </html>
@@ -442,8 +452,16 @@ def order_efficiency_smtp():
         email_from = sender_email
         password = yourpassword
 
-        # receiver_email = ['tstbranch@gmail.com']
-        receiver_email = [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','nicholas.muthui@optica.africa','simon.peter@optica.africa','shyam@optica.africa']
+        if department == "BRS":
+            # receiver_email = ['tstbranch@gmail.com']
+            receiver_email = [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','shyam@optica.africa','stock@optica.africa','idah.atieno@optica.africa']
+        else:    
+            if pd.to_numeric((table1['Total'].iloc[-1]).replace("%","")) < 95:
+                receiver_email = [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','shyam@optica.africa','yuri@optica.africa','idah.atieno@optica.africa']
+                # receiver_email = ['wairimu@optica.africa']
+            else:
+                receiver_email = [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','shyam@optica.africa','idah.atieno@optica.africa']
+                # receiver_email = ['tstbranch@gmail.com']
 
         # Create a MIMEMultipart class, and set up the From, To, Subject fields
         email_message = MIMEMultipart()
@@ -465,3 +483,10 @@ def order_efficiency_smtp():
 if __name__ == '__main__': 
     order_efficiency_smtp()  
 
+# def clean_folder(dir_name=r"/home/opticabi/Documents/optica_reports/"):
+#     files = os.listdir(dir_name)
+#     for file in files:
+#         if file.endswith(".xlsx"):
+#             os.remove(os.path.join(dir_name, file))
+
+# clean_folder()

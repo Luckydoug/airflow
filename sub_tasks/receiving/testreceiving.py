@@ -48,7 +48,7 @@ def create_receivingdata():
 
 def receiving():
     today = datetime.date.today()
-    yesterday = today - datetime.timedelta(days=2)
+    yesterday = today - datetime.timedelta(days=1)
 
     receiving = pd.read_sql("""
     SELECT "DocEntry", "Order No.", odsc_date::date, odsc_time, "Customer Code", "Normal(Or)Repair Order", "Status", odsc_status,"Order Criteria Status",odsc_createdby, "Order Total Amount", "Outlet"
@@ -546,6 +546,7 @@ def receiving():
     thikatown = thikatown[['doc_entry','odsc_date','odsc_time','odsc_status','odsc_createdby','doc_no','cust_code','ods_outlet','DateTime','trip_date','receiving_time','order_criteria_status','region']]
 
     receiving = pd.concat([thika,westlands,mombasa,eastlands,karen,upcountry,rongai,cbd,thikatown], axis=0)   
+    print(receiving)
 
     query = """truncate mabawa_dw.dim_receiving_data;"""
     query = pg_execute(query)
@@ -633,6 +634,6 @@ def create_time_difference():
     
 
 # create_receivingdata()
-# receiving()
+receiving()
 # create_time_difference()
 # update_source_receiving_data()

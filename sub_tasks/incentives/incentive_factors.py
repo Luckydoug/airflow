@@ -119,3 +119,11 @@ def create_all_activity():
 
 
 
+def refresh_lens_silh():
+
+    query = """
+    refresh materialized view mabawa_mviews.order_contents;
+    refresh materialized view mabawa_mviews.lens_incentive;
+    refresh materialized view mabawa_mviews.silh_incentive;
+    """
+    query = pg_execute(query)

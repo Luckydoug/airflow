@@ -205,6 +205,19 @@ with DAG(
         )
 
         fetch_goods_receipt >> goods_receipt_live
+    
+    """
+    PURCHASE ORDERS
+    """
+    with TaskGroup('purchase_orders') as purchase_orders:
+
+        from sub_tasks.ordersETLs.purchaseorder import (fetch_purchase_orders)
+
+        fetch_purchase_orders = PythonOperator(
+            task_id = 'fetch_purchase_orders',
+            python_callable=fetch_purchase_orders,
+            provide_context=True
+        )
 
     """
     GET ORDERS
@@ -337,4 +350,4 @@ with DAG(
         task_id = "finish"
     ) 
 
-    start >> dimensions >> goods_receipt >> orders >> finance >> finish
+    start >> dimensions >> goods_receipt >> orders >> purchase_orders >> finance >> finish

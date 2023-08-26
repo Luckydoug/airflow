@@ -19,6 +19,7 @@ from uganda_sub_tasks.postgres.salesorders_views import (refresh_order_line_with
                                                     refresh_fact_orders_header,refresh_order_contents)
 
 from uganda_sub_tasks.postgres.prescriptions_views import refresh_et_conv
+from uganda_sub_tasks.postgres.incentives import refresh_lens_silh
 
 DAG_ID = 'UG_Update_Views'
 
@@ -81,9 +82,17 @@ with DAG(
             python_callable = refresh_et_conv,
             provide_context = True
         )
+    
+    with TaskGroup('lens_silh') as lens_silh:
+
+        refresh_lens_silh = PythonOperator(
+            task_id = 'refresh_lens_silh',
+            python_callable = refresh_lens_silh,
+            provide_context = True
+        )
         
     finish = DummyOperator(
         task_id = "finish"
     )
 
-    start >> salesorders >> prescriptions >> finish
+    start >> salesorders >> prescriptions >> lens_silh >> finish

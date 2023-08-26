@@ -1,4 +1,6 @@
-test = ["tstbranch@gmail.com", "wairimu@optica.africa"]
+test = [
+    "tstbranch@gmail.com"
+]
 
 kenya = [
     'kush@optica.africa',

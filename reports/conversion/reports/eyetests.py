@@ -255,7 +255,8 @@ def create_eyetests_conversion(data, country, path, selection):
             "on_after_createdon": "Order Created On",
             "on_after_cancelled": "Order Cancelled",
             "on_after_status": "Order Status",
-            "view_creator": "Who Viewed RX"
+            "view_creator": "Who Viewed RX",
+            "insurance_name": "Insurance Company"
         })
 
         non_conversions_data = non_conversions_data[[
@@ -272,6 +273,7 @@ def create_eyetests_conversion(data, country, path, selection):
             "RX Last Viewed By",
             "View Date",
             "Order Converted",
+            "Insurance Company",
             "Date Converted",
             "Days to Convert",
             "Order Created",

@@ -44,7 +44,8 @@ with DAG(
                 build_kenya_plano_report,
                 build_kenya_ratings_report,
                 push_kenya_opening_time,
-                build_kenya_opening_time
+                build_kenya_opening_time,
+                build_kenya_insurance_conversion
             )
 
             push_kenya_efficiency_data = PythonOperator(
@@ -96,8 +97,14 @@ with DAG(
                 provide_context=True
             )
 
+            build_kenya_insurance_conversion = PythonOperator(
+                task_id='build_kenya_insurance_conversion',
+                python_callable=build_kenya_insurance_conversion,
+                provide_context=True
+            )
+
             
-            push_kenya_efficiency_data >> build_kenya_draft_upload >> build_kenya_sops >> build_kenya_rejections >> build_kenya_plano_report >> build_kenya_ratings_report >> push_kenya_opening_time >> build_kenya_opening_time
+            push_kenya_efficiency_data >> build_kenya_draft_upload >> build_kenya_sops >> build_kenya_rejections >> build_kenya_plano_report >> build_kenya_ratings_report >> push_kenya_opening_time >> build_kenya_opening_time >> build_kenya_insurance_conversion
             
 
     with TaskGroup('smtp') as smtp:

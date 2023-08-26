@@ -10,7 +10,14 @@ def check_time(row):
         return 0
 
 
-def push_branch_opening_time_data(opening_time, rename, database, table, engine, form):
+def push_branch_opening_time_data(
+    opening_time: pd.DataFrame, 
+    rename: dict, 
+    database: str, 
+    table: pd.DataFrame, 
+    engine: str, 
+    form: str
+    ) -> None:
     opening_time_rename = opening_time.rename(columns=rename)[[
         "date",
         "day",
@@ -24,13 +31,14 @@ def push_branch_opening_time_data(opening_time, rename, database, table, engine,
         opening_time_rename["date"], format=form
     )
     opening_time_rename.loc[:, "rep_time"] = pd.to_datetime(opening_time_rename["date"].astype(
-        str) + " " + opening_time_rename["reporting_time"].astype(str), format="%Y-%m-%d %H:%M:%S")
+    str) + " " + opening_time_rename["reporting_time"].astype(str), format="%Y-%m-%d %H:%M:%S")
     opening_time_rename.loc[:, "ope_time"] = pd.to_datetime(opening_time_rename["date"].astype(
         str) + " " + opening_time_rename["opening_time"].astype(str), format="%Y-%m-%d %H:%M:%S")
     opening_time_rename.loc[:, "time_ope"] = pd.to_datetime(opening_time_rename["date"].astype(
         str) + " " + opening_time_rename["time_opened"].astype(str), format="%Y-%m-%d %H:%M:%S")
 
-    opening_time_rename["lost_time"] = (opening_time_rename["time_ope"] - opening_time_rename["ope_time"]).apply(lambda x: x.total_seconds() / 60)
+    opening_time_rename["lost_time"] = (
+        opening_time_rename["time_ope"] - opening_time_rename["ope_time"]).apply(lambda x: x.total_seconds() / 60)
     opening_time_rename["lost_time"] = opening_time_rename.apply(
         lambda row: check_time(row), axis=1
     )
@@ -67,12 +75,18 @@ def push_branch_opening_time_data(opening_time, rename, database, table, engine,
     )
 
 
-
-def create_opening_time_report(data, path):
+def create_opening_time_report(data: pd.DataFrame, path: str) -> None:
+    """
+    Get the opening data and save it to an excel.
+    But before saving to excel, we convert the Date column
+    to a string so that excel does not append zeros at the end of the date.
+    """
+    data["Date"] = data["Date"].astype(str)
     if not len(data):
         return
     with pd.ExcelWriter(f"{path}draft_upload/opening_time.xlsx") as writer:
-        data.to_excel(writer, sheet_name="daily_summary", index=False)
-
-
-
+        data.to_excel(
+            writer, 
+            sheet_name="daily_summary", 
+            index=False
+        )

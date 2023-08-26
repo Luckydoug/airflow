@@ -31,6 +31,7 @@ engine = createe_engine()
 
 def fetch_et_non_conversions():
     today = datetime.date.today()
+    # yesterday = today - datetime.timedelta(days=1)
     monthstart = datetime.date(today.year, today.month, 1)
     datefrom = (monthstart - dateutil.relativedelta.relativedelta(months=3))
 
@@ -84,13 +85,16 @@ def manipulate_et_non_conversions():
         'mode_of_pay':'Customer Type',
         'handed_over_to':'Handed Over To',
         'last_viewed_by':'EWC Name',
-        'view_date':'View Date'
+        'view_date':'View Date',
+        'conversion_reason':'Conversion Reason',
+        'conversion_remarks':'Conversion Remarks'
     },axis=1,inplace=True)
 
-    non_q_cols = ['ET Date','ET Time','Branch','Customer Code','Optom','EWC Name']
+    non_q_cols = ['ET Date','ET Time','Branch','Customer Code','Optom','EWC Name','Conversion Reason','Conversion Remarks']
     non_q  = non_q[non_q_cols]
     non_q["Remarks"] = ""
     non_q["EWC Sign"] = ""
+    print(non_q)
 
     with pd.ExcelWriter(f"{path}et_non_conversions/et_non_conversions.xlsx", engine='xlsxwriter') as writer:  
             non_q.to_excel(writer, sheet_name='Master',index=False)
@@ -99,7 +103,7 @@ def manipulate_et_non_conversions():
                 dataframe.to_excel(writer,sheet_name=name, index=False)
 
 
-
+# manipulate_et_non_conversions()
 def smtp():
     branch_data = fetch_gsheet_data()["branch_data"]
     log_file=f"{path}et_non_conversions/branch_log.txt"
@@ -108,6 +112,7 @@ def smtp():
     password = os.getenv("wairimu_password")
     create_initial_file(log_file)
     et_non_q_file = f"{path}et_non_conversions/et_non_conversions.xlsx"
+    print(et_non_q_file)
 
     # et_non_q = pd.ExcelFile(et_non_q_file)
 
@@ -122,7 +127,7 @@ def smtp():
     if not assert_date_modified([et_non_q_file]):
         return
     else:
-        selectedBranches = ["DIA","KII","NAR","OHO","COR","YOR"]
+        selectedBranches = ["DIA","KII","NAR","OHO","COR","YOR","JUN"]
         targetbranches = branch_data[branch_data['Outlet'].isin(selectedBranches)]
         for index, row in targetbranches.iterrows():
             branchcode = row['Outlet']
@@ -153,12 +158,15 @@ def smtp():
                         report_date = report_date
                         )
             # receiver_email = ["tstbranch@gmail.com"]
-            # receiver_email = ["wairimu@optica.africa"]
-            receiver_email = [branchemail,"naveed@optica.africa","cavin@optica.africa","kimstone@optica.africa",'kush@optica.africa','wazeem@optica.africa','shehan@optica.africa']
+            # receiver_email = ["cavin@optica.africa","kimstone@optica.africa","shehan@optica.africa"]
+            receiver_email = [branchemail,"cavin@optica.africa","kimstone@optica.africa",'kush@optica.africa','wazeem@optica.africa','shehan@optica.africa']
             if branchcode == "OHO":
-                receiver_email = [branchemail,"naveed@optica.africa","cavin@optica.africa","kimstone@optica.africa",'kush@optica.africa','wazeem@optica.africa','shehan@optica.africa',"susan@optica.africa","wairimu@optica.africa"]
+                receiver_email = [branchemail,"cavin@optica.africa","kimstone@optica.africa",'kush@optica.africa','wazeem@optica.africa','shehan@optica.africa',"susan@optica.africa","wairimu@optica.africa"]
             if branchcode == "YOR":
-                receiver_email = ["naveed@optica.africa","cavin@optica.africa","kimstone@optica.africa",'kush@optica.africa','wazeem@optica.africa','shehan@optica.africa',"yh.manager@optica.africa","wairimu@optica.africa"]
+                receiver_email = ["cavin@optica.africa","kimstone@optica.africa",'kush@optica.africa','wazeem@optica.africa','shehan@optica.africa',"yh.manager@optica.africa","wairimu@optica.africa"]
+            if branchcode == "JUN":
+                receiver_email = [branchemail,"cavin@optica.africa","wairimu@optica.africa"]
+
         # Create a MIMEMultipart class, and set up the From, To, Subject fields
             email_message = MIMEMultipart()
             email_message['From'] = your_email

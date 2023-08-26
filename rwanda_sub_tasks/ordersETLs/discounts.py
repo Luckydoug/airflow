@@ -29,7 +29,7 @@ SessionId = login_rwanda()
 # ToDate = '2023/05/04'
 
 today = date.today()
-pastdate = today - timedelta(days=1)
+pastdate = today - timedelta(days=3)
 FromDate = pastdate.strftime('%Y/%m/%d')
 ToDate = date.today().strftime('%Y/%m/%d')
 
@@ -119,4 +119,4 @@ def fetch_sap_discounts():
 
         print('Update successful')
         
-# fetch_sap_discounts()
+fetch_sap_discounts()

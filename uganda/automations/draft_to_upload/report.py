@@ -21,7 +21,7 @@ from reports.draft_to_upload.reports.opening_time import (
     push_branch_opening_time_data, 
     create_opening_time_report
 )
-from reports.draft_to_upload.utils.utils import get_report_frequency, return_report_daterange
+from reports.draft_to_upload.utils.utils import get_report_frequency, return_report_daterange, get_start_end_dates
 from reports.draft_to_upload.data.push_data import push_insurance_efficiency_data
 from reports.draft_to_upload.reports.rejections import create_rejection_report
 from reports.draft_to_upload.reports.plano import (
@@ -199,6 +199,9 @@ def push_uganda_efficiency_data():
         database=database
     )
 
+pstart_date, pend_date = get_start_end_dates(
+    selection=selection
+)
 
 data_orders = fetch_insurance_efficiency(
     database=database,
@@ -206,14 +209,19 @@ data_orders = fetch_insurance_efficiency(
     start_date=start_date
 )
 
+
 daywise_efficiency = fetch_daywise_efficiency(
     database=database,
-    engine=engine
+    engine=engine,
+    start_date=pstart_date,
+    end_date=pend_date
 )
 
 mtd_efficiency = fetch_mtd_efficiency(
     database=database,
-    engine=engine
+    engine=engine,
+    start_date=pstart_date,
+    end_date=pend_date
 )
 
 
@@ -235,13 +243,17 @@ def build_ug_draft_upload():
 daywise_rejections = fetch_daywise_rejections(
     database=database,
     view="mawingu_mviews",
-    engine=engine
+    engine=engine,
+    start_date=pstart_date,
+    end_date=pend_date
 )
 
 mtd_rejections = fetch_mtd_rejections(
     database=database,
     view="mawingu_mviews",
-    engine=engine
+    engine=engine,
+    start_date=pstart_date,
+    end_date=pend_date
 )
 
 def build_ug_rejections():

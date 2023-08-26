@@ -9,10 +9,12 @@ from sub_tasks.libraries.utils import (
     fetch_gsheet_data,
     uganda_path
 )
+from reports.draft_to_upload.utils.utils import (return_report_daterange)
 
 engine = create_unganda_engine()
 selection = get_report_frequency()
 selection = "Weekly"
+start_date = return_report_daterange(selection = selection)
 data_fetcher = FetchData(
     engine=engine,
     database="mawingu_staging"
@@ -30,8 +32,12 @@ sales_orders = data_fetcher.fetch_sales_orders(
 
 def build_uganda_insurance_conversion() -> None:
     branch_data = fetch_gsheet_data()["ug_srm_rm"]
+    working_hours = fetch_gsheet_data()["ug_working_hours"]
     create_insurance_conversion(
         path=uganda_path,
+        working_hours=working_hours,
+        date = start_date,
+        selection=selection,
         all_orders=orders,
         orderscreen=orderscreen,
         branch_data=branch_data,

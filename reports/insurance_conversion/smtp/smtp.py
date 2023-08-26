@@ -233,6 +233,7 @@ def send_to_branches(
                     rm_email,
                     "duncan.muchai@optica.africa",
                     "susan@optica.africa",
+                    "insuranceoh@optica.africa",
                     branch_email
                 ]
             
@@ -240,6 +241,7 @@ def send_to_branches(
                 receiver_email = [
                     rm_email,
                     "yh.manager@optica.africa",
+                    "insurance@optica.africa",
                     branch_email
                 ]
             

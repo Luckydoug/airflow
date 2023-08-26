@@ -8,7 +8,7 @@ from sub_tasks.libraries.utils import (
 )
 from reports.draft_to_upload.reports.draft import create_draft_upload_report
 from reports.draft_to_upload.data.push_data import push_insurance_efficiency_data
-from reports.draft_to_upload.utils.utils import return_report_daterange, get_report_frequency
+from reports.draft_to_upload.utils.utils import return_report_daterange, get_report_frequency, get_start_end_dates
 from reports.draft_to_upload.smtp.branches import send_branches_efficiency
 from reports.draft_to_upload.smtp.smtp import clean_folders
 from reports.draft_to_upload.data.fetch_data import (
@@ -89,14 +89,22 @@ data_orders = fetch_insurance_efficiency(
     start_date=start_date
 )
 
+pstart_date, pend_date = get_start_end_dates(
+    selection=selection
+)
+
 daywise_efficiency = fetch_daywise_efficiency(
     database=database,
-    engine=engine
+    engine=engine,
+    start_date=pstart_date,
+    end_date=pend_date
 )
 
 mtd_efficiency = fetch_mtd_efficiency(
     database=database,
-    engine=engine
+    engine=engine,
+    start_date=pstart_date,
+    end_date=pend_date
 )
 
 

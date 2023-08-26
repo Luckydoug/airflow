@@ -25,12 +25,12 @@ from sub_tasks.api_login.api_login import(login_rwanda)
 
 SessionId = login_rwanda()
 
-# FromDate = '2023/01/01'
+FromDate = '2023/05/01'
 # ToDate = '2023/05/18'
 
 today = date.today()
-pastdate = today - timedelta(days=3)
-FromDate = pastdate.strftime('%Y/%m/%d')
+# pastdate = today - timedelta(days=3)
+# FromDate = pastdate.strftime('%Y/%m/%d')
 ToDate = date.today().strftime('%Y/%m/%d')
 
 pagecount_url = f"https://10.40.16.9:4300/RWANDA_BI/XSJS/BI_API.xsjs?pageType=GetOrderDetailsC1&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
@@ -47,10 +47,11 @@ def fetch_sap_orderscreendetailsc1():
     payload={}
     headers = {}
     pages = data['result']['body']['recs']['PagesCount']
+    print(pages)
     for i in range(1, pages+1):
         page = i
         print(page)
-        url = f"https://10.40.16.9:4300/RWANDA_BI/XSJS/BI_API.xsjs?pageType=GetOrderDetailsC1&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+        url = f"https://10.40.16.9:4300/RWANDA_BI/XSJS/BI_API.xsjs?pageType=GetOrderDetailsC1&pageNo={page}&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
         response = requests.request("GET", url, headers=headers, data=payload, verify=False)
         response = response.json()
         response = response['result']['body']['recs']['Results']
@@ -75,6 +76,7 @@ def fetch_sap_orderscreendetailsc1():
     query = pg_execute(query)
 
     orderscreenc1.to_sql('landing_orderscreenc1', con = engine, schema='voler_staging', if_exists = 'append', index=False)
+
 # fetch_sap_orderscreendetailsc1()
 
 def update_to_source_orderscreenc1():
@@ -95,4 +97,5 @@ def update_to_source_orderscreenc1():
        create_table=False)
     
     print('source_orderscreenc1')
+
 # update_to_source_orderscreenc1()

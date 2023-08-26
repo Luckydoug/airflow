@@ -213,11 +213,18 @@ with DAG(
         provide_context = True
     )
 
+    from sub_tasks.incentives.incentive_factors import refresh_lens_silh
+
+    refresh_lens_silh = PythonOperator(
+        task_id = 'refresh_lens_silh',
+        python_callable = refresh_lens_silh,
+        provide_context = True
+    )
 
     finish = DummyOperator(
         task_id = "finish"
     )
     
-    start >> sales >> gr >> sg >> nps_det >> create_all_activity >> ins_rej >> sop >> ins_conv >>  finish
+    start >> sales >> gr >> sg >> nps_det >> create_all_activity >> ins_rej >> sop >> ins_conv >> refresh_lens_silh >> finish
     # start >> gr >> sg >> nps_det >> create_all_activity >> ins_rej >> sop >> ins_conv >>  finish
     

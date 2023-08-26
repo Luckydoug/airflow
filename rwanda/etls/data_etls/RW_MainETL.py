@@ -30,6 +30,7 @@ from rwanda_sub_tasks.ordersETLs.optom_queue import fetch_optom_queue_mgmt
 from rwanda_sub_tasks.ordersETLs.items import (fetch_sap_items, fetch_item_groups)
 from rwanda_sub_tasks.ordersETLs.branch_targets import fetch_sap_branch_targets
 from rwanda_sub_tasks.ordersETLs.incentive_slab import fetch_sap_incentive_slab
+from rwanda_sub_tasks.ordersETLs.purchaseorder import fetch_purchase_orders
 
 DAG_ID = 'RW_Main_Pipeline'
 
@@ -174,7 +175,6 @@ with DAG(
             provide_context = True
         )
 
-        fetch_sap_discounts
 
     with TaskGroup('users') as users:
         fetch_sap_users = PythonOperator(
@@ -199,6 +199,7 @@ with DAG(
         fetch_sap_users >> fetch_sap_items >> fetch_item_groups
 
     with TaskGroup('targets') as targets:
+        
         fetch_sap_branch_targets = PythonOperator(
             task_id = 'fetch_sap_branch_targets',
             python_callable = fetch_sap_branch_targets,
@@ -212,9 +213,17 @@ with DAG(
         )
 
         fetch_sap_branch_targets >> fetch_sap_incentive_slab
+    
+    with TaskGroup('purchaseorders') as purchaseorders:
+
+        fetch_purchase_orders = PythonOperator(
+            task_id = 'fetch_purchase_orders',
+            python_callable = fetch_purchase_orders,
+            provide_context = True
+        )
   
     finish = DummyOperator(
         task_id = "finish"
     )
     
-    start >> orders >> orderlog >> payments >> customers >> prescriptions >> view >> salesorders >> discounts >> users >> items >> targets >> finish
+    start >> orders >> orderlog >> payments >> customers >> prescriptions >> view >> salesorders >> discounts >> purchaseorders >> users >> items >> targets >> finish

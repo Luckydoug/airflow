@@ -40,7 +40,12 @@ Should the need arise to make adjustments, it is recommended to utilize if and e
 By adhering to this approach, you can mitigate potential issues and maintain the integrity of the file and its associated reports.
 """
 
-def fetch_gsheet_data():
+def fetch_gsheet_data() -> dict:
+    """
+    This function returns an a dictionary with the sheets
+    By returning an object, and putting all this a function, we prevent the code
+    from running periodically and causing errors when Google Transport server is unavailable.
+    """
     service_key = pygsheets.authorize(service_file=service_file)
     sheet = service_key.open_by_key('1jTTvbk8g--Q3FWKMLZaLquDiJJ5a03hsJEtZcUTTFr8')
     staff = pd.DataFrame(sheet.worksheet_by_title("Emails").get_all_records())
@@ -55,6 +60,7 @@ def fetch_gsheet_data():
     rw_working_hours = pd.DataFrame(sheet.worksheet_by_title("RW_Working_Hours").get_all_records())
     itr_cutoff = pd.DataFrame(sheet.worksheet_by_title("ITR_Cutoffs").get_all_records())
     orders_cutoff = pd.DataFrame(sheet.worksheet_by_title("Order_Cutoffs").get_all_records())
+    insurance_tat = pd.DataFrame(sheet.worksheet_by_title("Insurance TAT").get_all_records())
     rw_srm_rm = pd.DataFrame(sheet.worksheet_by_title("RW_SRM_RM").get_all_records())
     department_emails = pd.DataFrame(sheet.worksheet_by_title("Operations Department Emails").get_all_records())
     sheet_orderstodrop = service_key.open_by_key('1cnpNo85Hncf9cdWBfkQ1dn0TYnGfs-PjVGp1XMjk2Wo')
@@ -84,12 +90,13 @@ def fetch_gsheet_data():
         'orders_drop': orders_drop,
         'rwanda_opening': rwanda_opening,
         'rw_working_hours': rw_working_hours,
-        'rejections_drop': rejections_drop
+        'rejections_drop': rejections_drop,
+        'insurance_tat': insurance_tat
         }
 
 
 
-def return_sunday_truth():
+def return_sunday_truth() -> bool:
     today = datetime.date.today()
     if today.weekday() == 6:
         return True
@@ -98,6 +105,9 @@ def return_sunday_truth():
 
 
 def get_yesterday_date(truth = False):
+    """
+    This function returns the dates of yesterday.
+    """
     today = datetime.date.today()
     if truth and today.weekday() == 0:
         days_to_subtract = 2
@@ -141,7 +151,7 @@ def get_todate(truth = False):
     return today - timedelta(days=days_substract)
 
 
-def assert_date_modified(files):
+def assert_date_modified(files) -> bool:
     condition = True
     name = ""
     for file in files:
@@ -457,6 +467,7 @@ third_week_start = date_ranges[2][0].strftime('%Y-%m-%d')
 third_week_end = date_ranges[2][1].strftime('%Y-%m-%d')
 fourth_week_start = date_ranges[3][0].strftime('%Y-%m-%d')
 fourth_week_end = date_ranges[3][1].strftime('%Y-%m-%d')
+
 
 start_date = (date_ranges[0][0])
 end_date = (date_ranges[3][1])

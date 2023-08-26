@@ -2,18 +2,19 @@ from airflow.models import Variable
 import pandas as pd
 
 def fetch_eyetests_conversion(engine, database, start_date, end_date, users, users_table):
-    et_q = f"""           
-        select 
-                code, create_date, trim(to_char(create_date::date, 'Month')) as "Month", create_time, optom, optom_name, rx_type, branch_code, cust_code, status, 
-                patient_to_ophth, "RX",plano_rx, sales_employees, handed_over_to, view_date, view_creator, 
-                last_viewed_by, branch_viewed, order_converted,  date_converted, 
-                days, on_after, on_after_createdon, on_after_cancelled, on_after_status,
-                on_before_prescription_order, on_before_mode, reg_cust_type, mode_of_pay,
-                case when "RX" = 'High Rx' then 1 else 0 end as high_rx,
-                case when "RX" = 'Low Rx' then 1 else 0 end as low_rx,
-                case when a.days <= %(Days)s then 1 else 0 end as conversion,
-                case when a.days <= %(Days)s and "RX" = 'High Rx' then 1 else 0 end as high_rx_conversion,
-                case when (a.days <= %(Days)s and "RX" = 'Low Rx') then 1 else 0 end as low_rx_conversion
+    et_q = f""" 
+        SELECT
+        code, create_date, trim(to_char(create_date::date, 'Month')) as "Month", 
+        create_time, optom, optom_name, rx_type, branch_code, cust_code, status, 
+        patient_to_ophth, "RX",plano_rx, sales_employees, handed_over_to, view_date, view_creator, 
+        last_viewed_by, branch_viewed, order_converted,  date_converted,
+        days, on_after, on_after_createdon, on_after_cancelled, on_after_status,
+        on_before_prescription_order, on_before_mode, reg_cust_type, mode_of_pay,
+        case when "RX" = 'High Rx' then 1 else 0 end as high_rx,
+        case when "RX" = 'Low Rx' then 1 else 0 end as low_rx,
+        case when days is not null then 1 else 0 end as conversion,
+        case when order_converted is not null and "RX" = 'High Rx' then 1 else 0 end as high_rx_conversion,
+        case when order_converted is not null and "RX" = 'Low Rx' then 1 else 0 end as low_rx_conversion
         from
         (select row_number() over(partition by cust_code, create_date, code order by days, rx_type, code desc) as r, *
         from {database}.et_conv
@@ -23,16 +24,14 @@ def fetch_eyetests_conversion(engine, database, start_date, end_date, users, use
         where a.r = 1
         and a.create_date::date >=  %(From)s
         and a.create_date::date <= %(To)s
-        and a.branch_code not in ('0MA','HOM','null', 'MUR')
+        and a.branch_code not in ('0MA','HOM','null')
         and a.cust_code <> 'U10000002';
-
         """
 
     data = pd.read_sql_query(
         et_q, con=engine, params={
             'From': start_date, 
-            'To': end_date, 
-            'Days': 14
+            'To': end_date
             }
         )
     
@@ -52,9 +51,7 @@ def fetch_registrations_conversion(engine, database, start_date, end_date, users
     conv.draft_orderno as "Order Number", 
     conv.code as "Code",
     conv.days as "Days",
-    case when conv.days is null then 0
-    when conv.days::int <= 14::int then 1
-    else 0 end as "Conversion"
+    case when conv.days is not null then 1 else 0 end as "Conversion"
     from {database}.{view} as conv
     left join {users}.{users_table} as users 
     on conv.cust_sales_employeecode::text = users.se_optom::text
@@ -71,8 +68,7 @@ def fetch_registrations_conversion(engine, database, start_date, end_date, users
         registration_conv_query, con=engine, 
         params={
             'From': start_date, 
-            'To': end_date, 
-            'Days': 14
+            'To': end_date
         }
     )
 
@@ -90,9 +86,7 @@ def fetch_views_conversion(engine, database, start_date, end_date, users, users_
     viewrx.ord_orderno as "Order Number", 
     viewrx.ord_ordercreation_date as "CreateDate", 
     viewrx.days as "Days",
-    case when viewrx.days is null then 0
-    when viewrx.days <= 14 then 1
-    else 0
+    case when viewrx.days is not null then 1 else 0
     end as "Conversion"
     from (select row_number() over(partition by view_date, cust_loyalty_code order by days, doc_entry) as r, *
     from {database}.{view}) as viewrx

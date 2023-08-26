@@ -89,6 +89,9 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection):
                     2) Late Orders - This sheet contains all orders that took more than 8 minutes from Draft Order Created to Upload Attachment.
                     """
 
+
+                # LaTeX formula
+        
                 html = branch_efficiency_html.format(
                     branch_name = branch_name,
                     branch_report_html = branch_html,
@@ -108,6 +111,7 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection):
                     receiver_email = [
                         rm_email,
                         "yh.manager@optica.africa",
+                        "insurance@optica.africa",
                         branch_email
                     ]
                 
@@ -116,13 +120,13 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection):
                         rm_email,
                         "duncan.muchai@optica.africa",
                         "susan@optica.africa",
+                        "insuranceoh@optica.africa",
                         branch_email
                     ]
                 
                 else:
                     receiver_email = [rm_email, branch_email]  
                 
-
 
                 if selection == "Daily":
                     subject = f"{branch_name} Draft to Upload Efficiency Report for {todate}"

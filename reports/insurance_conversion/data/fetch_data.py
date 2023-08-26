@@ -19,7 +19,7 @@ class FetchData:
                 raise e
 
 
-    def fetch_orderscreen(self, start_date):
+    def fetch_orderscreen(self, start_date) -> pd.DataFrame:
         orderscreen_query = f"""
         select orderscreen.doc_entry as "DocEntry", odsc_date::date  as "Date",
         case
@@ -40,32 +40,38 @@ class FetchData:
         return self.fetch_data(orderscreen_query)
 
 
-    def fetch_orders(self, start_date = '2023-01-01'):
+    def fetch_orders(self, start_date = '2023-01-01') -> pd.DataFrame:
         orders_query = f"""
         SELECT CAST(orders.doc_entry AS INT) AS "DocEntry", 
-            CAST(orders.doc_no AS INT) AS "Order Number", 
-            orders.presctiption_no::text as "Code",
-            orders.ods_createdon::date AS "CreateDate",
-            CASE
-                WHEN length(ods_createdat::text) in (1,2) THEN null
-                ELSE (left(ods_createdat::text,(length(ods_createdat::text)-2))||':'||right(ods_createdat::text, 2))::time 
-            END AS "CreateTime",
-            ods_status as "Status",
-            CAST(orders.cust_code AS TEXT) AS "Customer Code", 
-            orders.ods_outlet AS "Outlet", 
-            orders.ods_insurance_order as "Insurance Order",
-            orders.ods_creator AS "Creator", 
-            users.user_name AS "Order Creator"
+        CAST(orders.doc_no AS INT) AS "Order Number", 
+        orders.presctiption_no::text as "Code",
+        orders.ods_createdon::date AS "CreateDate",
+        orders.ods_total_amt::decimal as "Order Amount",
+        case when ods_insurance_totaprvamt2::decimal + ods__insurance_totaprvamt1::decimal <> 0 
+        then ods_insurance_totaprvamt2::decimal + ods__insurance_totaprvamt1::decimal 
+        else ods_insurance_patotaprvamt1::decimal + ods_insurance_patotaprvamt2::decimal end as "Approved Amount",
+        CASE
+            WHEN length(ods_createdat::text) in (1,2) THEN null
+            ELSE (left(ods_createdat::text,(length(ods_createdat::text)-2))||':'||right(ods_createdat::text, 2))::time 
+        END AS "CreateTime",
+        orders.ods_status as "Status",
+        orders.ods_status1 as "Current Status",
+        CAST(orders.cust_code AS TEXT) AS "Customer Code", 
+        orders.ods_outlet AS "Outlet", 
+        orders.ods_insurance_order as "Insurance Order",
+        orders.ods_creator AS "Creator", 
+        users.user_name AS "Order Creator"
         FROM {self.database}.source_orderscreen orders
         LEFT JOIN {self.database}.source_users AS users ON CAST(orders.ods_creator AS TEXT) = CAST(users.user_code AS TEXT)
         WHERE orders.ods_createdon::date BETWEEN '{start_date}' AND '{today}'
         AND CAST(orders.cust_code AS TEXT) <> ''
         """
+        data =  self.fetch_data(orders_query)
+        data["% Approved"] = ((data["Approved Amount"] / data["Order Amount"]) * 100).fillna(0).round(0)
+        return data
 
-        return self.fetch_data(orders_query)
 
-
-    def fetch_insurance_companies(self, start_date = '2023-01-01'):
+    def fetch_insurance_companies(self, start_date = '2023-01-01') -> pd.DataFrame:
         insurance_companies_query = f"""
         select orders.doc_no::int as "Order Number",
             insurance_company.insurance_name as "Insurance Company",
@@ -86,13 +92,13 @@ class FetchData:
         return self.fetch_data(insurance_companies_query)
 
 
-    def fetch_sales_orders(self, start_date):
+    def fetch_sales_orders(self, start_date) -> pd.DataFrame:
         query = f"""
         select internal_number as "DocEntry",
         draft_orderno::int as "Order Number"
         from {self.database}.source_orders_header
         where order_canceled <> 'Y'
-        and posting_date::date between '{start_date}' and '{today}'
+        and creation_date::date between '{start_date}' and '{today}'
         """
 
         return self.fetch_data(query)

@@ -142,3 +142,4 @@ def fetch_sap_branch_targets():
     return "insert targets successfull"
 
 
+fetch_sap_branch_targets()

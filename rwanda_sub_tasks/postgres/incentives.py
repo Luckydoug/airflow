@@ -40,10 +40,21 @@ def create_incentive_cash():
     print('cash incentive done')
 
 def create_incentive_insurance():
+
     query = """
     refresh materialized view voler_mviews.incentive_insurance2; 
     """
 
     query = pg_execute(query)
     print('insurance incentive done')
+
+def refresh_lens_silh():
+
+    query = """
+    refresh materialized view voler_mviews.lens_incentive; 
+    refresh materialized view voler_mviews.silh_incentive;
+    """
+
+    query = pg_execute(query)
+    print('lens_silh done')
     

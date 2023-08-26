@@ -25,7 +25,7 @@ with DAG(
     DAG_ID,
     default_args=default_args,
     tags=['Live'],
-    schedule_interval='00 01 * * 2',
+    schedule_interval='00 01 * * 1',
     catchup=False
 ) as dag:
 
