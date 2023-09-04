@@ -83,11 +83,11 @@ def manipulate_et_non_conversions():
         'cust_code':'Customer Code',
         'mode_of_pay':'Customer Type',
         'handed_over_to':'Handed Over To',
-        'last_viewed_by':'EWC Name',
+        'last_viewed_by':'Last Viewed By',
         'view_date':'View Date'
     },axis=1,inplace=True)
 
-    non_q_cols = ['ET Date','ET Time','Branch','Customer Code','Optom','EWC Name']
+    non_q_cols = ['ET Date','ET Time','Branch','Customer Code','Optom','Handed Over To','Last Viewed By']
     non_q  = non_q[non_q_cols]
     non_q["Remarks"] = ""
     non_q["EWC Sign"] = ""
@@ -150,9 +150,9 @@ def smtp():
                         report_date = report_date
                         )
 
-            # receiver_email = ["tstbranch@gmail.com"]
+            receiver_email = ["tstbranch@gmail.com"]
             # receiver_email = ["wairimu@optica.africa"]
-            receiver_email = [branchemail,RMemail,"raghav@optica.africa","wairimu@optica.africa"]
+            # receiver_email = [branchemail,RMemail,"raghav@optica.africa","wairimu@optica.africa"]
            
         # Create a MIMEMultipart class, and set up the From, To, Subject fields
             email_message = MIMEMultipart()

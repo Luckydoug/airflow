@@ -14,6 +14,10 @@ import pandas as pd
 from colorama import Fore
 import calendar
 import pygsheets
+
+def check_status():
+    pass
+
 from sqlalchemy import create_engine
 
 load_dotenv()

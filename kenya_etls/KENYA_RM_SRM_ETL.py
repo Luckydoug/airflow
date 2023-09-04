@@ -8,11 +8,10 @@ from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python_operator import PythonOperator
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-DAG_ID = 'Kenya_SRM_RM_ETL'
+DAG_ID = 'KE_RM_SRM_ETL'
 
 default_args = {
-    'owner': 'Data Team',
-    # 'depends_on_past': False,
+    'owner': 'Data',
     'retries': 3,
     'retry_delay': timedelta(seconds=15),
     'start_date': datetime(2021, 12, 13),

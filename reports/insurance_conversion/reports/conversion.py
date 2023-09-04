@@ -5,7 +5,8 @@ from reports.insurance_conversion.utils.utils import(
     check_conversion,
     calculate_conversion,
     check_number_requests,
-    get_rm_srm_total
+    get_rm_srm_total,
+    create_monthly_report
 )
 from reports.draft_to_upload.utils.utils import today
 from sub_tasks.libraries.time_diff import calculate_time_difference
@@ -14,7 +15,8 @@ from sub_tasks.libraries.utils import (
     fourth_week_end,
     first_week_start,
     check_date_range,
-    fetch_gsheet_data
+    fetch_gsheet_data,
+    get_comparison_months
 )
 
 
@@ -127,8 +129,8 @@ def create_insurance_conversion(
 
 
     feed_sales = pivoting_data[
-        (pivoting_data["Full Feedback Date"].dt.date >= pd.to_datetime(first_week_start, format="%Y-%m-%d").date()) &
-        (pivoting_data["Full Feedback Date"].dt.date <= pd.to_datetime(fourth_week_end, format="%Y-%m-%d").date()) 
+        (pivoting_data["Full Feedback Date"].dt.date >= pd.to_datetime(date, format="%Y-%m-%d").date()) &
+        (pivoting_data["Full Feedback Date"].dt.date <= pd.to_datetime(today, format="%Y-%m-%d").date()) 
     ]
 
 
@@ -137,86 +139,84 @@ def create_insurance_conversion(
     final["Dif Order Converted"] = final.apply(lambda row: check_conversion(row, order_sales), axis=1)
 
     data = final.copy()
-    final["Requests"] = final.apply(lambda row: check_number_requests(row, data), axis= 1)  
+    final["Requests"] = final.apply(lambda row: check_number_requests(row, data, order_sales), axis= 1)  
     final["Conversion"] = final.apply(lambda row: calculate_conversion(row, data), axis = 1)
 
     final = final.drop_duplicates(subset=["Order Number"])
     final = final.dropna(subset = ["Insurance Company"])
     comparison_data = final.copy()
+   
+    insurance_tat = fetch_gsheet_data()["insurance_tat"]
+    daily_data = comparison_data[
+        (comparison_data["Full Feedback Date"].dt.date >= pd.to_datetime(date, format="%Y-%m-%d").date()) &
+        (comparison_data["Full Feedback Date"].dt.date < pd.to_datetime(today, format="%Y-%m-%d").date())
+    ].copy()
 
-    if selection == "Daily":
-        insurance_tat = fetch_gsheet_data()["insurance_tat"]
-        daily_data = comparison_data[
-            (comparison_data["Full Feedback Date"].dt.date >= pd.to_datetime(date, format="%Y-%m-%d").date()) &
-            (comparison_data["Full Feedback Date"].dt.date < pd.to_datetime(today, format="%Y-%m-%d").date())
-        ]
+    feedback_non = daily_data[
+        (daily_data["Requests"] == 1) & 
+        (daily_data["Conversion"] == 0) & 
+        (daily_data["Feedback"] != "Declined by Insurance Company")
+    ]
+    
 
-        feedback_non = daily_data[
-            (daily_data["Requests"] == 1) & 
-            (daily_data["Conversion"] == 0) & 
-            (daily_data["Feedback"] != "Declined by Insurance Company")
-        ]
-     
+    feedback_non["Time Taken"] = feedback_non.apply(
+        lambda row: calculate_time_difference(
+            row=row,
+            x="Full Request Date",
+            y="Feedback Time",
+            working_hours=working_hours
+        ),
+        axis=1
+    )
 
-        feedback_non["Time Taken"] = feedback_non.apply(
-            lambda row: calculate_time_difference(
-                row=row,
-                x="Full Request Date",
-                y="Feedback Time",
-                working_hours=working_hours
-            ),
-            axis=1
-        )
+    feedback_non = pd.merge(
+        feedback_non,
+        insurance_tat,
+        on = "Insurance Company",
+        how = "left"
+    ).fillna("-")
 
-        feedback_non = pd.merge(
-            feedback_non,
-            insurance_tat,
-            on = "Insurance Company",
-            how = "left"
-        ).fillna("-")
+    cols = [
+        "Outlet",
+        "Order Number",
+        "Current Status",
+        "Order Creator",
+        "Feedback",
+        "Insurance Company",
+        "% Approved",
+        "Full Request Date",
+        "Feedback Time",
+        "Time Taken",
+        "Turnaround Time",
+    ]
 
-        cols = [
-            "Outlet",
-            "Order Number",
-            "Current Status",
-            "Order Creator",
-            "Feedback",
-            "Insurance Company",
-            "% Approved",
-            "Full Request Date",
-            "Feedback Time",
-            "Time Taken",
-            "Turnaround Time",
-        ]
+    creator_summary = pd.pivot_table(
+        feedback_non,
+        index=["Outlet","Order Creator"],
+        columns="Feedback",
+        values="Order Number",
+        aggfunc="count"
+    ).reset_index().fillna("-")
 
-        creator_summary = pd.pivot_table(
-            feedback_non,
-            index=["Outlet","Order Creator"],
-            columns="Feedback",
-            values="Order Number",
-            aggfunc="count"
-        ).reset_index().fillna("-")
+    feedback_non["% Approved"] = feedback_non["% Approved"].astype(int).astype(str) + "%"
+    feedback_non["Feedback"] = pd.Categorical(
+        feedback_non["Feedback"],
+        categories=[
+            "Insurance Fully Approved", 
+            "Use Available Amount on SMART", 
+            "Insurance Partially Approved"
+        ],
+        ordered=True
+    )
 
-        feedback_non["% Approved"] = feedback_non["% Approved"].astype(int).astype(str) + "%"
-        feedback_non["Feedback"] = pd.Categorical(
-            feedback_non["Feedback"],
-            categories=[
-                "Insurance Fully Approved", 
-                "Use Available Amount on SMART", 
-                "Insurance Partially Approved"
-            ],
-            ordered=True
-        )
+    feedback_non = feedback_non.sort_values(by = "Feedback", ascending=True)
+    feedback_non["Time Taken"] = feedback_non["Time Taken"].astype(int)
+    with pd.ExcelWriter(f"{path}draft_upload/insurance_daily.xlsx", engine='xlsxwriter') as writer:
+        creator_summary.to_excel(writer, sheet_name="daily_summary", index=False)
+        feedback_non[cols].to_excel(writer, sheet_name = "daily_data", index = False)
+    writer.close()
 
-        feedback_non = feedback_non.sort_values(by = "Feedback", ascending=True)
-
-        with pd.ExcelWriter(f"{path}draft_upload/insurance_daily.xlsx", engine='xlsxwriter') as writer:
-            creator_summary.to_excel(writer, sheet_name="daily_summary", index=False)
-            feedback_non[cols].to_excel(writer, sheet_name = "daily_data", index = False)
-        writer.close()
-        return
-
-    elif selection == "Weekly":
+    if selection == "Weekly":
 
         final_data = final[
             (final["Full Feedback Date"].dt.date >= pd.to_datetime(fourth_week_start, format="%Y-%m-%d").date()) & 
@@ -376,7 +376,6 @@ def create_insurance_conversion(
         ).fillna(0).astype(str) + "%"
         unstacked_conversion = stacked_conversion.unstack()
 
-        stack_columns = unstacked_conversion.columns
         company_conversion = unstacked_conversion.swaplevel(0, 1, 1).sort_index(level=1, axis=1).reindex(["Requests", "%Conversion"],axis = 1, level = 1)
         multi_columns = company_conversion.columns
         dates = []
@@ -468,8 +467,43 @@ def create_insurance_conversion(
             branch_final.to_excel(writer, sheet_name = "all_branches", index = "Outlet")
         writer.close()
 
-    else:
-        return
+    elif selection == "Monthly":
+        first_month, second_month = get_comparison_months()
+        comparison_data["Month"] = comparison_data["Full Feedback Date"].dt.month_name()
+        
+
+        monthly_data = comparison_data[
+            (comparison_data["Month"] == first_month) |
+            (comparison_data["Month"] == second_month)
+        ]
+
+
+        summary_report = create_monthly_report(
+            data=monthly_data,
+            index="Feedback"
+        )
+
+        branches_report = create_monthly_report(
+            data = monthly_data,
+            index="Outlet"
+        )
+        
+        non_converted = monthly_data[
+            (monthly_data["Conversion"] == 0) & 
+            (monthly_data["Requests"] == 1) & 
+            (monthly_data["Feedback"] != "Declined by Insurance Company")
+        ]
+
+
+        with pd.ExcelWriter(f"{path}insurance_conversion/conversion_management.xlsx", engine='xlsxwriter') as writer:
+            non_converted.to_excel(writer, sheet_name = "NON Conversions")
+            monthly_data.to_excel(writer, sheet_name = "Master Data", index = False)
+            summary_report.to_excel(writer, sheet_name="overall")
+            branches_report.to_excel(writer, sheet_name = "all_branches")
+
+
+
+         
 
 
 

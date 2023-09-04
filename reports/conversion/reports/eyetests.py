@@ -229,12 +229,31 @@ def create_eyetests_conversion(data, country, path, selection):
             }
         )
 
+        optom_highrx_conversion = create_monthly_conversion(
+            data=high_rx_data,
+            index=["branch_code", "optom_name"],
+            values=["code", "conversion"],
+            rename={
+                "code": "ETs",
+                "conversion": "Converted"
+            }
+        )
+
+        ewc_highrx_conversion = create_monthly_conversion(
+            data=high_rx_data,
+            index=["branch_code", "handed_over_to"],
+            values=["code", "conversion"],
+            rename={
+                "code": "ETs",
+                "conversion": "Converted"
+            }
+        )
+
         non_conversions = monthly_data[
             (monthly_data["conversion"] == 0) &
             (monthly_data["Month"] == second_month)
         ]
 
-        print(non_conversions)
 
         non_conversions_data = non_conversions.rename(columns={
             "code": "ET Code",
@@ -273,7 +292,6 @@ def create_eyetests_conversion(data, country, path, selection):
             "RX Last Viewed By",
             "View Date",
             "Order Converted",
-            "Insurance Company",
             "Date Converted",
             "Days to Convert",
             "Order Created",
@@ -287,6 +305,9 @@ def create_eyetests_conversion(data, country, path, selection):
             branch_conversion.to_excel(writer, sheet_name="Branches_Conversion")
             high_rx_conversion.to_excel(writer, sheet_name="Highrx_Conversion")
             branch_highrx_conversion.to_excel(writer, sheet_name="branch_highrx")
+            optom_highrx_conversion.to_excel(writer, sheet_name="Optom")
+            ewc_highrx_conversion.to_excel(writer, sheet_name="EWC")
+            high_rx_data.to_excel(writer, sheet_name = "Data")
             non_conversions_data.sort_values(by="Branch").to_excel(
                 writer, 
                 sheet_name="Non Conversions", 

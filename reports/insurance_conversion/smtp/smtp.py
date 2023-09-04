@@ -16,7 +16,8 @@ from sub_tasks.libraries.utils import (
     assert_date_modified,
     save_file,
     return_sent_emails,
-    record_sent_branch
+    record_sent_branch,
+    get_comparison_months
 )
 from sub_tasks.libraries.styles import ug_styles, properties
 from reports.insurance_conversion.html.html import (
@@ -63,14 +64,24 @@ def attach_file(email_message, filename, name):
 def send_to_management(selection, country, path) -> None:
     if selection == "Weekly":
         subject = f"{country} {selection} Insurance Conversion Report From {fourth_week_start} to {fourth_week_end}"
+    elif selection == "Monthly":
+        first_month, second_month = get_comparison_months()
+        subject = f"{country} {selection} Insurance Conversion Report For {first_month} and {second_month}"
+    else:
+        return
+
 
     path_appended = f"{path}insurance_conversion/"
-    non_conversion = f"{path_appended}mng_noncoverted.xlsx"
-    # test = pd.read_excel(f"{path}insurance_conversion/conversion_management.xlsx")
-    # print(test)
+   
     management_report = pd.ExcelFile(
         f"{path_appended}conversion_management.xlsx"
     )
+
+    if selection == "Weekly":
+        non_conversion = f"{path_appended}mng_noncoverted.xlsx"
+    elif selection == "Monthly":
+        non_conversion =  f"{path_appended}conversion_management.xlsx"
+
     branches_conversion = management_report.parse(
         "all_branches",
         index_col=[0],
@@ -126,6 +137,7 @@ def send_to_management(selection, country, path) -> None:
         company_conversion_html=company_conversion_html
     )
 
+
     if country == "Test":
         receiver_email = test
     elif country == "Kenya":
@@ -164,7 +176,7 @@ def send_to_branches(
     # and this will cause the email to be sent to a branch that has already been sent. So we use this
     # function here to prevent the occurence of this.
     create_initial_file(filename)
-
+    return
     individual = f"{path}/insurance_conversion/individual.xlsx"
     staff_conversion = pd.ExcelFile(individual)
     non_converted = f"{path}insurance_conversion/noncoverted.xlsx"

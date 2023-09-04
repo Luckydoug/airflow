@@ -13,7 +13,6 @@ from reports.draft_to_upload.utils.utils import (return_report_daterange)
 
 engine = create_unganda_engine()
 selection = get_report_frequency()
-selection = "Weekly"
 start_date = return_report_daterange(selection = selection)
 data_fetcher = FetchData(
     engine=engine,
@@ -48,7 +47,7 @@ def build_uganda_insurance_conversion() -> None:
 def send_to_uganda_management() -> None:
     send_to_management(
         selection=selection,
-        country = "Uganda",
+        country = "Test",
         path=uganda_path
     )
 

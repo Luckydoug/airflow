@@ -40,7 +40,7 @@ class FetchData:
         return self.fetch_data(orderscreen_query)
 
 
-    def fetch_orders(self, start_date = '2023-01-01') -> pd.DataFrame:
+    def fetch_orders(self, start_date = '2022-08-01') -> pd.DataFrame:
         orders_query = f"""
         SELECT CAST(orders.doc_entry AS INT) AS "DocEntry", 
         CAST(orders.doc_no AS INT) AS "Order Number", 

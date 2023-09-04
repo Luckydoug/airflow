@@ -15,7 +15,6 @@ test = [
 kenya_daily = [
     'wazeem@optica.africa',
     'shehan@optica.africa',
-    'naveed@optica.africa',
     'john.gitonga@optica.africa',
     'maxwell@optica.africa',
     'cavin@optica.africa',
@@ -35,7 +34,6 @@ kenya_weekly = [
     'shehan@optica.africa',
     'john.gitonga@optica.africa',
     'maxwell@optica.africa',
-    'naveed@optica.africa',
     'cavin@optica.africa',
     'joseph.oluoch@optica.africa',
     'kimstone@optica.africa',
@@ -54,7 +52,6 @@ kenya_monthly = [
     'shehan@optica.africa',
     'john.gitonga@optica.africa',
     'maxwell@optica.africa',
-    'naveed@optica.africa',
     'cavin@optica.africa',
     'joseph.oluoch@optica.africa',
     'kimstone@optica.africa',

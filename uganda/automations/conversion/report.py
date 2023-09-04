@@ -28,7 +28,7 @@ from reports.conversion.smtp.smtp import (
 #Automatic selection is not yet implemented,
 database = "mawingu_mviews"
 engine = create_unganda_engine()
-selection = "Weekly"
+selection = "Monthly"
 start_date, end_date = return_conversion_daterange(selection=selection)
 
 views_conv = fetch_views_conversion(
@@ -124,4 +124,5 @@ Let's keep it flowing
 # Written and Curated by Douglas
 # We shall remember.
 
+build_uganda_et_conversion()
 

@@ -50,7 +50,7 @@ def fetch_insurance_errors_to_drop():
      query = """truncate mabawa_staging.source_drop_insurance_errors;"""
      query = pg_execute(query)
 
-     sh['date'] = pd.to_datetime(sh['date'],dayfirst=True)
+     sh['date'] = pd.to_datetime(sh['date'],dayfirst=True,errors='coerce')
      sh['order_no'] = sh['order_no'].apply("{:.0f}".format).astype(str)
 
 

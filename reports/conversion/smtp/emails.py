@@ -31,7 +31,7 @@ rwanda = [
     'kush@optica.africa',
     'raghav@optica.africa',
     'yuri@optica.africa',
-    'tiwari05nilesh@gmail.com',
+    'nilesh@optica.africa',
     'wairimu@optica.africa',
     'ian.gathumbi@optica.africa'
 ]

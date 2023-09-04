@@ -24,12 +24,12 @@ from sub_tasks.api_login.api_login import(login)
 
 SessionId = login()
 
-FromDate = '2023/07/01'
+# FromDate = '2023/07/01'
 # ToDate = '2023/05/24'
 
 today = date.today()
-pastdate = today - timedelta(days=1)
-# FromDate = pastdate.strftime('%Y/%m/%d')
+pastdate = today - timedelta(days=2)
+FromDate = pastdate.strftime('%Y/%m/%d')
 ToDate = date.today().strftime('%Y/%m/%d')
 
 # api details

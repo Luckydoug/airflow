@@ -126,7 +126,7 @@ def damage_suppy_time():
         print('Designer Store Printed')
     else:
         columns = ['Created User', 'Date', 'Time', 'Status','DocNum','OrderCriteria Status','Datetime','Datetimeout','Time taken'] 
-        reissueframedes = pd.DataFrame(columns=columns) 
+        designerdamage_reissued = pd.DataFrame(columns=columns) 
 
     """Main Store Damage Supply time"""
     print('Main Store Damage Supply time')
@@ -195,7 +195,7 @@ def damage_suppy_time():
         print('Main Store Printed')
     else:
         columns = ['Created User', 'Date', 'Time', 'Status','DocNum','OrderCriteria Status','Datetime','Datetimeout','Time taken']
-        reissueframemain = pd.DataFrame(columns=columns)    
+        mainstoredamage_reissued = pd.DataFrame(columns=columns)    
 
     """Lens Store Damage Supply Time"""
     lensrejected = status[status['Status']=='Rejected Lenses sent to Lens Store']    

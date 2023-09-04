@@ -6,6 +6,7 @@ from reports.conversion.data.fetch_data import (
 )
 
 from sub_tasks.libraries.utils import (createe_engine, path, fetch_gsheet_data)
+from reports.draft_to_upload.utils.utils import (get_report_frequency)
 from reports.conversion.reports.viewrx import (create_views_conversion)
 from reports.conversion.utils.utils import (return_conversion_daterange)
 from reports.conversion.reports.eyetests import (create_eyetests_conversion)
@@ -21,7 +22,7 @@ from reports.conversion.smtp.smtp import (
 
 database = "mabawa_mviews"
 engine = createe_engine()
-selection = "Weekly"
+selection = get_report_frequency()
 start_date, end_date = return_conversion_daterange(selection=selection)
 
 views_conv = fetch_views_conversion(
@@ -83,7 +84,7 @@ def build_kenya_viewrx_conversion():
 def trigger_kenya_management_smtp():
     send_management_report(
         path=path,
-        country="Kenya",
+        country="Test",
         selection=selection
     )
 

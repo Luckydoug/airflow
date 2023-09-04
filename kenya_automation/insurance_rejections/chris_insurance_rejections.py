@@ -52,15 +52,13 @@ if selection == 'Daily':
 elif selection == 'Weekly':
     start_date = fourth_week_start
     end_date = fourth_week_end
-print(start_date)
-print(end_date)
 start_date = return_report_daterange(selection)
 
 print(datetime.datetime.today())
 print(end_date)
 
-# start_date = '2023-08-14'
-# end_date = '2023-08-20'
+# start_date = '2023-08-01'
+# end_date = '2023-08-31'
 
 def rejections():
     branch_data = fetch_gsheet_data()["branch_data"]
@@ -235,8 +233,8 @@ def rejections():
         """
 
     to_date = get_todate()
-    # to_date = '2023-08-14'
-    # till_date = '2023-08-20'
+    # to_date = '2023-08-01'
+    # till_date = '2023-08-31'
     sender_email = os.getenv("wairimu_email")
     # receiver_email = 'wairimu@optica.africa'
     receiver_email = ['wairimu@optica.africa','christopher@optica.africa','andrew@optica.africa']

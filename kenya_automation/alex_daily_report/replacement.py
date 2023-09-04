@@ -219,9 +219,7 @@ def replacements():
 
     MasterData["StoresCreatedUser"]=MasterData["StoresCreatedUser"].str[:-1]
     MasterData['STP_User']=MasterData['STP_User'].str[:-1]
-    MasterData['STB_User']=MasterData['STB_User'].str[:-1]
-        
-
+    MasterData['STB_User']=MasterData['STB_User'].str[:-1]       
 
     #### Average Time Taken From BRS created to Picklist Printed in the Stores   
     AverageTime1= pd.pivot_table(MasterData,
@@ -259,7 +257,7 @@ def replacements():
                         margins=True).fillna('')
     
     print(AverageTime4)
-    print('Average Time Taken From  Sent to Packaging¶ to Sent to Branch ')
+    print('Average Time Taken From  Sent to Packaging to Sent to Branch ')
 
 
 
@@ -348,6 +346,7 @@ def replacements():
     DesignerCount = BRSDesigner_pivot.iloc[1,-1]
     Designeravg = BRSDesigner_pivot.iloc[0,-1] + Designer_pivot.iloc[2,-1]
 
+    print(BRSLens_pivot)
     LensItems = BRSLens_pivot.iloc[2,-1]
     LensCount = BRSLens_pivot.iloc[1,-1]
     Lensavg = BRSLens_pivot.iloc[0,-1] + Lens_pivot.iloc[2,-1]
@@ -403,4 +402,4 @@ def replacements():
                 df.to_excel(writer,'sheet%s' % n)
             writer.save()
             
-# replacements()
+replacements()

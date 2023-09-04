@@ -27,13 +27,13 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 SessionId = login()
 
-FromDate = '2023/04/01'
-ToDate = '2023/06/30'
+# FromDate = '2023/08/20'
+# ToDate = '2023/06/30'
 
-# today = date.today()
-# pastdate = today - timedelta(days=1)
-# FromDate = pastdate.strftime('%Y/%m/%d')
-# ToDate = date.today().strftime('%Y/%m/%d')
+today = date.today()
+pastdate = today - timedelta(days=3)
+FromDate = pastdate.strftime('%Y/%m/%d')
+ToDate = date.today().strftime('%Y/%m/%d')
 
 print(FromDate)
 print(ToDate)

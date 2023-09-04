@@ -307,7 +307,7 @@ def trigger_kenya_smtp():
     send_draft_upload_report(
         selection=selection,
         path=path,
-        country="Kenya",
+        country="Test",
         target=target
     )
 

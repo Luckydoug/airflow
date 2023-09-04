@@ -512,12 +512,13 @@ def send_to_branches(branch_data, selection, path, filename):
     if os.path.exists(rejections_path) and os.path.exists(planos_path) and os.path.exists(feedback):
         feedbacks = pd.ExcelFile(feedback)
         feedbacks_data = feedbacks.parse(
-            f"{selections_lower}_data",
+            "daily_data",
             index_col=False
         )
 
         feedbacks_summary = feedbacks.parse(
-            f"{selections_lower}_summary"
+            "daily_summary",
+            index_col=False
         )
 
         rejections = pd.ExcelFile(rejections_path)

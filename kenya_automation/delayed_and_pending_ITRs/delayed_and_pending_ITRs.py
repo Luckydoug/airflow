@@ -249,8 +249,7 @@ def smtp():
                 table2heading = "15 minutes to cut off"
                 table2html = table2.to_html(index=False) 
         elif department == "Main store":
-            department_email = 'mainstore@optica.africa'
-            # department_email = 'wairimu@optica.africa','shyam@optica.africa' 
+            department_email = 'mainstore@optica.africa'        
             main_cutoff_full = cutoff_efficiency_full_dfs[0].rename(columns = {'Unnamed: 0':''})
             table1 = main_cutoff_full[main_cutoff_full["Classification"] == "Delayed"]
             table1 = table1.drop(["Delay","TenTo"], axis=1)
@@ -295,7 +294,7 @@ def smtp():
 
     # Create a MIMEMultipart class, and set up the From, To, Subject fields
         # receiver_email = ["tstbranch@gmail.com"]
-        receiver_email = [department_email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','shyam@optica.africa' ,'wairimu@optica.africa']
+        receiver_email = [department_email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','wairimu@optica.africa']
 
         email_message = MIMEMultipart()
         email_message['From'] = your_email

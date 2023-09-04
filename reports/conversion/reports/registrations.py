@@ -124,6 +124,16 @@ def create_registrations_conversion(data, country, path, selection):
             }
         )
 
+        salesperson_conversion = create_monthly_conversion(
+            data=monthly_data,
+            index=["Outlet", "Staff"],
+            values=["Customer Code", "Conversion"],
+            rename={
+                "Customer Code": "Customers",
+                "Conversion": "Converted"
+            }
+        )
+
         non_conversions =   monthly_data[
             (monthly_data["Conversion"] == 0) &
             (monthly_data["Month"] == second_month)
@@ -133,6 +143,7 @@ def create_registrations_conversion(data, country, path, selection):
             country_conversion.to_excel(writer, sheet_name="monthly_summary")
             branch_conversion.to_excel(writer, sheet_name="per_branch")
             non_conversions.to_excel(writer, sheet_name = "non_conversions", index = False)
+            salesperson_conversion.to_excel(writer, sheet_name="staff")
 
         with pd.ExcelWriter(f"{path}conversion/registrations/non_conversions.xlsx") as writer:
             non_conversions.iloc[:, :-2].to_excel(writer, sheet_name="master", index=False)
