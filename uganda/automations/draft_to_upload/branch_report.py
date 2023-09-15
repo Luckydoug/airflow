@@ -1,11 +1,12 @@
 from airflow.models import variable
 import pandas as pd
 from sub_tasks.libraries.utils import (
-    path, 
+    uganda_path, 
     target, 
-    createe_engine,
+    create_unganda_engine,
     fetch_gsheet_data
 )
+
 from reports.draft_to_upload.reports.draft import create_draft_upload_report
 from reports.draft_to_upload.data.push_data import push_insurance_efficiency_data
 from reports.draft_to_upload.utils.utils import return_report_daterange, get_report_frequency, get_start_end_dates
@@ -22,8 +23,8 @@ from reports.draft_to_upload.data.fetch_data import (
 )
 
 
-engine =createe_engine()
-database = "mabawa_staging"
+engine = create_unganda_engine()
+database = "mawingu_staging"
 selection = get_report_frequency()
 start_date = return_report_daterange(selection=selection)
 start_date = pd.to_datetime(start_date, format="%Y-%m-%d").date()
@@ -67,9 +68,9 @@ orders = pd.merge(
 )
 
 
-def push_kenya_efficiency_data():
-    branch_data = fetch_gsheet_data()["branch_data"]
-    working_hours = fetch_gsheet_data()["working_hours"]
+def push_uganda_efficiency_data():
+    branch_data = fetch_gsheet_data()["ug_srm_rm"]
+    working_hours = fetch_gsheet_data()["ug_working_hours"]
     date = return_report_daterange(selection="Daily")
     date = pd.to_datetime(date, format="%Y-%m-%d").date()
     push_insurance_efficiency_data(
@@ -87,7 +88,7 @@ data_orders = fetch_insurance_efficiency(
     database=database,
     engine=engine,
     start_date=start_date,
-    dw="mabawa_dw"
+    dw="mawingu_dw"
 )
 
 pstart_date, pend_date = get_start_end_dates(
@@ -99,7 +100,7 @@ daywise_efficiency = fetch_daywise_efficiency(
     engine=engine,
     start_date=pstart_date,
     end_date=pend_date,
-    dw = "mabawa_dw"
+    dw = "mawingu_dw"
 )
 
 mtd_efficiency = fetch_mtd_efficiency(
@@ -107,12 +108,12 @@ mtd_efficiency = fetch_mtd_efficiency(
     engine=engine,
     start_date=pstart_date,
     end_date=pend_date,
-    dw="mabawa_dw"
+    dw="mawingu_dw"
 )
 
 
 def build_branches_efficiency():
-    branch_data = fetch_gsheet_data()["branch_data"]
+    branch_data = fetch_gsheet_data()["ug_srm_rm"]
     create_draft_upload_report(
         data_orders=data_orders,
         mtd_data=mtd_efficiency,
@@ -121,21 +122,21 @@ def build_branches_efficiency():
         start_date=start_date,
         target=target,
         branch_data=branch_data,
-        path=path,
-        drop="KENYA PIPELINE COMPANY"
+        path=uganda_path,
+        drop=""
     )
 
 def trigger_efficiency_smtp():
-    branch_data = fetch_gsheet_data()["branch_data"]
+    branch_data = fetch_gsheet_data()["ug_srm_rm"]
     send_branches_efficiency(
-        path = path,
+        path = uganda_path,
         selection=selection,
         target= target,
         branch_data=branch_data,
-        country="Kenya",
-        log_file=f"{path}draft_upload/branch_log.txt"
+        country="Uganda",
+        log_file=f"{uganda_path}draft_upload/branch_log.txt"
     )
 
-def clean_kenya_folder():
-    clean_folders(path=path)
+def clean_uganda_folder():
+    clean_folders(path=uganda_path)
 

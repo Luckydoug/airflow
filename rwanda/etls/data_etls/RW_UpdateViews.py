@@ -18,7 +18,8 @@ from airflow.sensors.time_sensor import TimeSensor
 from rwanda_sub_tasks.postgres.salesorders_views import (
     refresh_order_line_with_details,
     refresh_salesorders_line_cl_and_rr,
-    refresh_fact_orders_header
+    refresh_fact_orders_header,
+    refresh_order_contents
 )
 from rwanda_sub_tasks.postgres.prescriptions_views import refresh_et_conv
 from rwanda_sub_tasks.postgres.incentives import refresh_lens_silh
@@ -69,11 +70,11 @@ with DAG(
             provide_context = True
         )
 
-        # refresh_order_contents = PythonOperator(
-        #     task_id = 'refresh_order_contents',
-        #     python_callable = refresh_order_contents,
-        #     provide_context = True
-        # )
+        refresh_order_contents = PythonOperator(
+            task_id = 'refresh_order_contents',
+            python_callable = refresh_order_contents,
+            provide_context = True
+        )
 
         refresh_order_line_with_details >> refresh_salesorders_line_cl_and_rr >> refresh_fact_orders_header 
 

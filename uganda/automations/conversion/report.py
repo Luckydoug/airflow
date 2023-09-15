@@ -91,7 +91,7 @@ def build_uganda_viewrx_conversion():
 def trigger_uganda_management_smtp():
     send_management_report(
         path=uganda_path,
-        country="Uganda",
+        country="Test",
         selection=selection
     )
 
@@ -124,5 +124,4 @@ Let's keep it flowing
 # Written and Curated by Douglas
 # We shall remember.
 
-build_uganda_et_conversion()
 

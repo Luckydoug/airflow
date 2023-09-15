@@ -189,7 +189,12 @@ def send_to_salespersons():
                     )
 
                     if random_salesperson == payroll:
-                        receiver_email = ["wazeem@optica.africa", "wairimu@optica.africa", sales_person_email]
+                        receiver_email = [
+                            "wazeem@optica.africa", 
+                            "kimstone@optica.africa",
+                            "wairimu@optica.africa", 
+                            sales_person_email
+                        ]
 
                     else:
                         receiver_email = [sales_person_email]

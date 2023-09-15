@@ -57,8 +57,8 @@ start_date = return_report_daterange(selection)
 print(datetime.datetime.today())
 print(end_date)
 
-# start_date = '2023-08-01'
-# end_date = '2023-08-31'
+# start_date = '2023-09-04'
+# end_date = '2023-09-10'
 
 def rejections():
     branch_data = fetch_gsheet_data()["branch_data"]
@@ -164,15 +164,26 @@ def rejections():
     insurance_desk = orderlog[orderlog['odsc_createdby'].isin(insurance)]
     
     insurance_desk_pivot = insurance_desk.pivot_table(index = ['Outlet','RM','SRM'],aggfunc = {'doc_entry':np.count_nonzero,'draft_orderno':np.count_nonzero}).reset_index().rename(columns = {'doc_entry':'Rejected Orders'}).drop_duplicates(subset = 'Outlet', keep = 'first').fillna(0)
-
-    insurance_desk_rej = pd.merge(insurance_desk_pivot,srm_rm_new,on = ['Outlet','RM','SRM'],how = 'right').sort_values(by = 'Rejected Orders',ascending = True).rename(columns = {'draft_orderno':'Converted Orders'}).fillna(0)
-
-    insurance_desk_rej = pd.merge(insurance_desk_rej,orders_pivot,on = 'Outlet',how = 'left')
-    insurance_desk_rej['% Rejected Orders'] = (insurance_desk_rej['Rejected Orders']/insurance_desk_rej['Total Ins Orders'])*100
-    insurance_desk_rej['% Converted Orders'] = (insurance_desk_rej['Converted Orders']/insurance_desk_rej['Rejected Orders'])*100
-    insurance_desk_rej = insurance_desk_rej[['Outlet','RM','SRM','Total Ins Orders','Rejected Orders','% Rejected Orders','Converted Orders','% Converted Orders']]
-    insurance_desk_rej = insurance_desk_rej.fillna(0).replace(np.inf,0)
-    print(insurance_desk_rej)
+    print(insurance_desk_pivot)    # 
+    
+    if insurance_desk_pivot.empty:
+        insurance_desk_pivot['Rejected Orders'] = 0
+        insurance_desk_pivot['Converted Orders'] = 0
+        insurance_desk_rej = pd.merge(insurance_desk_pivot,srm_rm_new,on = ['Outlet','RM','SRM'],how = 'right').sort_values(by = 'Rejected Orders',ascending = True).rename(columns = {'draft_orderno':'Converted Orders'}).fillna(0)
+        insurance_desk_rej = pd.merge(insurance_desk_rej,orders_pivot,on = 'Outlet',how = 'left')
+        insurance_desk_rej['% Rejected Orders'] = (insurance_desk_rej['Rejected Orders']/insurance_desk_rej['Total Ins Orders'])*100
+        insurance_desk_rej['% Converted Orders'] = (insurance_desk_rej['Converted Orders']/insurance_desk_rej['Rejected Orders'])*100
+        insurance_desk_rej = insurance_desk_rej[['Outlet','RM','SRM','Total Ins Orders','Rejected Orders','% Rejected Orders','Converted Orders','% Converted Orders']]
+        insurance_desk_rej = insurance_desk_rej.fillna(0).replace(np.inf,0)
+        print(insurance_desk_rej)
+    else:    
+        insurance_desk_rej = pd.merge(insurance_desk_pivot,srm_rm_new,on = ['Outlet','RM','SRM'],how = 'right').sort_values(by = 'Rejected Orders',ascending = True).rename(columns = {'draft_orderno':'Converted Orders'}).fillna(0)
+        insurance_desk_rej = pd.merge(insurance_desk_rej,orders_pivot,on = 'Outlet',how = 'left')
+        insurance_desk_rej['% Rejected Orders'] = (insurance_desk_rej['Rejected Orders']/insurance_desk_rej['Total Ins Orders'])*100
+        insurance_desk_rej['% Converted Orders'] = (insurance_desk_rej['Converted Orders']/insurance_desk_rej['Rejected Orders'])*100
+        insurance_desk_rej = insurance_desk_rej[['Outlet','RM','SRM','Total Ins Orders','Rejected Orders','% Rejected Orders','Converted Orders','% Converted Orders']]
+        insurance_desk_rej = insurance_desk_rej.fillna(0).replace(np.inf,0)
+        print(insurance_desk_rej)
 
     """ Save to an Excel File"""
     import xlsxwriter
@@ -233,8 +244,9 @@ def rejections():
         """
 
     to_date = get_todate()
-    # to_date = '2023-08-01'
-    # till_date = '2023-08-31'
+    # to_date = '2023-09-04'
+    # till_date = '2023-09-10'
+
     sender_email = os.getenv("wairimu_email")
     # receiver_email = 'wairimu@optica.africa'
     receiver_email = ['wairimu@optica.africa','christopher@optica.africa','andrew@optica.africa']

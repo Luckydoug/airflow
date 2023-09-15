@@ -29,7 +29,7 @@ conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", p
 SessionId = login()
 
 
-# FromDate = '2023/05/13'
+# FromDate = '2023/08/01'
 # ToDate = '2023/05/07'
 
 today = date.today()

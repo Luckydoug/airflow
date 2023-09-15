@@ -85,10 +85,14 @@ def push_insurance_efficiency_data(database, engine, orderscreen, all_orders, st
     )
 
     final_data_orders["Month"] = final_data_orders["Preauth Time"].dt.month_name()
+    
     final_data_orders = final_data_orders[
-        (final_data_orders["Upload Time"] >= pd.to_datetime(start_date)) &
-        (final_data_orders["Upload Time"] <= pd.to_datetime(today))
+        (final_data_orders["Upload Time"].dt.date >= pd.to_datetime(start_date).date()) &
+        (final_data_orders["Upload Time"].dt.date <= pd.to_datetime(today).date())
     ]
+
+    print(final_data_orders)
+
 
     final_data_orders = final_data_orders.dropna(subset=["Draft Time"])
     final_data_orders = final_data_orders.dropna(subset=["Outlet"])
@@ -195,5 +199,4 @@ def push_insurance_efficiency_data(database, engine, orderscreen, all_orders, st
     Since this code will be running on Airflow, we can't afford to enter the dates manually. 
     There are three reports available: Daily, Weekly, and Monthly reports. 
     Depending on the day, we want the code to determine whether it should send the daily, weekly or monthly report.
-
-"""
+    """

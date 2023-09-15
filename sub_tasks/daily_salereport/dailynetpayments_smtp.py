@@ -177,13 +177,14 @@ def daily_netsales_email():
         )
 
     to_date = get_todate()
+    # to_date = '2023-08-31'
     sender_email = os.getenv("wairimu_email")
     # receiver_email = 'wairimu@optica.africa'
     receiver_email = ['wairimu@optica.africa','yuri@optica.africa','kush@optica.africa','giri@optica.africa','wazeem@optica.africa']
     email_message = MIMEMultipart()
     email_message["From"] = sender_email
     email_message["To"] = r','.join(receiver_email)
-    email_message["Subject"] = f"MTD & Daily Net Sales Report for {to_date}"
+    email_message["Subject"] = f"Kenya MTD & Daily Net Sales Report for {to_date}"
     email_message.attach(MIMEText(html, "html"))
 
     # Open the Excel file and attach it to the email

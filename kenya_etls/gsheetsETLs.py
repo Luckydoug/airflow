@@ -17,17 +17,14 @@ from sub_tasks.gsheets.branch_user_mapping import (fetch_branch_user_mappings, c
 from sub_tasks.gsheets.branches import (fetch_branch_tiers, create_dim_branches)
 from sub_tasks.gsheets.holidays import (fetch_holidays)
 from sub_tasks.gsheets.exempt_users import (fetch_exempt_users)
-from sub_tasks.gsheets.riders import (fetch_rider_times)
-# from sub_tasks.gsheets.sop import (fetch_sop_branch_info, fetch_sop)
-from sub_tasks.gsheets.routes import (fetch_routesdata)
+from sub_tasks.gsheets.draft_drop import (fetch_draft_drop)
 
-# from sub_tasks.gsheets.novaxnew import (fetch_novax_data1,fetch_dhl_data1,create_dim_novax_data1)
 
 # from tmp.python_test
 DAG_ID = 'Gsheet_ETL_Pipeline'
 
 default_args = {
-    'owner': 'Iconia ETLs',
+    'owner': 'Data Team',
     # 'depends_on_past': False,
     'retries': 3,
     'retry_delay': timedelta(seconds=15),
@@ -72,6 +69,19 @@ with DAG(
             python_callable=fetch_exempt_users,
             provide_context=True
         )
+
+    """
+    DRAFT TO UPLOAD
+    """
+
+    with TaskGroup('draft_drop') as draft_drop:
+
+        fetch_draft_drop = PythonOperator(
+            task_id = 'fetch_draft_drop',
+            python_callable=fetch_draft_drop,
+            provide_context=True
+        )
+
 
     """
     BRANCHES
@@ -126,4 +136,4 @@ with DAG(
         task_id = "finish"
     ) 
 
-    start >> exempt_users >> holidays >> branches >> finish
+    start >> exempt_users >> holidays >> draft_drop >> branches >> finish

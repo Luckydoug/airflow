@@ -130,7 +130,7 @@ def summary_gross_payments():
 
     # create a list of month names for the current year and months up to and including the current month
     month_names = [datetime.date(lastyear, month_num, 1).strftime('%b') for month_num in range(1, current_month)]
-    month_names = [month.replace('Jun', 'June') for month in month_names]
+    month_names = [month.replace('Jun', 'June').replace('Jul','July') for month in month_names]
     print(month_names)
 
     ##add a column to your list

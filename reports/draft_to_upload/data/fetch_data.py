@@ -1,7 +1,7 @@
 import pandas as pd
 from airflow.models import variable
 from reports.draft_to_upload.utils.utils import today
-
+today = str(today)
 
 def fetch_orderscreen(database, engine, start_date='2023-01-01'):
     orderscreen_query = f"""
@@ -286,7 +286,7 @@ def fetch_opening_time(database, engine, start_date='2023-01-01'):
     return opening_time
 
 
-def fetch_insurance_efficiency(database, engine, start_date):
+def fetch_insurance_efficiency(database, engine, start_date, dw):
     query = f"""
     SELECT
         order_number AS "Order Number",
@@ -309,14 +309,15 @@ def fetch_insurance_efficiency(database, engine, start_date):
         feedback_2 AS "Feedback 2"
     FROM
         {database}.source_insurance_efficiency
-    where upload_time::date between '{start_date}' and '{today}';
+    where upload_time::date between '{start_date}' and '{today}'
+    and order_number::text not in (select order_number::text from {dw}.dim_draft_drop);
     """
 
     data = pd.read_sql_query(query, con=engine)
     return data
 
 
-def fetch_daywise_efficiency(database, engine, start_date, end_date):
+def fetch_daywise_efficiency(database, engine, start_date, end_date, dw):
     daywise_query = f"""
         SELECT
         outlet AS "Outlet",
@@ -326,6 +327,7 @@ def fetch_daywise_efficiency(database, engine, start_date, end_date):
         FROM
             {database}.source_insurance_efficiency sie
             where upload_time::date between '{start_date}' and '{end_date}'
+            and order_number::text not in (select order_number::text from {dw}.dim_draft_drop)
         GROUP BY
         outlet, upload_time::date
         order by upload_time::date;
@@ -334,7 +336,7 @@ def fetch_daywise_efficiency(database, engine, start_date, end_date):
     return data
 
 
-def fetch_mtd_efficiency(database, engine, start_date, end_date):
+def fetch_mtd_efficiency(database, engine, start_date, end_date, dw):
     mtd_query = f"""
     SELECT
         outlet AS "Outlet",
@@ -346,6 +348,7 @@ def fetch_mtd_efficiency(database, engine, start_date, end_date):
         {database}.source_insurance_efficiency sie
     WHERE
         upload_time::date BETWEEN '{start_date}' AND '{end_date}'
+        and order_number::text not in (select order_number::text from {dw}.dim_draft_drop)
     GROUP BY
         outlet
     """

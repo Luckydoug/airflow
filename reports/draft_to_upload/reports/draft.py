@@ -26,7 +26,7 @@ When preparing a report for any country, make sure to call the following functio
 
 """
 
-def create_draft_upload_report(data_orders, daywise_data, mtd_data, selection,start_date, target, branch_data, path, orders_drop = [], drop = ""):
+def create_draft_upload_report(data_orders, daywise_data, mtd_data, selection,start_date, target, branch_data, path, drop = ""):
     if not len(data_orders):
         return
     first_month, second_month = get_comparison_months()
@@ -70,8 +70,7 @@ def create_draft_upload_report(data_orders, daywise_data, mtd_data, selection,st
     ]
 
 
-    not_drop_data = data_orders[~data_orders["Order Number"].isin(orders_drop)]
-    final_data_orders = not_drop_data.copy()
+    final_data_orders = data_orders.copy()
     final_data_orders = pd.merge(
         final_data_orders,
         branch_data[["Outlet", "RM", "SRM"]],

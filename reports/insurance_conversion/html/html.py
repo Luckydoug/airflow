@@ -28,16 +28,27 @@ management_html = """
             <div class = "content">
                 <p><b>Hi All,</b></p>
                 <p>Please see the analyis for insurance conversion per the Insurance Feedback for the period on the subject.</p>
-                <h4 style = "color: #0081C9;">1. Overall Company Insurance Conversion </h4> 
-                <p> 
-                    The table provided is a summary of the insurance conversion process for different time periods.<br>
-                    It shows the number of requests and conversions for each feedback type, including "Insurance Fully Approved", "Insurance Partially Approved", "Use Available Amount on SMART", and "Declined by Insurance Company". <br>
-                </p> <br>
-                <table style = "width: 90%;">{company_conversion_html}</table>
-                <br>
-                <h4 style = "color: #0081C9;">2. Branches Conversion</h4>
-                <b><i>Kindly note that the data in the table below shows the conversion for the period on the subject line only</i></b> <br>
-                <table style = "width: 100%; padding: 6px">{branches_conversion_html}</table>
+                <ol>
+                    <li>
+                        <h4>Requests Sent Vs Feedbacks</h4>
+                        <table>{no_feedback_html}</table>
+                    </li>
+                
+                    <li>
+                        <h4>Overall Company Insurance Conversion </h4> 
+                        <p> 
+                            The table provided is a summary of the insurance conversion process for different time periods.<br>
+                            It shows the number of requests and conversions for each feedback type, including "Insurance Fully Approved", "Insurance Partially Approved", "Use Available Amount on SMART", and "Declined by Insurance Company". <br>
+                        </p> <br>
+                        <table style = "width: 90%;">{company_conversion_html}</table>
+                    </li>
+                    <br>
+                    <li>
+                        <h4>Branches Conversion</h4>
+                        <b><i>Kindly note that the data in the table below shows the conversion for the period on the subject line only</i></b> <br>
+                        <table style = "width: 100%; padding: 6px">{branches_conversion_html}</table>
+                    </li>
+                </ol>
 
                 <p>Also see on the attachement a list of orders that didn't convert for each branch.</p>
                 <br>

@@ -12,7 +12,6 @@ from airflow.operators.bash_operator import BashOperator
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python_operator import PythonOperator
 from airflow.utils.task_group import TaskGroup
-
 from sub_tasks.Ajua.ajua_info import (fetch_ajua_info,update_log_nps)
 from sub_tasks.gsheets.ajuatodrop import (fetch_npsreviews_with_issues,npsreviews_with_issues_live)
 

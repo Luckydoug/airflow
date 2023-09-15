@@ -152,6 +152,8 @@ def create_eyetests_conversion(data, country, path, selection):
             weekly_et_conv.to_excel(writer, sheet_name="Branches_Conversion")
             weekly_highrx_conv.to_excel(writer, sheet_name="Highrx_Conversion")
             branch_high_rx.to_excel(writer, sheet_name="high_rx_branch")
+            ewc_conversion.to_excel(writer, sheet_name="EWC", index=False)
+            opthom_conversion.to_excel(writer, sheet_name="Optom", index=False)
             non_conversions_data.sort_values(by="Branch").to_excel(
                 writer, 
                 sheet_name="Non Conversions", 
@@ -307,7 +309,6 @@ def create_eyetests_conversion(data, country, path, selection):
             branch_highrx_conversion.to_excel(writer, sheet_name="branch_highrx")
             optom_highrx_conversion.to_excel(writer, sheet_name="Optom")
             ewc_highrx_conversion.to_excel(writer, sheet_name="EWC")
-            high_rx_data.to_excel(writer, sheet_name = "Data")
             non_conversions_data.sort_values(by="Branch").to_excel(
                 writer, 
                 sheet_name="Non Conversions", 

@@ -213,7 +213,7 @@ def summary_gross_payments():
     
     to_date = get_todate()
     sender_email = os.getenv("wairimu_email")
-    # receiver_email = ['yuri@optica.africa','kush@optica.africa','wazeem@optica.africa','lahiru@optica.africa']
+    # receiver_email = ['yuri@optica.africa','kush@optica.africa','wazeem@optica.africa']
     receiver_email = ['wairimu@optica.africa']
     email_message = MIMEMultipart()
     email_message["From"] = sender_email

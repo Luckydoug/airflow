@@ -18,15 +18,22 @@ from reports.draft_to_upload.smtp.smtp import (
 from reports.draft_to_upload.reports.draft import (
     create_draft_upload_report
 )
-from reports.draft_to_upload.utils.utils import get_report_frequency, return_report_daterange, get_start_end_dates
+from reports.draft_to_upload.utils.utils import (
+    get_report_frequency, 
+    return_report_daterange, 
+    get_start_end_dates
+)
+
 from reports.draft_to_upload.reports.rejections import create_rejection_report
 from reports.draft_to_upload.reports.plano import (
     create_plano_report
 )
+
 from reports.draft_to_upload.reports.opening_time import (
     push_branch_opening_time_data,
     create_opening_time_report
 )
+
 from reports.insurance_conversion.data.fetch_data import FetchData
 from reports.insurance_conversion.reports.conversion import create_insurance_conversion
 from reports.draft_to_upload.reports.sops import create_ug_sops_report
@@ -191,29 +198,30 @@ def push_kenya_efficiency_data():
 data_orders = fetch_insurance_efficiency(
     database=database,
     engine=engine,
-    start_date=start_date
+    start_date=start_date,
+    dw = "mabawa_dw"
 )
-
 
 
 daywise_efficiency = fetch_daywise_efficiency(
     database=database,
     engine=engine,
     start_date=pstart_date,
-    end_date=pend_date
+    end_date=pend_date,
+    dw="mabawa_dw"
 )
 
 mtd_efficiency = fetch_mtd_efficiency(
     database=database,
     engine=engine,
     start_date=pstart_date,
-    end_date=pend_date
+    end_date=pend_date,
+    dw="mabawa_dw"
 )
 
 
 def build_kenya_draft_upload():
     branch_data = fetch_gsheet_data()["branch_data"]
-    orders = fetch_gsheet_data()["orders_drop"]
     create_draft_upload_report(
         data_orders=data_orders,
         mtd_data=mtd_efficiency,
@@ -223,7 +231,6 @@ def build_kenya_draft_upload():
         target=target,
         branch_data=branch_data,
         path=path,
-        orders_drop=orders,
         drop="KENYA PIPELINE COMPANY"
     )
 
@@ -307,7 +314,7 @@ def trigger_kenya_smtp():
     send_draft_upload_report(
         selection=selection,
         path=path,
-        country="Test",
+        country="Kenya",
         target=target
     )
 
@@ -318,6 +325,7 @@ def trigger_kenya_branches_smtp():
         branch_data=branch_data,
         selection=selection,
         path=path,
+        country="Kenya",
         filename=f"{path}draft_upload/log.txt"
     )
 
@@ -379,8 +387,10 @@ def build_kenya_insurance_conversion() -> None:
         insurance_companies=insurance_companies,
         selection=selection,
         date = start_date,
-        working_hours=working_hours
+        working_hours=working_hours,
+        country="Kenya"
     )
+
 
 
 

@@ -15,6 +15,7 @@ kenya = [
     'nicholas@optica.africa',
     'shaka@optica.africa',
     'peter@optica.africa',
+    'john@optica.africa',
     'wairimu@optica.africa', 
 ]
 
@@ -26,3 +27,14 @@ uganda = [
     'wairimu@optica.africa',
     'ian.gathumbi@optica.africa'
 ]
+
+# uganda = [
+#     "yuri@optica.africa",
+#     "wairimu@optica.africa"
+# ]
+
+# kenya = [
+#     "yuri@optica.africa",
+#     "wairimu@optica.africa"
+# ]
+

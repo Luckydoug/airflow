@@ -19,7 +19,7 @@ from sub_tasks.api_login.api_login import(login)
 
 SessionId = login()
 
-# FromDate = '2023/05/13'
+# FromDate = '2023/08/01'
 # ToDate = '2023/05/13'
 
 today = date.today()

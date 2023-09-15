@@ -203,17 +203,20 @@ def push_rwanda_efficiency_data():
 data_orders = fetch_insurance_efficiency(
     database=database,
     engine=engine,
-    start_date=start_date
+    start_date=start_date,
+    dw="rwanda_dw"
 )
 
 daywise_efficiency = fetch_daywise_efficiency(
     database=database,
-    engine=engine
+    engine=engine,
+    dw="rwanda_dw"
 )
 
 mtd_efficiency = fetch_mtd_efficiency(
     database=database,
-    engine=engine
+    engine=engine,
+    dw="rwanda_dw"
 )
 
 
@@ -227,7 +230,7 @@ def build_rw_draft_upload():
         start_date=start_date,
         target=target,
         branch_data=branch_data,
-        path=rwanda_path,
+        path=rwanda_path
     )
 
 

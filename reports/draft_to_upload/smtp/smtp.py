@@ -498,7 +498,7 @@ rej_cols = [
 ]
 
 
-def send_to_branches(branch_data, selection, path, filename):
+def send_to_branches(branch_data, selection, path, filename, country):
     create_initial_file(filename)
     todate = get_yesterday_date(truth=True)
     branches = branch_data["Outlet"].to_list()
@@ -825,6 +825,7 @@ def send_to_branches(branch_data, selection, path, filename):
                 "WES"
             ]
 
+
             if branch in bottom_branches:
                 receiver_email = [
                     "shehan@optica.africa",
@@ -832,7 +833,7 @@ def send_to_branches(branch_data, selection, path, filename):
                     branch_email
                 ]
 
-            elif branch == random_branch:
+            elif branch == random_branch and country == "Kenya":
                 receiver_email = [
                     "wazeem@optica.africa",
                     "yuri@optica.africa",
@@ -858,9 +859,20 @@ def send_to_branches(branch_data, selection, path, filename):
                     "insuranceoh@optica.africa",
                     branch_email
                 ]
+            
+           
+            elif country == "Uganda":
+                receiver_email = [
+                    "kush@optica.africa",
+                    "raghav@optica.africa",
+                    "wairimu@optica.africa",
+                    branch_email
+                ]
 
             else:
                 receiver_email = [rm_email, branch_email]
+
+
 
             html_content = quopri.encodestring(
                 html.encode("utf-8")).decode("utf-8")

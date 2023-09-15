@@ -23,8 +23,8 @@ from sub_tasks.api_login.api_login import(login)
 
 SessionId = login()
 
-FromDate = '2023/01/01'
-# ToDate = '2023/03/31'
+FromDate = '2023/08/01'
+# ToDate = '2023/05/04'
 
 today = date.today()
 # pastdate = today - timedelta(days=1)

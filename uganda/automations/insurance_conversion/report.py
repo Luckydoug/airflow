@@ -12,7 +12,7 @@ from sub_tasks.libraries.utils import (
 from reports.draft_to_upload.utils.utils import (return_report_daterange)
 
 engine = create_unganda_engine()
-selection = get_report_frequency()
+selection = "Weekly"
 start_date = return_report_daterange(selection = selection)
 data_fetcher = FetchData(
     engine=engine,
@@ -25,7 +25,7 @@ orderscreen = data_fetcher.fetch_orderscreen(
 insurance_companies = data_fetcher.fetch_insurance_companies()
 orders = data_fetcher.fetch_orders()
 sales_orders = data_fetcher.fetch_sales_orders(
-    start_date=first_week_start
+    start_date=start_date
 )
 
 
@@ -42,16 +42,18 @@ def build_uganda_insurance_conversion() -> None:
         branch_data=branch_data,
         sales_orders=sales_orders,
         insurance_companies=insurance_companies,
+        country="Uganda"
     )
 
 def send_to_uganda_management() -> None:
     send_to_management(
         selection=selection,
-        country = "Test",
+        country = "Uganda",
         path=uganda_path
     )
 
 def send_to_uganda_branches() -> None:
+    return
     branch_data = fetch_gsheet_data()["ug_srm_rm"]
     send_to_branches(
         path=uganda_path,
@@ -61,6 +63,7 @@ def send_to_uganda_branches() -> None:
     )
 
 def clean_uganda_folder() -> None:
+    return
     mop_folder(path=uganda_path)
 
 

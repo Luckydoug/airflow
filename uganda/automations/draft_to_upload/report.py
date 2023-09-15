@@ -6,11 +6,13 @@ from sub_tasks.libraries.utils import (
     fetch_gsheet_data,
     create_unganda_engine,
     createe_engine,
-    fourth_week_start
+    fourth_week_start,
+    first_week_start
 )
 
 from reports.draft_to_upload.smtp.smtp import (
     send_draft_upload_report,
+    send_to_branches,
     clean_folders
 )
 
@@ -27,6 +29,8 @@ from reports.draft_to_upload.reports.rejections import create_rejection_report
 from reports.draft_to_upload.reports.plano import (
     create_plano_report
 )
+from reports.insurance_conversion.reports.conversion import create_insurance_conversion
+from reports.insurance_conversion.data.fetch_data import FetchData
 from reports.draft_to_upload.reports.sops import create_ug_sops_report
 from reports.draft_to_upload.data.fetch_data import (
     fetch_views,
@@ -48,7 +52,6 @@ from reports.draft_to_upload.data.fetch_data import (
     fetch_daywise_rejections,
     fetch_mtd_rejections
 )
-
 
 database = "mawingu_staging"
 engine = create_unganda_engine()
@@ -78,6 +81,7 @@ orderscreen = fetch_orderscreen(
     database=database,
     engine=engine
 )
+
 
 insurance_companies = fetch_insurance_companies(
     database=database,
@@ -168,7 +172,7 @@ if selection == "Daily":
 if selection == "Weekly":
     date = fourth_week_start
 if selection == "Monthly":
-    date = '2023-07-01'
+    date = '2023-09-01'
 
 opening_data = fetch_opening_time(
     database=database,
@@ -188,6 +192,7 @@ def push_uganda_efficiency_data():
     branch_data = fetch_gsheet_data()["ug_srm_rm"]
     working_hours = fetch_gsheet_data()["ug_working_hours"]
     date = return_report_daterange(selection="Daily")
+    date = date
     date = pd.to_datetime(date, format="%Y-%m-%d").date()
     push_insurance_efficiency_data(
         engine=engine,
@@ -206,7 +211,8 @@ pstart_date, pend_date = get_start_end_dates(
 data_orders = fetch_insurance_efficiency(
     database=database,
     engine=engine,
-    start_date=start_date
+    start_date=start_date,
+    dw="mawingu_dw"
 )
 
 
@@ -214,14 +220,16 @@ daywise_efficiency = fetch_daywise_efficiency(
     database=database,
     engine=engine,
     start_date=pstart_date,
-    end_date=pend_date
+    end_date=pend_date,
+    dw="mawingu_dw"
 )
 
 mtd_efficiency = fetch_mtd_efficiency(
     database=database,
     engine=engine,
     start_date=pstart_date,
-    end_date=pend_date
+    end_date=pend_date,
+    dw="mawingu_dw"
 )
 
 
@@ -304,9 +312,36 @@ def build_plano_report():
     )
 
 
+data_fetcher = FetchData(
+    engine=engine,
+    database="mawingu_staging"
+)
+insurance_companies = data_fetcher.fetch_insurance_companies()
+orders = data_fetcher.fetch_orders()
+sales_orders = data_fetcher.fetch_sales_orders(
+    start_date=first_week_start
+)
+
+def build_uganda_insurance_conversion() -> None:
+    branch_data = fetch_gsheet_data()["ug_srm_rm"]
+    working_hours = fetch_gsheet_data()["ug_working_hours"]
+    create_insurance_conversion(
+        path=uganda_path,
+        all_orders=orders,
+        orderscreen=orderscreen,
+        branch_data=branch_data,
+        sales_orders=sales_orders,
+        insurance_companies=insurance_companies,
+        selection=selection,
+        date = start_date,
+        working_hours=working_hours,
+        country="Uganda"
+    )
+
+
 def trigger_uganda_smtp():
     #This is the function to trigger SMTP.
-    #When country is the name of the function the report is for.
+    #The Country argument is the name of the country the report is for.
     #If wanted to send for Rwanda then you would pass Rwanda as the argument for country parameter.
     #To Test this report. please pass Test as the argument.
     send_draft_upload_report(
@@ -316,9 +351,24 @@ def trigger_uganda_smtp():
         target=uganda_target
     )
 
+def trigger_uganda_branches_smtp():
+    branch_data = fetch_gsheet_data()["ug_srm_rm"]
+    send_to_branches(
+        branch_data=branch_data,
+        selection=selection,
+        path=uganda_path,
+        country="Uganda",
+        filename=f"{uganda_path}draft_upload/log.txt"
+    )
+
 
 def clean_uganda_folder():
     clean_folders(path=uganda_path)
+
+
+
+
+
 
 
 

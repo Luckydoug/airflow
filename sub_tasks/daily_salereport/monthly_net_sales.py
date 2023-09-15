@@ -63,6 +63,7 @@ def create_net_sales():
     lastyear = current_year-1
     current_month = datetime.datetime.now().month-1
     previous_month_name = calendar.month_name[current_month].title()
+    
     # create a list of month names for the current year and months up to and including the current month
     month_names = [datetime.date(lastyear, month_num, 1).strftime('%b') for month_num in range(1, current_month+1)]
     print(month_names)

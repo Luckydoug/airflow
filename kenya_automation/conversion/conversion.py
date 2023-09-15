@@ -22,7 +22,7 @@ from reports.conversion.smtp.smtp import (
 
 database = "mabawa_mviews"
 engine = createe_engine()
-selection = get_report_frequency()
+selection = "Weekly"
 start_date, end_date = return_conversion_daterange(selection=selection)
 
 views_conv = fetch_views_conversion(
@@ -84,7 +84,7 @@ def build_kenya_viewrx_conversion():
 def trigger_kenya_management_smtp():
     send_management_report(
         path=path,
-        country="Test",
+        country="Kenya",
         selection=selection
     )
 

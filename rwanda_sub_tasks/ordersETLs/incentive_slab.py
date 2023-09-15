@@ -44,7 +44,7 @@ def fetch_sap_incentive_slab():
 
     for i in range(1, pages+1):
         page = i
-        url = f"https://10.40.16.9:4300/UGANDA_BI/XSJS/BI_API.xsjs?pageType=GetCashIncentive&pageNo={page}&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+        url = f"https://10.40.16.9:4300/RWANDA_BI/XSJS/BI_API.xsjs?pageType=GetCashIncentive&pageNo={page}&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
         response = requests.request("GET", url, headers=headers, data=payload, verify=False)
         incentives = response.json()
         stripped_incentives = incentives['result']['body']['recs']['Results']

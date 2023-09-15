@@ -263,6 +263,7 @@ def daily_netsales_email_uganda_rwanda():
         )
 
     to_date = get_todate()
+  
     sender_email = os.getenv("wairimu_email")
     # receiver_email = ['wairimu@optica.africa']
     receiver_email = ['wairimu@optica.africa','yuri@optica.africa','kush@optica.africa','raghav@optica.africa']

@@ -21,7 +21,6 @@ kenya_daily = [
     'joseph.oluoch@optica.africa',
     'kimstone@optica.africa',
     'larry.larsen@optica.africa',
-    'timothy.ahere@optica.africa',
     'doris.kinoti@optica.africa',
     'wairimu@optica.africa',
     'peter.maina@optica.africa' 
@@ -38,7 +37,6 @@ kenya_weekly = [
     'joseph.oluoch@optica.africa',
     'kimstone@optica.africa',
     'larry.larsen@optica.africa',
-    'timothy.ahere@optica.africa',
     'doris.kinoti@optica.africa',
     'john@optica.africa',
     'wairimu@optica.africa',
@@ -56,7 +54,6 @@ kenya_monthly = [
     'joseph.oluoch@optica.africa',
     'kimstone@optica.africa',
     'larry.larsen@optica.africa',
-    'timothy.ahere@optica.africa',
     'doris.kinoti@optica.africa',
     'john@optica.africa',
     'wairimu@optica.africa',
@@ -65,15 +62,15 @@ kenya_monthly = [
     
 
 uganda_daily = [
+    'kush@optica.africa',
     'raghav@optica.africa',
-    'shaik@optica.africa',
     'wairimu@optica.africa'
 ]
     
 uganda_weekly = [
+    'kush@optica.africa',
     'raghav@optica.africa',
     'yuri@optica.africa',
-    'shaik@optica.africa',
     'wairimu@optica.africa'
 ]
     
@@ -81,7 +78,6 @@ uganda_monthly = [
     'kush@optica.africa',
     'raghav@optica.africa',
     'yuri@optica.africa',
-    'shaik@optica.africa',
     'wairimu@optica.africa'  
 ]
 

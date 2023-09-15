@@ -25,12 +25,12 @@ from sub_tasks.api_login.api_login import(login_rwanda)
 
 SessionId = login_rwanda()
 
-# FromDate = '2023/01/01'
+FromDate = '2023/08/01'
 # ToDate = '2023/05/04'
 
 today = date.today()
-pastdate = today - timedelta(days=3)
-FromDate = pastdate.strftime('%Y/%m/%d')
+# pastdate = today - timedelta(days=7)
+# FromDate = pastdate.strftime('%Y/%m/%d')
 ToDate = date.today().strftime('%Y/%m/%d')
 
 print(FromDate)
@@ -119,4 +119,4 @@ def fetch_sap_discounts():
 
         print('Update successful')
         
-fetch_sap_discounts()
+# fetch_sap_discounts()

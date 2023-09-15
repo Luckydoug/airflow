@@ -150,9 +150,9 @@ def smtp():
                         report_date = report_date
                         )
 
-            receiver_email = ["tstbranch@gmail.com"]
+            # receiver_email = ["tstbranch@gmail.com"]
             # receiver_email = ["wairimu@optica.africa"]
-            # receiver_email = [branchemail,RMemail,"raghav@optica.africa","wairimu@optica.africa"]
+            receiver_email = [branchemail,RMemail,"raghav@optica.africa","wairimu@optica.africa"]
            
         # Create a MIMEMultipart class, and set up the From, To, Subject fields
             email_message = MIMEMultipart()

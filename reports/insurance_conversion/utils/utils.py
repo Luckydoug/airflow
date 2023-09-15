@@ -2,7 +2,12 @@ from airflow.models import variable
 import pandas as pd
 import numpy as np
 
-
+def seek_feedback(row):
+    if pd.isna(row["Feedback"]):
+        return "No Feedback"
+    else:
+        return "Feedback"
+    
 def check_conversion(row, sales):
     if row["Converted"] == False:
         customer_code = row["Customer Code"]
@@ -167,3 +172,64 @@ def create_monthly_report(
     monthly_conversion_unstack = monthly_conversion_unstack.rename(columns = {"Conversion": "Converted"}, level = 1)
 
     return monthly_conversion_unstack
+
+"""
+BRANCH SUMMARY
+
+With Branch as the index, and feedback(s) as the columns
+Contains no Comparison, either monthly or weekly.
+Shows Requests, Number of Conversions, and the percentage conversion
+per the insurance feedback.
+i.e.
+"Insurance Fully Approved",
+"Insurance Partially Approved"
+"Use Available Amount on SMART"
+
+This function is called with just one argument;
+the data.
+"""
+
+def create_branch_report(
+    data: pd.DataFrame
+):
+    
+    branches_pivot = pd.pivot_table(
+        data,
+        index="Outlet",
+        columns="Feedback",
+        values=["Requests", "Conversion"],
+        aggfunc="sum"
+    )
+
+    branches_stack = branches_pivot.stack()
+    branches_stack["% Conversion"] = (
+        (branches_stack["Conversion"] / branches_stack["Requests"]) * 100
+    ).round(0).astype(str) + "%"
+    branches_stack = branches_stack.rename(columns = {"Conversion": "Converted"})
+    branches_unstack = branches_stack.unstack()
+
+    branches_unstack = branches_unstack.swaplevel(0, 1, 1)
+    branches_unstack = branches_unstack.reindex(
+        [
+            "Insurance Fully Approved", 
+            "Insurance Partially Approved", 
+            "Use Available Amount on SMART"
+        ], 
+        level = 0, 
+        axis = 1
+    )
+
+    branches_final = branches_unstack.reindex(
+        ["Requests", 
+         "Converted", 
+         "% Conversion"], 
+         level = 1, 
+         axis = 1
+    )
+
+    """
+    RETURN SOMETHING.
+    SEE THE SOMETHING BELOW
+    """
+
+    return branches_final

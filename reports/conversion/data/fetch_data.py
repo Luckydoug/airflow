@@ -12,9 +12,9 @@ def fetch_eyetests_conversion(engine, database, start_date, end_date, users, use
         on_before_prescription_order, on_before_mode, reg_cust_type, mode_of_pay,
         case when "RX" = 'High Rx' then 1 else 0 end as high_rx,
         case when "RX" = 'Low Rx' then 1 else 0 end as low_rx,
-        case when days is not null then 1 else 0 end as conversion,
-        case when order_converted is not null and "RX" = 'High Rx' then 1 else 0 end as high_rx_conversion,
-        case when order_converted is not null and "RX" = 'Low Rx' then 1 else 0 end as low_rx_conversion
+        case when days::int <=7 then 1 else 0 end as conversion,
+        case when days::int <=7 and "RX" = 'High Rx' then 1 else 0 end as high_rx_conversion,
+        case when days::int <=7 and "RX" = 'Low Rx' then 1 else 0 end as low_rx_conversion
         from
         (select row_number() over(partition by cust_code, create_date, code order by days, rx_type, code desc) as r, *
         from {database}.et_conv
@@ -25,7 +25,8 @@ def fetch_eyetests_conversion(engine, database, start_date, end_date, users, use
         and a.create_date::date >=  %(From)s
         and a.create_date::date <= %(To)s
         and a.branch_code not in ('0MA','null')
-        and a.cust_code <> 'U10000002';
+        and a.cust_code <> 'U10000002'
+        and a.cust_code <> 'U10002522';
         """
 
     data = pd.read_sql_query(
@@ -51,7 +52,7 @@ def fetch_registrations_conversion(engine, database, start_date, end_date, users
     conv.draft_orderno as "Order Number", 
     conv.code as "Code",
     conv.days as "Days",
-    case when conv.days is not null then 1 else 0 end as "Conversion"
+    case when conv.days <=7 then 1 else 0 end as "Conversion"
     from {database}.{view} as conv
     left join {users}.{users_table} as users 
     on conv.cust_sales_employeecode::text = users.se_optom::text
@@ -86,7 +87,7 @@ def fetch_views_conversion(engine, database, start_date, end_date, users, users_
     viewrx.ord_orderno as "Order Number", 
     viewrx.ord_ordercreation_date as "CreateDate", 
     viewrx.days as "Days",
-    case when viewrx.days is not null then 1 else 0
+    case when viewrx.days <=7 then 1 else 0
     end as "Conversion"
     from (select row_number() over(partition by view_date, cust_loyalty_code order by days, doc_entry) as r, *
     from {database}.{view}) as viewrx
@@ -97,6 +98,7 @@ def fetch_views_conversion(engine, database, start_date, end_date, users, users_
     and viewrx.view_date::date >=  %(From)s
     and viewrx.view_date::date <= %(To)s
     and viewrx.branch not in ('0MA','null', 'MUR')
+    and viewrx.cust_loyalty_code <> 'U10000002'
     """
 
     data = pd.read_sql_query(

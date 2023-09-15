@@ -34,7 +34,7 @@ todate = get_yesterday_date(truth=True)
 first_month, second_month = get_comparison_months()
 
 
-def send_branches_efficiency(path, target, branch_data, log_file, selection):
+def send_branches_efficiency(path, target, branch_data, log_file, selection, country):
     create_initial_file(log_file)
     sales_persons = f"{path}draft_upload/draft_to_upload_sales_efficiency.xlsx"
     branches = f"{path}draft_upload/draft_to_upload_branch_efficiency.xlsx"
@@ -123,9 +123,19 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection):
                         "insuranceoh@optica.africa",
                         branch_email
                     ]
+
+                elif country == "Uganda":
+                    receiver_email = [
+                        "kush@optica.africa",
+                        rm_email,
+                        "wairimu@optica.africa",
+                        branch_email
+                    ]
                 
                 else:
                     receiver_email = [rm_email, branch_email]  
+
+
                 
 
                 if selection == "Daily":

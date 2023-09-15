@@ -210,7 +210,7 @@ def google_reviews_automation():
     to_date = get_todate()
     sender_email = os.getenv("wairimu_email")
     # receiver_email = ['wairimu@optica.africa','douglas.kathurima@optica.africa']
-    receiver_email = ['wairimu@optica.africa','yuri@optica.africa','raghav@optica.africa','shaik@optica.africa','douglas.kathurima@optica.africa']
+    receiver_email = ['wairimu@optica.africa','yuri@optica.africa','raghav@optica.africa','douglas.kathurima@optica.africa']
     email_message = MIMEMultipart()
     email_message["From"] = sender_email
     email_message["To"] = r','.join(receiver_email)

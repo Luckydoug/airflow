@@ -74,6 +74,8 @@ def create_registrations_conversion(data, country, path, selection):
         with pd.ExcelWriter(f"{path}conversion/registrations/overall.xlsx") as writer:
             summary_weekly_conv.to_excel(writer, sheet_name="summary")
             weekly_reg_conv.to_excel(writer, sheet_name="per_branch")
+            sales_persons_conversion.to_excel(writer, sheet_name="EWC", index=False)
+            non_conversions.sort_values(by = "Outlet").iloc[:, :-2].to_excel(writer, sheet_name="NON Conversions", index=False)
 
         with pd.ExcelWriter(f"{path}conversion/registrations/sales_persons.xlsx") as writer:
             for group, dataframe in sales_persons_conversion.groupby("Outlet"):

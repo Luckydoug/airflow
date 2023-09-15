@@ -66,7 +66,7 @@ def send_to_management(selection, country, path) -> None:
         subject = f"{country} {selection} Insurance Conversion Report From {fourth_week_start} to {fourth_week_end}"
     elif selection == "Monthly":
         first_month, second_month = get_comparison_months()
-        subject = f"{country} {selection} Insurance Conversion Report For {first_month} and {second_month}"
+        subject = f"{country} {selection} Insurance Conversion Report For {second_month}"
     else:
         return
 
@@ -119,6 +119,16 @@ def send_to_management(selection, country, path) -> None:
         header=[0, 1]
     )
 
+    no_feedback = management_report.parse(
+        "no feedback",
+        index_col=[0],
+        header=[0,1]
+    )
+
+    no_feedback.index = no_feedback.index.get_level_values(0)
+    no_feedback = no_feedback.reset_index().rename(columns = {"": "Country"}, level = 1)
+    no_feedback = no_feedback.rename(columns = {"Country": "", "Date Range": ""}, level = 0)
+
     company_conversion.index = company_conversion.index.get_level_values(0)
     company_conversion = company_conversion.reset_index(level=0)
     company_conversion = company_conversion.rename(columns={"Feedback": ""})
@@ -127,14 +137,19 @@ def send_to_management(selection, country, path) -> None:
         level=1
     )
 
+    branches_conversion = branches_conversion.rename(columns={"Feedback": "", "Outlet": ""}, level=0)
     branches_conversion_html = branches_conversion.to_html(index=False)
     company_conversion = company_conversion.style.hide_index(
     ).set_properties(**properties).set_table_styles(ug_styles)
     company_conversion_html = company_conversion.to_html(doctype_html=True)
 
+    no_feedback_style = no_feedback.style.hide_index().set_properties(**properties).set_table_styles(ug_styles)
+    no_feedback_html = no_feedback_style.to_html(doctype_html = True)
+
     html = management_html.format(
         branches_conversion_html=branches_conversion_html,
-        company_conversion_html=company_conversion_html
+        company_conversion_html=company_conversion_html,
+        no_feedback_html = no_feedback_html
     )
 
 
@@ -176,7 +191,6 @@ def send_to_branches(
     # and this will cause the email to be sent to a branch that has already been sent. So we use this
     # function here to prevent the occurence of this.
     create_initial_file(filename)
-    return
     individual = f"{path}/insurance_conversion/individual.xlsx"
     staff_conversion = pd.ExcelFile(individual)
     non_converted = f"{path}insurance_conversion/noncoverted.xlsx"
@@ -212,8 +226,6 @@ def send_to_branches(
             individual_feedback = individual_feedback.reset_index(level=0)
             individual_feedback = individual_feedback.rename(columns={"Order Creator": ""})
             individual_feedback = individual_feedback.rename(columns={"": "Order Creator"}, level=1)
-
-            print(overall_feedbacks.columns)
             
             overall_feedbacks = overall_feedbacks.style.hide_index().set_properties(**properties).set_table_styles(ug_styles)
 

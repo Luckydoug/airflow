@@ -24,7 +24,7 @@ orderscreen = data_fetcher.fetch_orderscreen(
 insurance_companies = data_fetcher.fetch_insurance_companies()
 orders = data_fetcher.fetch_orders()
 sales_orders = data_fetcher.fetch_sales_orders(
-    start_date=str(start_date)
+    start_date="2023-04-27"
 )
 
 
@@ -40,17 +40,19 @@ def build_kenya_insurance_conversion() -> None:
         branch_data=branch_data,
         sales_orders=sales_orders,
         insurance_companies=insurance_companies,
-        date = start_date
+        date = start_date,
+        country="Kenya"
     )
 
 def send_to_kenya_management() -> None:
     send_to_management(
         selection=selection,
-        country = "Test",
+        country = "Kenya",
         path=path
     )
 
 def send_to_kenya_branches() -> None:
+    return
     branch_data = fetch_gsheet_data()["branch_data"]
     send_to_branches(
         path=path,
@@ -62,6 +64,5 @@ def send_to_kenya_branches() -> None:
 def clean_kenya_folder():
     mop_folder(path=path)
 
-build_kenya_insurance_conversion()
 
 

@@ -110,10 +110,7 @@ def create_ins_direct_conv():
 def create_all_activity():
     
     query = """
-    truncate mabawa_mviews.all_activity;
-    insert into mabawa_mviews.all_activity
-    SELECT activity, id, "date", user_code, staff_name, dpt, branch, cust_code
-    FROM mabawa_mviews.v_all_activity
+    refresh materialized view mabawa_mviews.all_activity;
     """
     query = pg_execute(query)
 

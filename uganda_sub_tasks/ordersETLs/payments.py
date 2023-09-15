@@ -25,12 +25,12 @@ from sub_tasks.api_login.api_login import(login_uganda)
 
 SessionId = login_uganda()
 
-# FromDate = '2023/01/01'
+FromDate = '2023/08/01'
 # ToDate = '2023/05/04'
 
 today = date.today()
-pastdate = today - timedelta(days=1)
-FromDate = pastdate.strftime('%Y/%m/%d')
+# pastdate = today - timedelta(days=1)
+# FromDate = pastdate.strftime('%Y/%m/%d')
 ToDate = date.today().strftime('%Y/%m/%d')
 
 print(FromDate)

@@ -78,7 +78,7 @@ def send_management_report(path, country, selection):
 
         # Eye Tests
         eyetests_path = f"{path}conversion/eyetests/overall.xlsx"
-        ets_non_conversions = f"{path}conversion/eyetests/non_conversions.xlsx"
+        ets_non_conversions = f"{path}conversion/eyetests/overall.xlsx"
 
         overall_et_report = pd.ExcelFile(eyetests_path)
         overall_et_conv = overall_et_report.parse(
@@ -173,7 +173,6 @@ def send_management_report(path, country, selection):
         subject = f"{country} Monthly Registrations, Eyes Tests, and View RX Conversion Report for {first_month} and {second_month}"
         # Registrations
         registrations_path = f"{path}conversion/registrations/overall.xlsx"
-        reg_non_conversions = f"{path}conversion/registrations/non_conversions.xlsx"
 
         overall_reg_report = pd.ExcelFile(registrations_path)
         reg_summary_conv = overall_reg_report.parse(
@@ -201,7 +200,6 @@ def send_management_report(path, country, selection):
 
         # Eye Tests
         eyetests_path = f"{path}conversion/eyetests/overall.xlsx"
-        ets_non_conversions = f"{path}conversion/eyetests/non_conversions.xlsx"
 
         overall_et_report = pd.ExcelFile(eyetests_path)
         overall_et_conv = overall_et_report.parse(
@@ -261,7 +259,6 @@ def send_management_report(path, country, selection):
         # View RX
 
         view_rx_path = f"{path}conversion/viewrx/overall.xlsx"
-        views_non_conversions = f"{path}conversion/viewrx/non_conversions.xlsx"
 
         overall_views_report = pd.ExcelFile(view_rx_path)
         overall_views_conv = overall_views_report.parse(
@@ -322,9 +319,9 @@ def send_management_report(path, country, selection):
     email_message["Subject"] = subject
     email_message.attach(MIMEText(html, "html"))
 
-    attach_file(email_message, reg_non_conversions, "Regisrations Non-Conversions.xlsx")
-    attach_file(email_message, ets_non_conversions, "Eye Tests Non_Conversions.xlsx")
-    attach_file(email_message, views_non_conversions, "ViewRX Non-Conversions.xlsx")
+    attach_file(email_message, registrations_path, "Registrations Report.xlsx")
+    attach_file(email_message, eyetests_path, "Eye Tests Report.xlsx")
+    attach_file(email_message, view_rx_path, "ViewRX Report.xlsx")
 
     context = ssl.create_default_context()
     with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
@@ -418,7 +415,7 @@ def send_branches_report(path, branch_data, selection):
                 else:
                     receiver_email = [
                         branch_rm,
-                        branch_email
+                        branch_email,
                     ]
 
 

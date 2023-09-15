@@ -52,13 +52,13 @@ def refresh_fact_orders_header():
     query = pg_execute(query)
 
 
-# def refresh_order_contents():
+def refresh_order_contents():
 
-#     query = """
-#     refresh materialized view voler_mviews.order_contents;
-#     """
+    query = """
+    refresh materialized view voler_mviews.order_contents;
+    """
 
-#     query = pg_execute(query)
+    query = pg_execute(query)
 
 
 

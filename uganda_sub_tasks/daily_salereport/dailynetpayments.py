@@ -37,7 +37,7 @@ yesterday = today - datetime.timedelta(days=1)
 start_month = datetime.date(today.year,today.month,1)
 
 # today = datetime.date.today()
-# yesterday = today - datetime.timedelta(days=2)
+# yesterday = today - datetime.timedelta(days=5)
 # start_month = datetime.date(yesterday.year,yesterday.month,1)
 
 def daily_net_payments():

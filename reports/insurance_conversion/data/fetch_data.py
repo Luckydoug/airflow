@@ -29,12 +29,20 @@ class FetchData:
             end 
                 as "Time",
         odsc_status as "Status", odsc_createdby as "Created User", 
-        odsc_remarks as "Remarks", orders.doc_no::int as "Order Number" 
+        odsc_remarks as "Remarks", orders.doc_no::int as "Order Number"
         from {self.database}.source_orderscreenc1 orderscreen
         left join {self.database}.source_orderscreen as orders 
         on orderscreen.doc_entry = orders.doc_entry
         where odsc_date::date between '{start_date}' and '{today}'
         and orders.cust_code <> 'U10000002'
+        and odsc_status in (
+            'Insurance Fully Approved',
+            'Insurance Partially Approved',
+            'Declined by Insurance Company',
+            'Use Available Amount on SMART',
+            'Sent Pre-Auth to Insurance Company',
+            'Resent Pre-Auth to Insurance Company'
+        )
         """
 
         return self.fetch_data(orderscreen_query)
@@ -74,6 +82,7 @@ class FetchData:
     def fetch_insurance_companies(self, start_date = '2023-01-01') -> pd.DataFrame:
         insurance_companies_query = f"""
         select orders.doc_no::int as "Order Number",
+        orders.cust_code as "Customer Code",
             insurance_company.insurance_name as "Insurance Company",
             plan.plan_scheme_name as "Insurance Scheme", plan.plan_scheme_type as "Scheme Type",
             ods_insurance_feedback1 as "Feedback 1", ods_insurance_feedback2 as "Feedback 2"

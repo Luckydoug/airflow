@@ -72,6 +72,7 @@ def create_views_conversion(data, country, path, selection):
         with pd.ExcelWriter(f"{path}conversion/viewrx/overall.xlsx") as writer:
             summary_weekly_conv.to_excel(writer, sheet_name="Summary_Conversion")
             weekly_viewrx_conv.to_excel(writer, sheet_name="Branches_Conversion")
+            ewc_conversion.to_excel(writer, sheet_name="EWC", index=False)
             non_conversions.sort_values(by="Branch").to_excel(
                 writer, sheet_name="Non Conversions", index=False)
 
