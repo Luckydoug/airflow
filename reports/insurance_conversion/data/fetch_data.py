@@ -35,14 +35,6 @@ class FetchData:
         on orderscreen.doc_entry = orders.doc_entry
         where odsc_date::date between '{start_date}' and '{today}'
         and orders.cust_code <> 'U10000002'
-        and odsc_status in (
-            'Insurance Fully Approved',
-            'Insurance Partially Approved',
-            'Declined by Insurance Company',
-            'Use Available Amount on SMART',
-            'Sent Pre-Auth to Insurance Company',
-            'Resent Pre-Auth to Insurance Company'
-        )
         """
 
         return self.fetch_data(orderscreen_query)
@@ -108,6 +100,44 @@ class FetchData:
         from {self.database}.source_orders_header
         where order_canceled <> 'Y'
         and creation_date::date between '{start_date}' and '{today}'
+        """
+
+        return self.fetch_data(query)
+    
+
+    def fetch_branch_data(self, database):
+        query = f"""
+        select branch_code as "Outlet",
+        branch_name as "Branch",
+        email as "Email",
+        rm as "RM",
+        rm_email as "RM Email",
+        rm_group as "RM Group",
+        srm as "SRM",
+        srm_email as "SRM Email",
+        branch_manager as "Branch Manager",
+        front_desk as "Front Desk",
+        zone as "Zone"
+        from {database}.branch_data bd 
+        """
+
+        return self.fetch_data(query)
+
+    def fetch_no_feedbacks(self, database, start_date):
+        query = f"""
+        select order_number as "Order Number",
+        create_date as "CreateDate",
+        cust_code as "Customer Code",
+        branch as "Outlet",
+        insurance_company as "Insurance Company",
+        insurance_scheme as "Insurance Scheme",
+        scheme_type as "Scheme Type",
+        request_date "Request Date",
+        feedback_date as "Feedback Date",
+        month as "Month",
+        feedback as "Feedback"
+        from {database}.requests_feedbacks
+        where request_date::date between '{start_date}' and '{today}'
         """
 
         return self.fetch_data(query)

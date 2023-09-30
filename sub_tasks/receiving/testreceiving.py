@@ -425,7 +425,7 @@ def receiving():
     cbd = pd.merge(cbd, cbd11, left_on=['odsc_date','ods_outlet'], right_on=['trip_date','CBD Branches'], how='left')
     print(cbd['doc_no'].nunique())
     print('cdb')
-    print(cbd[cbd['doc_no'] == '23227492'])
+    # print(cbd[cbd['doc_no'] == '23227492'])
 
     # Selecting the trip that came with the orders
     cbd['cbd_time_back_at_hq2'] = cbd.groupby('doc_no', as_index=False)['cbd_time_back_at_hq'].shift(-1)
@@ -634,6 +634,6 @@ def create_time_difference():
     
 
 # create_receivingdata()
-receiving()
+# receiving()
 # create_time_difference()
 # update_source_receiving_data()

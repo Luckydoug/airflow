@@ -92,6 +92,7 @@ def manipulate_et_non_conversions():
     non_q["Remarks"] = ""
     non_q["EWC Sign"] = ""
 
+
     with pd.ExcelWriter(f"{uganda_path}et_non_conversions/et_non_conversions.xlsx", engine='xlsxwriter') as writer:  
             non_q.to_excel(writer, sheet_name='Master',index=False)
             for group, dataframe in non_q.groupby('Branch'):
@@ -152,7 +153,7 @@ def smtp():
 
             # receiver_email = ["tstbranch@gmail.com"]
             # receiver_email = ["wairimu@optica.africa"]
-            receiver_email = [branchemail,RMemail,"raghav@optica.africa","wairimu@optica.africa"]
+            receiver_email = [branchemail,RMemail,"raghav@optica.africa","wairimu@optica.africa","fredrick@optica.africa","tiffany@optica.africa","felicity@optica.africa","lenah@optica.africa","john@optica.africa"]
            
         # Create a MIMEMultipart class, and set up the From, To, Subject fields
             email_message = MIMEMultipart()
@@ -212,4 +213,4 @@ if __name__ == '__main__':
     clean_folder()
         
 
-
+# manipulate_et_non_conversions()

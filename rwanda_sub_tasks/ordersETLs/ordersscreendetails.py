@@ -276,7 +276,8 @@ def fetch_sap_orderscreendetails():
                        'GiftVoucher':'ods_giftvoucher', 
                        'NaturePrice':'ods_natureprice', 
                        'PreQCTechnician':'ods_preqc_tech', 
-                       'FinalQCTechnician':'ods_final_qc_tech'}
+                       'FinalQCTechnician':'ods_final_qc_tech',
+                       'Order Hours':'order_hours'}
             ,inplace=True)
     
     # print(orderscreendf)

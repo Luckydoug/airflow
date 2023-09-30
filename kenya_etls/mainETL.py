@@ -286,15 +286,15 @@ with DAG(
         """
         GET INVOICES
         """
-        with TaskGroup('invoices') as invoices:
+        # with TaskGroup('invoices') as invoices:
 
-            from sub_tasks.paymentsETLs.invoices import (fetch_sap_invoices)
+        #     from sub_tasks.paymentsETLs.invoices import (fetch_sap_invoices)
 
-            fetch_sap_invoices = PythonOperator(
-                task_id = 'fetch_sap_invoices',
-                python_callable=fetch_sap_invoices,
-                provide_context=True
-            )
+        #     fetch_sap_invoices = PythonOperator(
+        #         task_id = 'fetch_sap_invoices',
+        #         python_callable=fetch_sap_invoices,
+        #         provide_context=True
+        #     )
         
         """
         GET EXPENSES
@@ -343,7 +343,7 @@ with DAG(
 
             [fetch_sap_payments,fetch_sap_web_payments] >> create_customers_mop >> create_customers_mop_new
 
-        payments >> expenses >> invoices
+        payments >> expenses
 
 
     finish = DummyOperator(

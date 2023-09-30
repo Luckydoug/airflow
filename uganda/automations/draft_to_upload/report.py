@@ -162,7 +162,7 @@ def push_uganda_opening_time():
         database=database,
         table="source_opening_time",
         engine=engine,
-        form="%d-%b-%y"
+        form="%d-%m-%y"
     )
 
 
@@ -192,7 +192,6 @@ def push_uganda_efficiency_data():
     branch_data = fetch_gsheet_data()["ug_srm_rm"]
     working_hours = fetch_gsheet_data()["ug_working_hours"]
     date = return_report_daterange(selection="Daily")
-    date = date
     date = pd.to_datetime(date, format="%Y-%m-%d").date()
     push_insurance_efficiency_data(
         engine=engine,
@@ -322,6 +321,11 @@ sales_orders = data_fetcher.fetch_sales_orders(
     start_date=first_week_start
 )
 
+no_feedbacks = data_fetcher.fetch_no_feedbacks(
+    database="report_views",
+    start_date=start_date
+)
+
 def build_uganda_insurance_conversion() -> None:
     branch_data = fetch_gsheet_data()["ug_srm_rm"]
     working_hours = fetch_gsheet_data()["ug_working_hours"]
@@ -335,6 +339,7 @@ def build_uganda_insurance_conversion() -> None:
         selection=selection,
         date = start_date,
         working_hours=working_hours,
+        no_feedbacks=no_feedbacks,
         country="Uganda"
     )
 

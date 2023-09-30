@@ -50,7 +50,6 @@ drafts_html = """
 """
 
 branches_html = """
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -78,9 +77,6 @@ branches_html = """
             {rejection_message}
             </p>
             <ol>
-                <li><h4>Staff Summary</h4>
-                <table>{rejections_ewc_summary_html}</table>
-                </li></br></br>
                 <li><h4>Data</h4>
                 <table>{rejections}</table>
                 </li>
@@ -93,10 +89,6 @@ branches_html = """
                 {plano_message}
             </p>
              <ol>
-
-                <li><h4>Staff Summary</h4>
-                    <table>{plano_ewc_summary_html}</table>
-                </li></br></br>
 
                 <li><h4>Data</h4>
                     <table>{planos}</table>
@@ -137,9 +129,6 @@ html_rejections = """
                 {rejection_message}
             </p>
             <ol>
-                <li><h4>Staff Summary</h4>
-                <table>{rejections_ewc_summary_html}</table>
-                </li></br></br>
                 <li><h4>Data</h4>
                 <table>{rejections}</table>
                 </li>
@@ -181,10 +170,6 @@ html_planos = """
                {plano_message}
             </p>
             <ol>
-
-                <li><h4>Staff Summary</h4>
-                    <table>{plano_ewc_summary_html}</table>
-                </li></br></br>
 
                 <li> <h4>Data</h4>
                     <table>{planos}</table>
@@ -311,9 +296,6 @@ html_feedback = """
                 {feedback_message}
             </p>
             <ol>
-                <li><h4>Staff Summary</h4>
-                <table>{feedback_html}</table>
-                </li></br></br>
                 <li><h4>Data</h4>
                 <table>{feedback_data_html}</table>
                 </li>
@@ -355,9 +337,6 @@ all_reports_html = """
             {feedback_message}
             </p>
             <ol>
-                <li><h4>Staff Summary</h4>
-                <table>{feedback_html}</table>
-                </li></br></br>
                 <li><h4>Data</h4>
                 <table>{feedback_data_html}</table>
                 </li>
@@ -370,9 +349,6 @@ all_reports_html = """
             {rejection_message}
             </p>
             <ol>
-                <li><h4>Staff Summary</h4>
-                <table>{rejections_ewc_summary_html}</table>
-                </li></br></br>
                 <li><h4>Data</h4>
                 <table>{rejections}</table>
                 </li>
@@ -385,10 +361,6 @@ all_reports_html = """
                 {plano_message}
             </p>
              <ol>
-                <li><h4>Staff Summary</h4>
-                    <table>{plano_ewc_summary_html}</table>
-                </li></br></br>
-
                 <li><h4>Data</h4>
                     <table>{planos}</table>
                 </li>
@@ -430,9 +402,6 @@ feedback_rejection = """
             {feedback_message}
             </p>
             <ol>
-                <li><h4>Staff Summary</h4>
-                <table>{feedback_html}</table>
-                </li></br></br>
                 <li><h4>Data</h4>
                 <table>{feedback_data_html}</table>
                 </li>
@@ -445,12 +414,6 @@ feedback_rejection = """
             {rejection_message}
             </p>
             <ol>
-                <li><h4>Branch Summary</h4>
-                <table>{rejections_branch_summary_html}</table>
-                </li> </br></br>
-                <li><h4>Staff Summary</h4>
-                <table>{rejections_ewc_summary_html}</table>
-                </li></br></br>
                 <li><h4>Data</h4>
                 <table>{rejections}</table>
                 </li>
@@ -494,9 +457,6 @@ feedback_planos = """
             {feedback_message}
             </p>
             <ol>
-                <li><h4>Staff Summary</h4>
-                <table>{feedback_html}</table>
-                </li></br></br>
                 <li><h4>Data</h4>
                 <table>{feedback_data_html}</table>
                 </li>
@@ -509,10 +469,6 @@ feedback_planos = """
                 {plano_message}
             </p>
              <ol>
-                <li><h4>Staff Summary</h4>
-                    <table>{plano_ewc_summary_html}</table>
-                </li></br></br>
-
                 <li><h4>Data</h4>
                     <table>{planos}</table>
                 </li>
@@ -527,31 +483,498 @@ feedback_planos = """
 
 """
 
+html_no_feedback = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{branch} Report</title>
+
+    <style>
+        table {{border-collapse: collapse;font-family:Garamond; font-size: 10px;}}
+        th {{text-align: left;font-family:Garamond; padding: 2px;}}
+        body, p, h3, div, span, var {{font-family:Garamond; font-size:11}}
+        td {{text-align: left;font-family:Garamond; font-size:11px; padding: 4px;}}
+        h4 {{font-size: 14px; font-family: Garamond;}}
+    </style>
+
+</head>
+<body>
+    <div>
+        <b><p>Hi {branch_manager},</p></b>
+        <div class="rejections">
+            <h3>1. Non Converted Insurance Approved Orders.</h3>
+            <p>
+                {no_feedback_message}
+            </p>
+            <ol>
+                <li><h4>Data</h4>
+                <table>{no_feedback_html}</table>
+                </li>
+            </ol>
+        </div>
+       <br><br>
+       <b><i>Best Regards <br> Optica Data Team</i></b>
+    </div>
+</body>
+</html>
+"""
+
+# Combination: Planos and No Feedback
+
+html_plano_no_feedback = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{branch} Report</title>
+
+    <style>
+        table {{border-collapse: collapse;font-family:Garamond; font-size: 10px;}}
+        th {{text-align: left;font-family:Garamond; padding: 2px;}}
+        body, p, h3, div, span, var {{font-family:Garamond; font-size:11}}
+        td {{text-align: left;font-family:Garamond; font-size:11px; padding: 4px;}}
+        h4 {{font-size: 14px; font-family: Garamond;}}
+    </style>
+
+</head>
+<body>
+    <div>
+        <b><p>Hi {branch_manager},</p></b>
+        <p>Please see the below reports.</p>
+
+        <div class="feedbacks">
+            <h3>1. Insurance Orders with No Feedback</h3>
+            <p>
+            {no_feedback_message}
+            </p>
+            <ol>
+                <li><h4>Data</h4>
+                <table>{no_feedback_html}</table>
+                </li>
+            </ol>
+        </div>
+
+        <div class="planos">
+            <h3>2. Plano Preauth non submission</h3>
+            <p>
+                {plano_message}
+            </p>
+             <ol>
+                <li><h4>Data</h4>
+                    <table>{planos}</table>
+                </li>
+            </ol>
+        </div>
+
+       <br><br>
+       <b><i>Best Regards <br> Optica Data Team</i></b>
+    </div>
+</body>
+</html>
+"""
+
+no_feedback_rejections_html = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{branch} Report</title>
+
+        <style>
+            table {{border-collapse: collapse;font-family:Garamond; font-size: 10px;}}
+            th {{text-align: left;font-family:Garamond; padding: 2px;}}
+            body, p, h3, div, span, var {{font-family:Garamond; font-size:11}}
+            td {{text-align: left;font-family:Garamond; font-size:11px; padding: 4px;}}
+            h4 {{font-size: 14px; font-family: Garamond;}}
+        </style>
+
+    </head>
+    <body>
+        <div>
+            <b><p>Hi {branch_manager},</p></b>
+            <p>Please see the below reports.</p>
+
+            <div class="planos">
+                <h3>1. Insurance Errors</h3>
+                <p>
+                {rejection_message}
+                </p>
+                <ol>
+                    <li><h4>Data</h4>
+                    <table>{rejections}</table>
+                    </li>
+                </ol>
+            </div>
+
+            <div class="feedbacks">
+                <h3>2. Insurance Orders with No Feedback</h3>
+                <p>
+                {no_feedback_message}
+                </p>
+                <ol>
+                    <li><h4>Data</h4>
+                    <table>{no_feedback_html}</table>
+                    </li>
+                </ol>
+            </div>
+
+        <br><br>
+        <b><i>Best Regards <br> Optica Data Team</i></b>
+        </div>
+    </body>
+    </html>
+"""
+
+feedback_no_feedback_html = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{branch} Report</title>
+
+    <style>
+        table {{border-collapse: collapse;font-family:Garamond; font-size: 10px;}}
+        th {{text-align: left;font-family:Garamond; padding: 2px;}}
+        body, p, h3, div, span, var {{font-family:Garamond; font-size:11}}
+        td {{text-align: left;font-family:Garamond; font-size:11px; padding: 4px;}}
+        h4 {{font-size: 14px; font-family: Garamond;}}
+    </style>
+
+</head>
+<body>
+    <div>
+        <b><p>Hi {branch_manager},</p></b>
+        <p>Please see the below reports.</p>
+
+        <div class="feedbacks">
+            <h3>1. Non Converted Insurance Approved Orders.</h3>
+            <p>
+            {feedback_message}
+            </p>
+            <ol>
+                <li><h4>Data</h4>
+                <table>{feedback_data_html}</table>
+                </li>
+            </ol>
+        </div>
+
+        <div class="feedbacks">
+            <h3>2. Insurance Orders with No Feedback</h3>
+            <p>
+            {no_feedback_message}
+            </p>
+            <ol>
+                <li><h4>Data</h4>
+                <table>{no_feedback_html}</table>
+                </li>
+            </ol>
+        </div>
+
+       <br><br>
+       <b><i>Best Regards <br> Optica Data Team</i></b>
+    </div>
+</body>
+</html>
+"""
+
+pl_rej_nof_html = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{branch} Report</title>
+
+    <style>
+        table {{border-collapse: collapse;font-family:Garamond; font-size: 10px;}}
+        th {{text-align: left;font-family:Garamond; padding: 2px;}}
+        body, p, h3, div, span, var {{font-family:Garamond; font-size:11}}
+        td {{text-align: left;font-family:Garamond; font-size:11px; padding: 4px;}}
+        h4 {{font-size: 14px; font-family: Garamond;}}
+    </style>
+
+</head>
+<body>
+    <div>
+        <b><p>Hi {branch_manager},</p></b>
+        <p>Please see the below reports.</p>
+
+        <div class="planos">
+            <h3>1. Insurance Errors</h3>
+            <p>
+            {rejection_message}
+            </p>
+            <ol>
+                <li><h4>Data</h4>
+                <table>{rejections}</table>
+                </li>
+            </ol>
+        </div>
+
+        <div class="feedbacks">
+            <h3>2. Insurance Orders with No Feedback</h3>
+            <p>
+            {no_feedback_message}
+            </p>
+            <ol>
+                <li><h4>Data</h4>
+                <table>{no_feedback_html}</table>
+                </li>
+            </ol>
+        </div>
+
+        <div class="planos">
+            <h3>3. Plano Preauth non submission</h3>
+            <p>
+                {plano_message}
+            </p>
+             <ol>
+                <li><h4>Data</h4>
+                    <table>{planos}</table>
+                </li>
+            </ol>
+        </div>
+       <br><br>
+       <b><i>Best Regards <br> Optica Data Team</i></b>
+    </div>
+</body>
+</html>
+"""
+
+plano_feedback_nofeedback_html = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{branch} Report</title>
+
+        <style>
+            table {{border-collapse: collapse;font-family:Garamond; font-size: 10px;}}
+            th {{text-align: left;font-family:Garamond; padding: 2px;}}
+            body, p, h3, div, span, var {{font-family:Garamond; font-size:11}}
+            td {{text-align: left;font-family:Garamond; font-size:11px; padding: 4px;}}
+            h4 {{font-size: 14px; font-family: Garamond;}}
+        </style>
+
+    </head>
+    <body>
+        <div>
+            <b><p>Hi {branch_manager},</p></b>
+            <p>Please see the below reports.</p>
+            <div class="feedbacks">
+                <h3>1. Non Converted Insurance Approved Orders.</h3>
+                <p>
+                {feedback_message}
+                </p>
+                <ol>
+                    <li><h4>Data</h4>
+                    <table>{feedback_data_html}</table>
+                    </li>
+                </ol>
+            </div>
+
+            <div class="feedbacks">
+                <h3>2. Insurance Orders with No Feedback</h3>
+                <p>
+                {no_feedback_message}
+                </p>
+                <ol>
+                    <li><h4>Data</h4>
+                    <table>{no_feedback_html}</table>
+                    </li>
+                </ol>
+            </div>
+
+            <div class="planos">
+                <h3>3. Plano Preauth non submission</h3>
+                <p>
+                    {plano_message}
+                </p>
+                <ol>
+                    <li><h4>Data</h4>
+                        <table>{planos}</table>
+                    </li>
+                </ol>
+            </div>
+        <br><br>
+        <b><i>Best Regards <br> Optica Data Team</i></b>
+        </div>
+    </body>
+    </html>
+"""
+
+rejections_feedback_nofeedback_html = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{branch} Report</title>
+
+        <style>
+            table {{border-collapse: collapse;font-family:Garamond; font-size: 10px;}}
+            th {{text-align: left;font-family:Garamond; padding: 2px;}}
+            body, p, h3, div, span, var {{font-family:Garamond; font-size:11}}
+            td {{text-align: left;font-family:Garamond; font-size:11px; padding: 4px;}}
+            h4 {{font-size: 14px; font-family: Garamond;}}
+        </style>
+
+    </head>
+    <body>
+        <div>
+            <b><p>Hi {branch_manager},</p></b>
+            <p>Please see the below reports.</p>
+            <div class="feedbacks">
+                <h3>1. Non Converted Insurance Approved Orders.</h3>
+                <p>
+                {feedback_message}
+                </p>
+                <ol>
+                    <li><h4>Data</h4>
+                    <table>{feedback_data_html}</table>
+                    </li>
+                </ol>
+            </div>
+
+            <div class="planos">
+                <h3>2. Insurance Errors</h3>
+                <p>
+                {rejection_message}
+                </p>
+                <ol>
+                    <li><h4>Data</h4>
+                    <table>{rejections}</table>
+                    </li>
+                </ol>
+            </div>
+
+            <div class="feedbacks">
+                <h3>3. Insurance Orders with No Feedback</h3>
+                <p>
+                {no_feedback_message}
+                </p>
+                <ol>
+                    <li><h4>Data</h4>
+                    <table>{no_feedback_html}</table>
+                    </li>
+                </ol>
+            </div>
+        <br><br>
+        <b><i>Best Regards <br> Optica Data Team</i></b>
+        </div>
+    </body>
+    </html>
+"""
+
+all_four_html = """
+   <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{branch} Report</title>
+
+        <style>
+            table {{border-collapse: collapse;font-family:Garamond; font-size: 10px;}}
+            th {{text-align: left;font-family:Garamond; padding: 2px;}}
+            body, p, h3, div, span, var {{font-family:Garamond; font-size:11}}
+            td {{text-align: left;font-family:Garamond; font-size:11px; padding: 4px;}}
+            h4 {{font-size: 14px; font-family: Garamond;}}
+        </style>
+
+    </head>
+    <body>
+        <div>
+            <b><p>Hi {branch_manager},</p></b>
+            <p>Please see the below reports.</p>
+            <div class="feedbacks">
+                <h3>1. Non Converted Insurance Approved Orders.</h3>
+                <p>
+                {feedback_message}
+                </p>
+                <ol>
+                    <li><h4>Data</h4>
+                    <table>{feedback_data_html}</table>
+                    </li>
+                </ol>
+            </div>
+
+            <div class="planos">
+                <h3>2. Insurance Errors</h3>
+                <p>
+                {rejection_message}
+                </p>
+                <ol>
+                    <li><h4>Data</h4>
+                    <table>{rejections}</table>
+                    </li>
+                </ol>
+            </div>
+
+            <div class="feedbacks">
+                <h3>3. Insurance Orders with No Feedback</h3>
+                <p>
+                {no_feedback_message}
+                </p>
+                <ol>
+                    <li><h4>Data</h4>
+                    <table>{no_feedback_html}</table>
+                    </li>
+                </ol>
+            </div>
+
+            <div class="planos">
+                <h3>4. Plano Preauth non submission</h3>
+                <p>
+                    {plano_message}
+                </p>
+                <ol>
+                    <li><h4>Data</h4>
+                        <table>{planos}</table>
+                    </li>
+                </ol>
+            </div>
+
+        <br><br>
+        <b><i>Best Regards <br> Optica Data Team</i></b>
+        </div>
+    </body>
+    </html>
+"""
+
 rejections_daily_message = """
-Please help us understand why the below mentioned insurance error 
-has occurred and what action you have taken to curtail this going forward.
+Please help us understand why the mentioned insurance error(s) has occurred and 
+what actions you have taken to prevent this from happening in the future.
 """
 
 plano_daily_message = """
-Please help us understand, 
-why the below Plano Rx was not submitted to insurance for preauth 
-and what action you have taken to curtail this going forward.
+Please help us understand why the Plano Rx below was not submitted to insurance for preauthorization 
+and what actions you have taken to prevent this from happening in the future.
 """
 
 rejections_weekly_message = """
-This a weekly summary for all the rejections that you have made throughout the last week. <br>
-Please review this data to ensure that you  record 0 insurance errors this week.
+This is a weekly summary of all the rejections that occurred throughout the last week. <br>
+Please review this data to ensure that you have recorded zero insurance errors this week.
 """
 
 plano_weekly_message = """
-Refer to the summary below that shows all the Insurance Plano  Eye Tests that have not been submitted to the insurance company <br>
-for preauthorization.
+Refer to the summary below, which shows all the Insurance Plano Eye Tests that have not been submitted to the insurance company for preauthorization.
 """
 
 feedback_daily_message = """
-Please help us understand why the following orders have been approved and yet not converted.
+Please help us understand why the following orders have been approved but have not yet been converted.
 """
 
 feedback_weekly_message = """
 These are the insurance orders that got approved throught out the week but haven't converted. Please be sure to follow up with the customers.
+"""
+
+no_feedback_daily_message = """
+The orders shown in the table below have not received feedback. Have we followed up with the insurance company?
 """

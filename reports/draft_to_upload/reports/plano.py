@@ -108,7 +108,6 @@ def create_plano_report(branch_data, path, registrations, payments, all_planos, 
 
     if selection == "Daily":
         daily_plano_data = final_plano_data[final_plano_data["Create Date"] == get_yesterday_date(truth=True)]
-
         if not len(daily_plano_data):
             return
         
@@ -133,6 +132,7 @@ def create_plano_report(branch_data, path, registrations, payments, all_planos, 
             cols_order=["SRM", "RM", "Branch","EWC Handover", "Plano Eye Tests", "Submitted", "Not Submitted", "Converted"]
         )
 
+        daily_plano_data["Create Date"] = daily_plano_data["Create Date"].astype(str)
         with pd.ExcelWriter(f"{path}draft_upload/planorx_not_submitted.xlsx") as writer:
             daily_submission_branch.to_excel(writer, sheet_name="daily_submission_branch", index=False)
             daily_submission_optom.to_excel(writer, sheet_name="daily_submission_optom", index=False)

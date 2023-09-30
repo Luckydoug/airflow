@@ -26,7 +26,10 @@ from reports.draft_to_upload.smtp.emails import (
     kenya_monthly,
     uganda_daily,
     uganda_weekly,
-    uganda_monthly
+    uganda_monthly,
+    rwanda_daily,
+    rwanda_weekly,
+    rwanda_monthly
 )
 from sub_tasks.libraries.styles import ug_styles, properties
 from sub_tasks.libraries.utils import (highlight_spaces)
@@ -36,6 +39,8 @@ from reports.draft_to_upload.html.html import (
     branches_html, 
     html_rejections, 
     html_planos,
+    html_no_feedback,
+    no_feedback_rejections_html,
     rejections_daily_message,
     rejections_weekly_message,
     plano_daily_message,
@@ -45,13 +50,21 @@ from reports.draft_to_upload.html.html import (
     all_reports_html,
     html_feedback,
     feedback_planos,
-    feedback_rejection
+    feedback_rejection,
+    no_feedback_daily_message,
+    feedback_no_feedback_html,
+    pl_rej_nof_html,
+    plano_feedback_nofeedback_html,
+    rejections_feedback_nofeedback_html,
+    all_four_html,
+    html_plano_no_feedback
 )
 
 from reports.draft_to_upload.templates.template import (
     rejections_template,
     planos_template,
-    feedback_template
+    feedback_template,
+    no_feedback_template
 )
 
 
@@ -196,6 +209,8 @@ def send_draft_upload_report(
             receiver_email = kenya_daily
         elif country == "Uganda":
             receiver_email = uganda_daily
+        elif country == "Rwanda":
+            receiver_email = rwanda_daily
         elif country == "Test":
             receiver_email = test
         else:
@@ -307,6 +322,8 @@ def send_draft_upload_report(
             receiver_email = kenya_weekly
         elif country == "Uganda":
             receiver_email = uganda_weekly
+        elif country == "Rwanda":
+            receiver_email = rwanda_weekly
         elif country == "Test":
             receiver_email = test
         else:
@@ -403,6 +420,8 @@ def send_draft_upload_report(
             receiver_email = kenya_monthly
         elif country == "Uganda":
             receiver_email = uganda_monthly
+        elif country == "Rwanda":
+            receiver_email = rwanda_monthly
         elif country == "Test":
             receiver_email = test
         else:
@@ -489,7 +508,6 @@ req_columns = [
 rej_cols = [
     "Order Number",
     "Date",
-    "Outlet",
     "Front Desk",
     "Creator",
     "Order Creator",
@@ -501,6 +519,7 @@ rej_cols = [
 def send_to_branches(branch_data, selection, path, filename, country):
     create_initial_file(filename)
     todate = get_yesterday_date(truth=True)
+    # todate = "Today"
     branches = branch_data["Outlet"].to_list()
     html = ""
     branch_data = branch_data.set_index("Outlet")
@@ -508,6 +527,7 @@ def send_to_branches(branch_data, selection, path, filename, country):
     rejections_path = f"{path}draft_upload/rejections_report.xlsx"
     planos_path = f"{path}draft_upload/planorx_not_submitted.xlsx"
     feedback = f"{path}draft_upload/insurance_daily.xlsx"
+    no_feedbacks = f"{path}draft_upload/no_feedbacks.xlsx"
 
     if os.path.exists(rejections_path) and os.path.exists(planos_path) and os.path.exists(feedback):
         feedbacks = pd.ExcelFile(feedback)
@@ -518,6 +538,12 @@ def send_to_branches(branch_data, selection, path, filename, country):
 
         feedbacks_summary = feedbacks.parse(
             "daily_summary",
+            index_col=False
+        )
+
+        non_feedback = pd.ExcelFile(no_feedbacks)
+        no_feedbacks_data = non_feedback.parse(
+            "no_feedback",
             index_col=False
         )
 
@@ -559,13 +585,15 @@ def send_to_branches(branch_data, selection, path, filename, country):
         rejection_branches = rejections_data["Outlet"].to_list()
         planos_branches = planos_data["Branch"].to_list()
         feedback_branches = feedbacks_summary["Outlet"].to_list()
-        all_branches = planos_branches + rejection_branches + feedback_branches
+        no_feedback_branches = no_feedbacks_data["Outlet"].to_list()
+        all_branches = planos_branches + rejection_branches + feedback_branches + no_feedback_branches
         random_branch = random.choice(all_branches)
         
         if selection == "Daily":
             plano_message = plano_daily_message
             rejection_message = rejections_daily_message
             feedback_message = feedback_daily_message
+            no_feedback_message = no_feedback_daily_message
         elif selection == "Weekly":
             plano_message = plano_weekly_message
             rejection_message = rejections_weekly_message
@@ -581,8 +609,67 @@ def send_to_branches(branch_data, selection, path, filename, country):
 
             if branch not in rejection_branches and branch not in planos_branches and branch not in feedback_branches:
                 continue
+                
+                """
+                Combination: Rejections, Planos, and Feedbacks
+                """
 
-            elif branch in rejection_branches and branch in planos_branches and branch in feedback_branches:
+            elif branch in planos_branches and branch in rejection_branches and branch in feedback_branches and branch in no_feedback_branches:
+                if selection == "Daily":
+                    subject = f"{branch} Non Converted Approved Insurance Orders, Insurance Errors, Insurance Orders with no Feedback, and Plano NoN Submissions for {todate}"
+                elif selection == "Weekly":
+                    subject = f"{branch} Non Converted Approved Insurance Orders, Insurance Errors, Insurance Orders with no Feedback, and Plano NoN Submissions from {fourth_week_start} to {fourth_week_end}"
+                else:
+                    return
+                
+                planos_html, plano_branch_summary_html, plano_ewc_summary_html = planos_template(
+                    req_columns=req_columns,
+                    planos_data=planos_data,
+                    plano_branches_summary=plano_branches_summary,
+                    plano_ewc_summary=plano_ewc_summary,
+                    branch=branch
+                )
+
+                rejections_html, rejections_branch_summary_html, rejections_ewc_summary_html = rejections_template(
+                    branch=branch,
+                    rejections_data=rejections_data,
+                    rejection_branches_summary=rejection_branches_summary,
+                    rej_cols=rej_cols,
+                    rejections_ewc_summary=rejections_ewc_summary
+                )
+
+                feedback_html, feedback_data_html = feedback_template(
+                    branch=branch,
+                    feedbacks_data=feedbacks_data,
+                    feedbacks_summary=feedbacks_summary
+                )
+
+                no_feedback_html = no_feedback_template(
+                    branch=branch,
+                    data=no_feedbacks_data
+                )
+
+                html = all_four_html.format(
+                    no_feedback_html = no_feedback_html,
+                    branch = branch,
+                    branch_manager = branch_manager,
+                    no_feedback_message = no_feedback_message,
+                    planos=planos_html,
+                    rejections=rejections_html,
+                    rejections_branch_summary_html=rejections_branch_summary_html,
+                    rejections_ewc_summary_html=rejections_ewc_summary_html,
+                    plano_branch_summary_html=plano_branch_summary_html,
+                    plano_ewc_summary_html=plano_ewc_summary_html,
+                    plano_message = plano_message,
+                    rejection_message = rejection_message,
+                    feedback_html = feedback_html,
+                    feedback_data_html = feedback_data_html,
+                    feedback_message = feedback_message
+                )
+
+
+
+            elif branch in rejection_branches and branch in planos_branches and branch in feedback_branches and branch not in no_feedback_branches:
                 if selection == "Daily":
                     subject = f"{branch} Non Converted Approved Insurance Orders, Insurance Errors and Plano NoN Submissions for {todate}"
                 elif selection == "Weekly":
@@ -628,7 +715,10 @@ def send_to_branches(branch_data, selection, path, filename, country):
                     feedback_message = feedback_message
                 )
 
-            elif branch in rejection_branches and branch in planos_branches and branch not in feedback_branches:
+                """
+                Combination: Plano and Rejections"
+                """
+            elif branch in rejection_branches and branch in planos_branches and branch not in feedback_branches and branch not in no_feedback_branches:
                 if selection == "Daily":
                     subject = f"{branch} Insurance Errors and Plano NoN Submissions for {todate}"
                 elif selection == "Weekly":
@@ -666,8 +756,10 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 )
 
             
-
-            elif branch in feedback_branches and branch not in rejection_branches and branch not in planos_branches:
+                """
+                Combination: "Feedbacks Only"
+                """
+            elif branch in feedback_branches and branch not in rejection_branches and branch not in planos_branches and branch not in no_feedback_branches:
                 if selection == "Daily":
                     subject = f"{branch} Non Converted Approved Insurance Orders for {todate}"
                 elif selection == "Weekly":
@@ -690,7 +782,33 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 )
 
 
-            elif branch in rejection_branches and branch not in planos_branches and branch not in feedback_branches:
+                """
+                Combination: No Feedback Only
+                """
+            elif branch in no_feedback_branches and branch not in rejection_branches and branch not in planos_branches and branch not in feedback_branches:
+                if selection == "Daily":
+                    subject = f"{branch} Insurance Orders With No Feedback for {todate}"
+                elif selection == "Weekly":
+                    subject = f"{branch} Insurance Orders With No Feedback from {fourth_week_start} to {fourth_week_end}"
+                else:
+                    return
+                
+                no_feedback_html = no_feedback_template(
+                    branch=branch,
+                    data=no_feedbacks_data
+                )
+
+                html = html_no_feedback.format(
+                    no_feedback_html = no_feedback_html,
+                    branch = branch,
+                    branch_manager = branch_manager,
+                    no_feedback_message = no_feedback_message
+                )
+
+                """
+                Combination: Rejections Only
+                """
+            elif branch in rejection_branches and branch not in planos_branches and branch not in feedback_branches and branch not in no_feedback_branches:
                 if selection == "Daily":
                     subject = f"{branch} Insurance Errors for {todate}"
                 elif selection == "Weekly":
@@ -715,7 +833,10 @@ def send_to_branches(branch_data, selection, path, filename, country):
                     rejection_message = rejection_message
                 )
 
-            elif branch in planos_branches and branch not in rejection_branches and branch not in feedback_branches:
+                """
+                Combination: Planos Only
+                """
+            elif branch in planos_branches and branch not in rejection_branches and branch not in feedback_branches and branch not in no_feedback_branches:
                 if selection == "Daily":
                     subject = f"{branch} Plano No Submissions for {todate}"
                 elif selection == "Weekly":
@@ -740,7 +861,10 @@ def send_to_branches(branch_data, selection, path, filename, country):
                     plano_message = plano_message
                 )
 
-            elif branch in feedback_branches and branch in rejection_branches and branch not in planos_branches:
+                """
+                Combination: Feedbacks and Rejections
+                """
+            elif branch in feedback_branches and branch in rejection_branches and branch not in planos_branches and branch not in no_feedback_branches:
                 if selection == "Daily":
                     subject = f"{branch} Non Converted Approved Insurance Orders and Insurance Errors for {todate}"
                 elif selection == "Weekly":
@@ -775,7 +899,10 @@ def send_to_branches(branch_data, selection, path, filename, country):
                     feedback_html= feedback_html
                 )
 
-            elif branch in feedback_branches and  branch in planos_branches and branch not in rejection_branches:
+                """
+                Combination: Feedbacks and Planos
+                """
+            elif branch in feedback_branches and  branch in planos_branches and branch not in rejection_branches and branch not in no_feedback_branches:
                 if selection == "Daily":
                     subject = f"{branch} Non Converted Approved Insurance Orders and Plano No Submissions for {todate}"
                 elif selection == "Weekly":
@@ -811,41 +938,252 @@ def send_to_branches(branch_data, selection, path, filename, country):
                     feedback_message = feedback_message
                 )
 
+                """
+                Combination: No Feedback and Planos
+                """
+            elif branch in planos_branches and branch in no_feedback_branches and branch not in rejection_branches and branch not in feedback_branches:
+                if selection == "Daily":
+                    subject = f"{branch} Insurance Orders with no Feedback and Plano NON Submission for {todate}"
+                elif selection == "Weekly":
+                    subject = f"{branch} Insurance Orders with no Feedback and Plano NON Submission from {fourth_week_start} to {fourth_week_end}"
+                else:
+                    return
+                
 
-            bottom_branches = [
-                "ROS",
-                "NAN",
-                "OIL",
-                "POI",
-                "NYA",
-                "WSQ",
-                "TWO",
-                "LAV",
-                "WGT",
-                "WES"
-            ]
+                planos_html, plano_branch_summary_html, plano_ewc_summary_html = planos_template(
+                    req_columns=req_columns,
+                    planos_data=planos_data,
+                    plano_branches_summary=plano_branches_summary,
+                    plano_ewc_summary=plano_ewc_summary,
+                    branch=branch
+                )
 
+                no_feedback_html = no_feedback_template(
+                    branch=branch,
+                    data=no_feedbacks_data
+                )
 
-            if branch in bottom_branches:
-                receiver_email = [
-                    "shehan@optica.africa",
-                    rm_email,
-                    branch_email
-                ]
+                html = html_plano_no_feedback.format(
+                    no_feedback_html = no_feedback_html,
+                    branch = branch,
+                    branch_manager = branch_manager,
+                    no_feedback_message = no_feedback_message,
+                    planos = planos_html,
+                    plano_message = plano_message
+                )
+            
+                """
+                Combination: "Rejections and No Feedback
+                """
+            
+            elif branch in rejection_branches and branch in no_feedback_branches and branch not in planos_branches and branch not in feedback_branches:
+                if selection == "Daily":
+                    subject = f"{branch} Insurance Errors and Orders with No Feedback for {todate}"
+                elif selection == "Weekly":
+                    subject = f"{branch}  Insurance Errors and Orders with No Feedback from {fourth_week_start} to {fourth_week_end}"
+                else:
+                    return
+                
+                rejections_html, rejections_branch_summary_html, rejections_ewc_summary_html = rejections_template(
+                    branch=branch,
+                    rejections_data=rejections_data,
+                    rejection_branches_summary=rejection_branches_summary,
+                    rej_cols=rej_cols,
+                    rejections_ewc_summary=rejections_ewc_summary
+                )
 
-            elif branch == random_branch and country == "Kenya":
+                no_feedback_html = no_feedback_template(
+                    branch=branch,
+                    data=no_feedbacks_data
+                )
+
+                html = no_feedback_rejections_html.format(
+                    rejections=rejections_html,
+                    branch=branch_name,
+                    branch_manager=branch_manager,
+                    rejections_branch_summary_html=rejections_branch_summary_html,
+                    rejections_ewc_summary_html=rejections_ewc_summary_html,
+                    rejection_message = rejection_message,
+                    no_feedback_message = no_feedback_message,
+                    no_feedback_html = no_feedback_html
+                )
+
+                """
+                Combination: Feedback and No Feedback
+                """
+            elif branch in feedback_branches and branch in no_feedback_branches and branch not in planos_branches and branch not in rejection_branches:
+                if selection == "Daily":
+                    subject = f"{branch} NON Converted Approved Insurance Orders and Orders with no Feedback for {todate}"
+                elif selection == "Weekly":
+                    subject = f"{branch} NON Converted Approved Insurance Orders and Orders with no Feedback from {fourth_week_start} to {fourth_week_end}"
+                else:
+                    return
+                
+                feedback_html, feedback_data_html = feedback_template(
+                    branch=branch,
+                    feedbacks_data=feedbacks_data,
+                    feedbacks_summary=feedbacks_summary
+                )
+
+                no_feedback_html = no_feedback_template(
+                    branch=branch,
+                    data=no_feedbacks_data
+                )
+
+                html = feedback_no_feedback_html.format(
+                    feedback_html = feedback_html,
+                    branch=branch_name,
+                    branch_manager=branch_manager,
+                    feedback_data_html = feedback_data_html,
+                    feedback_message = feedback_message,
+                    no_feedback_message = no_feedback_message,
+                    no_feedback_html = no_feedback_html
+                )
+
+                """
+                Combination: Rejections, No Feedback, and Planos
+                """
+            elif branch in planos_branches and branch in rejection_branches and branch in no_feedback_branches and branch not in feedback_branches:
+                if selection == "Daily":
+                    subject = f"{branch} Insurance Errors, Insurance Orders with no Feedback, and Plano NON Submission for {todate}"
+                elif selection == "Weekly":
+                    subject = f"{branch}  Insurance Errors, Insurance Orders with no Feedback, and Plano NON Submission from {fourth_week_start} to {fourth_week_end}"
+                else:
+                    return
+                
+                planos_html, plano_branch_summary_html, plano_ewc_summary_html = planos_template(
+                    req_columns=req_columns,
+                    planos_data=planos_data,
+                    plano_branches_summary=plano_branches_summary,
+                    plano_ewc_summary=plano_ewc_summary,
+                    branch=branch
+                )
+
+                rejections_html, rejections_branch_summary_html, rejections_ewc_summary_html = rejections_template(
+                    branch=branch,
+                    rejections_data=rejections_data,
+                    rejection_branches_summary=rejection_branches_summary,
+                    rej_cols=rej_cols,
+                    rejections_ewc_summary=rejections_ewc_summary
+                )
+
+                no_feedback_html = no_feedback_template(
+                    branch=branch,
+                    data=no_feedbacks_data
+                )
+
+                html =  pl_rej_nof_html.format(
+                    rejections=rejections_html,
+                    branch=branch_name,
+                    branch_manager=branch_manager,
+                    rejections_branch_summary_html=rejections_branch_summary_html,
+                    rejections_ewc_summary_html=rejections_ewc_summary_html,
+                    rejection_message = rejection_message,
+                    no_feedback_message = no_feedback_message,
+                    no_feedback_html = no_feedback_html,
+                    planos = planos_html,
+                    plano_message = plano_message
+                )
+
+                """
+                Combination: Planos, Feedbacks and No Feedbacks
+                """
+            elif branch in planos_branches and branch in feedback_branches and branch in no_feedback_branches and branch not in rejection_branches:
+                if selection == "Daily":
+                    subject = f"{branch} Approved NON Converted Insurance Orders, Insurance Orders with no Feedback, and Plano NON Submission for {todate}"
+                elif selection == "Weekly":
+                    subject = f"{branch}  Approved NON Converted Insurance Orders, Insurance Orders with no Feedback, and Plano NON Submission from {fourth_week_start} to {fourth_week_end}"
+                else:
+                    return
+
+                planos_html, plano_branch_summary_html, plano_ewc_summary_html = planos_template(
+                    req_columns=req_columns,
+                    planos_data=planos_data,
+                    plano_branches_summary=plano_branches_summary,
+                    plano_ewc_summary=plano_ewc_summary,
+                    branch=branch
+                )
+
+                feedback_html, feedback_data_html = feedback_template(
+                    branch=branch,
+                    feedbacks_data=feedbacks_data,
+                    feedbacks_summary=feedbacks_summary
+                )
+
+                no_feedback_html = no_feedback_template(
+                    branch=branch,
+                    data=no_feedbacks_data
+                )
+
+                html = plano_feedback_nofeedback_html.format(
+                    branch=branch_name,
+                    branch_manager=branch_manager,
+                    no_feedback_message = no_feedback_message,
+                    no_feedback_html = no_feedback_html,
+                    planos = planos_html,
+                    plano_message = plano_message,
+                    feedback_html = feedback_html,
+                    feedback_data_html = feedback_data_html,
+                    feedback_message = feedback_message,
+                )
+
+            
+            elif branch in rejection_branches and branch in feedback_branches and branch in no_feedback_branches and branch not in planos_branches:
+                if selection == "Daily":
+                    subject = f"{branch} Approved NON Converted Insurance Orders, Insurance Errors, and Insurance Orders with no Feedback for {todate}"
+                elif selection == "Weekly":
+                    subject = f"{branch}  Approved NON Converted Insurance Orders, Insurance Errors, and Insurance Orders with no Feedback from {fourth_week_start} to {fourth_week_end}"
+                else:
+                    return
+
+                rejections_html, rejections_branch_summary_html, rejections_ewc_summary_html = rejections_template(
+                    branch=branch,
+                    rejections_data=rejections_data,
+                    rejection_branches_summary=rejection_branches_summary,
+                    rej_cols=rej_cols,
+                    rejections_ewc_summary=rejections_ewc_summary
+                )
+
+                feedback_html, feedback_data_html = feedback_template(
+                    branch=branch,
+                    feedbacks_data=feedbacks_data,
+                    feedbacks_summary=feedbacks_summary
+                )
+
+                no_feedback_html = no_feedback_template(
+                    branch=branch,
+                    data=no_feedbacks_data
+                )
+
+                html = rejections_feedback_nofeedback_html.format(
+                    branch=branch_name,
+                    branch_manager=branch_manager,
+                    no_feedback_message = no_feedback_message,
+                    no_feedback_html = no_feedback_html,
+                    feedback_html = feedback_html,
+                    feedback_data_html = feedback_data_html,
+                    feedback_message = feedback_message,
+                    rejections=rejections_html,
+                    rejections_branch_summary_html=rejections_branch_summary_html,
+                    rejections_ewc_summary_html=rejections_ewc_summary_html,
+                    rejection_message = rejection_message
+                )
+
+            if branch == random_branch and country == "Kenya":
                 receiver_email = [
                     "wazeem@optica.africa",
                     "yuri@optica.africa",
+                    "andrew@optica.africa",
+                    "christopher@optica.africa",
                     rm_email,
                     branch_email,
-                    "shehan@optica.africa",
                     "wairimu@optica.africa"
                 ]
 
             elif branch == "YOR":
                 receiver_email = [
                     rm_email,
+                    "christopher@optica.africa",
                     "insurance@optica.africa",
                     "yh.manager@optica.africa",
                     branch_email
@@ -854,6 +1192,7 @@ def send_to_branches(branch_data, selection, path, filename, country):
             elif branch == "OHO":
                 receiver_email = [
                     rm_email,
+                    "christopher@optica.africa",
                     "duncan.muchai@optica.africa",
                     "susan@optica.africa",
                     "insuranceoh@optica.africa",
@@ -865,13 +1204,17 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 receiver_email = [
                     "kush@optica.africa",
                     "raghav@optica.africa",
+                    'fredrick@optica.africa',
+                    'tiffany@optica.africa',
                     "wairimu@optica.africa",
                     branch_email
                 ]
 
             else:
-                receiver_email = [rm_email, branch_email]
+                receiver_email = [rm_email, branch_email, "christopher@optica.africa"]
 
+            receiver_email = ["tstbrach@gmail.com"]
+            
 
 
             html_content = quopri.encodestring(

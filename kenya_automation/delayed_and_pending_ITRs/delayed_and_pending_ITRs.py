@@ -24,10 +24,10 @@ from sub_tasks.libraries.utils import (
 )
 
 engine = createe_engine()
-rn = datetime.datetime.now()
+# rn = datetime.datetime.now()
+rn = datetime.datetime.now()-datetime.timedelta(days = 3)
 
 def fetch_delayed_and_pending_ITRs():
-
     pending_itr = """           
     select su.user_code as "User Code",doc_no as "Document Number", ITR.internal_no as "Internal Number",exchange_type,
     filler as "Filter", to_warehouse_code as "Branch", createdon,creationtime_incl_secs,
@@ -56,9 +56,6 @@ def fetch_delayed_and_pending_ITRs():
     """
     itrs = pd.read_sql_query(pending_itr, con=engine, params={'From': rn.date(), 'To': rn.date()})
     return itrs
-
-    
-#    main_store_reps["Main Store Cut"] =  pd.to_datetime(rn.date().strftime("%Y/%m/%d") + " "+ main_store_reps["Main Store Cut"].astype(str), dayfirst=True).dt.time
 
 def mainstore(open_replacemnts):
     main_store_reps = open_replacemnts[(open_replacemnts["ITR Status"].isin(["Pick List Printed","Pick List Created"])) & (open_replacemnts["Filter"].isin(["0MA"]))]
@@ -202,7 +199,8 @@ def smtp():
                 table2heading = "15 minutes to cut off"
                 table2html = table2.to_html(index=False)
         elif department == "Control":
-            department_email = 'urvashi@optica.africa'
+            # department_email = 'urvashi@optica.africa'
+            department_email = 'wairimu@optica.africa'
             control_cutoff_full = cutoff_efficiency_full_dfs[3].rename(columns = {'Unnamed: 0':''})
             table1 = control_cutoff_full[control_cutoff_full["Classification"] == "Delayed"]
             table1 = table1.drop(["Delay","TenTo"], axis=1)
@@ -293,8 +291,8 @@ def smtp():
                     table2html=table2html,table2heading = table2heading)
 
     # Create a MIMEMultipart class, and set up the From, To, Subject fields
-        # receiver_email = ["tstbranch@gmail.com"]
-        receiver_email = [department_email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','wairimu@optica.africa']
+        receiver_email = ["tstbranch@gmail.com"]
+        # receiver_email = [department_email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','wairimu@optica.africa']
 
         email_message = MIMEMultipart()
         email_message['From'] = your_email

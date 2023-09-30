@@ -179,6 +179,7 @@ def send_to_management(selection, country, path) -> None:
 def send_to_branches(
     path: str,
     branch_data: pd.DataFrame,
+    country:str,
     filename: str
 ) -> None:  # This function explicitly returns Nothing, or in other words, it returns None.
     # This function will send the Insurance Conversion Report to the branches
@@ -266,6 +267,15 @@ def send_to_branches(
                     rm_email,
                     "yh.manager@optica.africa",
                     "insurance@optica.africa",
+                    branch_email
+                ]
+            
+            elif country == "Uganda":
+                receiver_email = [
+                    "kush@optica.africa",
+                    "raghav@optica.africa",
+                    rm_email,
+                    'fredrick@optica.africa',
                     branch_email
                 ]
             

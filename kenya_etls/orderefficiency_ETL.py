@@ -12,7 +12,7 @@ from datetime import datetime
 
 
 # from tmp.python_test
-DAG_ID = 'Operations_Efficiency'
+DAG_ID = 'Operation_Efficiency'
 
 default_args = {
     'owner': 'Iconia ETLs',

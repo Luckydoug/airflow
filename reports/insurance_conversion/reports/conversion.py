@@ -31,6 +31,7 @@ def create_insurance_conversion(
     selection: str,
     date,
     working_hours: pd.DataFrame,
+    no_feedbacks: pd.DataFrame,
     country: str
 ) -> None:
     if not len(all_orders) or not len(orderscreen) or not len(insurance_companies) or not len(sales_orders):
@@ -77,7 +78,7 @@ def create_insurance_conversion(
 
     requests_feedbacks = pd.merge(
         unique_requests_rename[["Order Number", "Request", "Full Request Date"]],
-        unique_feedback_rename[["Order Number", "Feedback", "Feedback Time", "Full Feedback Date"]], 
+        unique_feedback_rename[["Order Number", "Feedback", "Feedback Time", "Full Feedback Date", "Remarks"]], 
         on = "Order Number", 
         how = "right"
     )
@@ -217,11 +218,27 @@ def create_insurance_conversion(
         ordered=True
     )
 
-    feedback_non = feedback_non.sort_values(by = "Feedback", ascending=True)
+    feedback_non = feedback_non.sort_values(by = ["Feedback", "Order Creator"], ascending=[True, False])
     feedback_non["Time Taken"] = feedback_non["Time Taken"].astype(int)
+    not_received = no_feedbacks[
+        no_feedbacks["Feedback"] == "no feedback"
+    ]
+
+    feedback_non[["Full Request Date", "Feedback Time"]] = feedback_non[["Full Request Date", "Feedback Time"]].astype(str)
     with pd.ExcelWriter(f"{path}draft_upload/insurance_daily.xlsx", engine='xlsxwriter') as writer:
         creator_summary.to_excel(writer, sheet_name="daily_summary", index=False)
         feedback_non[cols].to_excel(writer, sheet_name = "daily_data", index = False)
+
+    not_received["Request Date"] = not_received["Request Date"].astype(str)
+    with pd.ExcelWriter(f"{path}draft_upload/no_feedbacks.xlsx", engine='xlsxwriter') as writer:
+        not_received[[
+            "Outlet",
+            "Order Number",
+            "Customer Code",
+            "Insurance Company",
+            "Request Date",
+            "Feedback"
+        ]].to_excel(writer, sheet_name="no_feedback", index=False)
     writer.close()
 
     if selection == "Weekly":
@@ -321,16 +338,16 @@ def create_insurance_conversion(
             ["Requests", "Converted", "%Conversion"], 
             axis = 1, 
             level = 1
-        )
+        ).rename(columns = {"Requests": "Feedbacks"}, level = 1)
 
         columns_todo = [
-            ("Insurance Fully Approved", "Requests"),
+            ("Insurance Fully Approved", "Feedbacks"),
             ("Insurance Fully Approved", "Converted"),
             ("Insurance Fully Approved", "%Conversion"),
-            ("Insurance Partially Approved", "Requests"),
+            ("Insurance Partially Approved", "Feedbacks"),
             ("Insurance Partially Approved", "Converted"),
             ("Insurance Partially Approved", "%Conversion"),
-            ("Use Available Amount on SMART", "Requests"),
+            ("Use Available Amount on SMART", "Feedbacks"),
             ("Use Available Amount on SMART", "Converted"),
             ("Use Available Amount on SMART", "%Conversion")
         ]
@@ -346,12 +363,6 @@ def create_insurance_conversion(
         branch_final.columns = pd.MultiIndex.from_tuples(new_cols)
         branch_final = branch_final.fillna(" ")
 
-        overall_performance = pd.pivot_table(
-            feedbacks, 
-            index = ["Feedback"], 
-            values = ["Requests", "Conversion"], 
-            aggfunc="sum").reset_index().rename(columns={"Conversion": "Converted", "Count": "Requests"}
-        )
 
         comparison_data["Week Range"] = comparison_data.apply(
             lambda row: check_date_range(row, "Full Feedback Date"), 
@@ -401,7 +412,7 @@ def create_insurance_conversion(
             sorted_columns.append(date_range)
 
         company_conversion = company_conversion.reindex(sorted_columns,axis = 1, level = 0)
-        company_conversion = company_conversion.reindex(["Requests", "%Conversion"], level = 1, axis = 1)
+        company_conversion = company_conversion.reindex(["Requests", "%Conversion"], level = 1, axis = 1).rename(columns = {"Requests": "Feedbacks"})
 
         pstart, pend = get_start_end_dates(selection=selection)
 
@@ -418,62 +429,37 @@ def create_insurance_conversion(
         Request Vs Feedbacks Section
         """
 
-        feedback_requests = pd.merge(
-            unique_requests_rename[["Order Number", "Request", "Full Request Date"]],
-            unique_feedback_rename[["Order Number", "Feedback", "Full Feedback Date"]], 
-            on = "Order Number", 
-            how = "left"
-        )
-
-        feedback_requests = feedback_requests.drop_duplicates(subset = ["Order Number"])
-
-        feedback_requests["Received"] = feedback_requests.apply(lambda row: seek_feedback(row), axis = 1)
-        feedback_requests["Date Range"] = feedback_requests.apply(lambda row: check_date_range(row, "Full Request Date"), axis = 1)
-        feedback_requests = feedback_requests[feedback_requests["Date Range"] != "None"]
-
-        feedback_requests["Country"] = country
-        company_no_feedback = pd.merge(
-            feedback_requests, 
-            insurance_companies[
-                ["Insurance Company", "Scheme Type", "Order Number", "Customer Code", "Insurance Scheme"]
-            ],
-            on = "Order Number",
-            how="left"
-        )
-
-        company_no_feedback = company_no_feedback.drop_duplicates(
-            subset=["Insurance Company", "Customer Code", "Feedback", "Insurance Scheme"]
-        )
+        no_feedbacks["Date Range"] = no_feedbacks.apply(lambda row: check_date_range(row, "Request Date"), axis = 1)
+        no_feedbacks = no_feedbacks[no_feedbacks["Date Range"] != "None"]
+        no_feedbacks["Country"] = country
 
         no_requests_pivot = pd.pivot_table(
-            company_no_feedback,
+            no_feedbacks,
             index="Country",
             columns="Date Range",
-            values="Received",
-            aggfunc={"Received":[
+            values="Feedback",
+            aggfunc={"Feedback":[
                 'count',
-                lambda x: (x == "Feedback").sum(),
-                lambda x: (x == "No Feedback").sum()]
+                lambda x: (x == "feedback").sum(),
+                lambda x: (x == "no feedback").sum()]
                 }
             )
         
         no_requests_pivot = no_requests_pivot.swaplevel(0, 1, 1).reindex(sorted_columns, level = 0, axis = 1)
-        no_requests_pivot = no_requests_pivot.reindex(["count", "<lambda_0>", "<lambda_1>"], axis = 1, level = 1)
+        no_requests_pivot = no_requests_pivot.reindex(["count", "<lambda_1>"], axis = 1, level = 1)
         no_requests_pivot = no_requests_pivot.rename(
             columns = {
                 "count": "Requests", 
-                "<lambda_0>": "Feedbacks", 
                 "<lambda_1>": "No Feedback"
             }, 
             level = 1
         )
 
-        last_week = company_no_feedback[company_no_feedback["Date Range"] == sorted_columns[-1]]
-        no_feedback = last_week[last_week["Received"] == "No Feedback"]
-
+        last_week =  no_feedbacks[no_feedbacks["Date Range"] == sorted_columns[-1]]
+        last_week_no_feedback = last_week[last_week["Feedback"] == 'no feedback']
 
         no_feedback_pivot = pd.pivot_table(
-            no_feedback,
+            last_week_no_feedback,
             index="Insurance Company",
             values="Order Number",
             aggfunc="count"
@@ -545,7 +531,7 @@ def create_insurance_conversion(
                 ]
             ].sort_values(by= "Outlet").to_excel(writer,sheet_name = "NON Conversions", index=False)  
             comparison_data.to_excel(writer, sheet_name = "Master Data", index = False)
-            company_no_feedback.to_excel(writer, sheet_name = "All Requests", index = False)
+            no_feedbacks.to_excel(writer, sheet_name = "All Requests", index = False)
             no_feedback_pivot.to_excel(writer, sheet_name = "Insurance Company", index = False)
              
         writer.save()
@@ -595,7 +581,8 @@ def create_insurance_conversion(
         )
 
         recent_month_data = comparison_data[
-            comparison_data["Month"] == second_month
+            (comparison_data["Month"] == second_month) | 
+            (comparison_data["Month"] == first_month)
         ]
 
         branches_report = create_branch_report(
@@ -608,11 +595,79 @@ def create_insurance_conversion(
             (recent_month_data["Feedback"] != "Declined by Insurance Company")
         ]
 
+
+        feedback_requests = pd.merge(
+            unique_requests_rename[["Order Number", "Request", "Full Request Date"]],
+            unique_feedback_rename[["Order Number", "Feedback", "Full Feedback Date"]], 
+            on = "Order Number", 
+            how = "left"
+        )
+
+        feedback_requests = feedback_requests.drop_duplicates(subset = ["Order Number"])
+        feedback_requests["Month"] = feedback_requests["Full Request Date"].dt.month_name()
+        feedback_requests["Received"] = feedback_requests.apply(lambda row: seek_feedback(row), axis = 1)
+
+        feedback_requests["Country"] = country
+        company_no_feedback = pd.merge(
+            feedback_requests, 
+            insurance_companies[
+                ["Insurance Company", "Scheme Type", "Order Number", "Customer Code", "Insurance Scheme"]
+            ],
+            on = "Order Number",
+            how="left"
+        )
+
+        company_no_feedback = company_no_feedback.drop_duplicates(
+            subset=["Insurance Company", "Customer Code", "Feedback", "Insurance Scheme"]
+        )
+
+        company_no_feedback = company_no_feedback[
+            (company_no_feedback["Month"] == second_month) | 
+            (company_no_feedback["Month"] == first_month)
+        ]
+
+        no_requests_pivot = pd.pivot_table(
+            company_no_feedback,
+            index="Country",
+            columns="Month",
+            values="Received",
+            aggfunc={"Received":[
+                'count',
+                lambda x: (x == "Feedback").sum(),
+                lambda x: (x == "No Feedback").sum()]
+                }
+            )
+        
+        no_requests_pivot = no_requests_pivot.swaplevel(0, 1, 1).reindex([first_month, second_month], level = 0, axis = 1)
+        no_requests_pivot = no_requests_pivot.reindex(["count", "<lambda_1>"], axis = 1, level = 1)
+        no_requests_pivot = no_requests_pivot.rename(
+            columns = {
+                "count": "Requests", 
+                "<lambda_1>": "No Feedback"
+            }, 
+            level = 1
+        )
+
+        latest_month = company_no_feedback[company_no_feedback["Month"] == second_month]
+        no_feedback =  latest_month[latest_month["Received"] == "No Feedback"]
+        no_feedback_pivot = pd.pivot_table(
+            no_feedback,
+            index="Insurance Company",
+            values="Order Number",
+            aggfunc="count"
+        ).reset_index().rename(columns =  {"Order Number": "Count of No Feedbacks"}).sort_values(by = "Count of No Feedbacks", ascending = False)
+
         with pd.ExcelWriter(f"{path}insurance_conversion/conversion_management.xlsx", engine='xlsxwriter') as writer:
             non_converted.to_excel(writer, sheet_name = "NON Conversions", index = False)
             recent_month_data.to_excel(writer, sheet_name = "Master Data", index = False)
             summary_report.to_excel(writer, sheet_name="overall")
             branches_report.to_excel(writer, sheet_name = "all_branches")
+            no_feedback_pivot.to_excel(writer, sheet_name = "Insurance Company", index = False)
+            company_no_feedback.to_excel(writer, sheet_name = "all_feedbacks", index=False)
+            no_requests_pivot.to_excel(
+                writer,
+                sheet_name = "no feedback"
+            )
 
 
 

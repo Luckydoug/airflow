@@ -79,8 +79,8 @@ def feedback_template(
     feedbacks_data: pd.DataFrame,
     feedbacks_summary: pd.DataFrame,
 ):
-    feedbacks_report = feedbacks_summary[feedbacks_summary["Outlet"] == branch]
-    feedback_data = feedbacks_data[feedbacks_data["Outlet"] == branch]
+    feedbacks_report = feedbacks_summary[feedbacks_summary["Outlet"] == branch].drop(columns=["Outlet"])
+    feedback_data = feedbacks_data[feedbacks_data["Outlet"] == branch].drop(columns=["Outlet"])
 
     feebacks_style = feedbacks_report.style.hide_index().set_table_styles(ug_styles)
     feedback_data_style =  feedback_data.style.hide_index().set_table_styles(ug_styles)
@@ -89,5 +89,16 @@ def feedback_template(
     feedback_data_html = feedback_data_style.to_html(doctype_html = True)
 
     return feedback_html, feedback_data_html
+
+
+def no_feedback_template(
+    branch: str,
+    data: str
+):
+    report = data[data["Outlet"] == branch].drop(columns=["Outlet"])
+    report_style = report.style.hide_index().set_table_styles(ug_styles)
+    report_html = report_style.to_html(doctype_html = True)
+
+    return report_html
 
 

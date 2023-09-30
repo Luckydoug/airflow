@@ -28,7 +28,7 @@ from reports.conversion.smtp.smtp import (
 #Automatic selection is not yet implemented,
 database = "mawingu_mviews"
 engine = create_unganda_engine()
-selection = "Monthly"
+selection = "Weekly"
 start_date, end_date = return_conversion_daterange(selection=selection)
 
 views_conv = fetch_views_conversion(
@@ -91,7 +91,7 @@ def build_uganda_viewrx_conversion():
 def trigger_uganda_management_smtp():
     send_management_report(
         path=uganda_path,
-        country="Test",
+        country="Uganda",
         selection=selection
     )
 

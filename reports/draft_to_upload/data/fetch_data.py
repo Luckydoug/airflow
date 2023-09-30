@@ -1,7 +1,6 @@
 import pandas as pd
 from airflow.models import variable
 from reports.draft_to_upload.utils.utils import today
-today = str(today)
 
 def fetch_orderscreen(database, engine, start_date='2023-01-01'):
     orderscreen_query = f"""
@@ -212,6 +211,7 @@ def fetch_planos(database, engine, schema, users, customers, table, views, start
             AND a.create_date::date >= %s
             AND a.create_date::date <= %s
             AND a.cust_code <> '10026902'
+            and insurance.insurance_name <> 'KENYA REVENUE AUTHORITY (KRA)'
     """
 
     all_planos = pd.read_sql_query(
@@ -472,3 +472,22 @@ def fetch_customers(engine, database, start_date):
     """
     data = pd.read_sql_query(query, con=engine)
     return data
+
+def fetch_branch_data(engine, database):
+    query = f"""
+    select branch_code as "Outlet",
+    branch_name as "Branch",
+    email as "Email",
+    rm as "RM",
+    rm_email as "RM Email",
+    rm_group as "RM Group",
+    srm as "SRM",
+    srm_email as "SRM Email",
+    branch_manager as "Branch Manager",
+    front_desk as "Front Desk",
+    zone as "Zone"
+    from {database}.branch_data bd 
+    """
+
+    branch_data = pd.read_sql_query(query, con = engine)
+    return branch_data

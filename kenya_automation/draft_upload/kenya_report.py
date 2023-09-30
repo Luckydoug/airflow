@@ -58,7 +58,8 @@ from reports.draft_to_upload.data.fetch_data import (
     fetch_daywise_efficiency,
     fetch_daywise_rejections,
     fetch_mtd_rejections,
-    fetch_customers
+    fetch_customers,
+    fetch_branch_data
 )
 
 
@@ -159,6 +160,11 @@ surveys = fetch_detractors(
     engine=engine
 )
 
+branch_data = fetch_branch_data(
+    engine=engine,
+    database='reports_tables'
+)
+
 date = ''
 if selection == "Daily":
     date = str(start_date)
@@ -180,7 +186,6 @@ opening_data = fetch_opening_time(
 
 
 def push_kenya_efficiency_data():
-    branch_data = fetch_gsheet_data()["branch_data"]
     working_hours = fetch_gsheet_data()["working_hours"]
     date = return_report_daterange(selection="Daily")
     date = pd.to_datetime(date, format="%Y-%m-%d").date()
@@ -221,7 +226,6 @@ mtd_efficiency = fetch_mtd_efficiency(
 
 
 def build_kenya_draft_upload():
-    branch_data = fetch_gsheet_data()["branch_data"]
     create_draft_upload_report(
         data_orders=data_orders,
         mtd_data=mtd_efficiency,
@@ -253,7 +257,6 @@ mtd_rejections = fetch_mtd_rejections(
 
 
 def build_kenya_rejections():
-    branch_data = fetch_gsheet_data()["branch_data"]
     to_drop = fetch_gsheet_data()["rejections_drop"]
     create_rejection_report(
         orderscreen=orderscreen,
@@ -275,7 +278,6 @@ customers = fetch_customers(
 )
 
 def build_kenya_sops():
-    branch_data = fetch_gsheet_data()["branch_data"]
     create_ug_sops_report(
         selection=selection,
         branch_data=branch_data,
@@ -287,7 +289,6 @@ def build_kenya_sops():
 
 
 def build_kenya_plano_report():
-    branch_data = fetch_gsheet_data()["branch_data"]
     create_plano_report(
         branch_data=branch_data,
         path=path,
@@ -301,7 +302,6 @@ def build_kenya_plano_report():
 
 
 def build_kenya_ratings_report():
-    branch_data = fetch_gsheet_data()["branch_data"]
     create_ratings_report(
         selection=selection,
         surveys=surveys,
@@ -320,7 +320,6 @@ def trigger_kenya_smtp():
 
 
 def trigger_kenya_branches_smtp():
-    branch_data = fetch_gsheet_data()["branch_data"]
     send_to_branches(
         branch_data=branch_data,
         selection=selection,
@@ -345,7 +344,7 @@ def push_kenya_opening_time():
         database="mabawa_staging",
         table="source_opening_time",
         engine=engine,
-        form="%d-%m-%Y"
+        form="%d-%m-%y"
     )
 
 
@@ -374,9 +373,13 @@ sales_orders = data_fetcher.fetch_sales_orders(
     start_date=first_week_start
 )
 
+no_feedbacks = data_fetcher.fetch_no_feedbacks(
+    database="report_views",
+    start_date=start_date
+)
+
 
 def build_kenya_insurance_conversion() -> None:
-    branch_data = fetch_gsheet_data()["branch_data"]
     working_hours = fetch_gsheet_data()["working_hours"]
     create_insurance_conversion(
         path=path,
@@ -388,8 +391,20 @@ def build_kenya_insurance_conversion() -> None:
         selection=selection,
         date = start_date,
         working_hours=working_hours,
-        country="Kenya"
+        country="Kenya",
+        no_feedbacks=no_feedbacks
     )
+
+
+
+trigger_kenya_branches_smtp()
+
+
+
+
+
+
+
 
 
 

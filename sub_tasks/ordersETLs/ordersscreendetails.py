@@ -23,7 +23,7 @@ SessionId = login()
 # ToDate = '2023/05/13'
 
 today = date.today()
-pastdate = today - timedelta(days=1)
+pastdate = today - timedelta(days=7)
 FromDate = pastdate.strftime('%Y/%m/%d')
 ToDate = date.today().strftime('%Y/%m/%d')
 
@@ -36,7 +36,7 @@ pagecount_payload={}
 pagecount_headers = {}
 
 
-def fetch_sap_orderscreendetails ():
+def fetch_sap_orderscreendetails():
 
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     data = pagecount_response.json()
@@ -45,7 +45,6 @@ def fetch_sap_orderscreendetails ():
     payload={}
     headers = {}
     pages = data['result']['body']['recs']['PagesCount']
-    print("Retrieved Pages", pages)
     for i in range(1, pages+1):
         page = i
         print(i)
@@ -53,6 +52,7 @@ def fetch_sap_orderscreendetails ():
         response = requests.request("GET", url, headers=headers, data=payload, verify=False)
         response = response.json()
         response = nested_to_record(response, sep='_')
+        print(response)
         response= response['result_body_recs_Results']
         response = pd.DataFrame.from_dict(response)
         response = pd.json_normalize(response['details'])
@@ -273,7 +273,8 @@ def fetch_sap_orderscreendetails ():
                        'GiftVoucher':'ods_giftvoucher', 
                        'NaturePrice':'ods_natureprice', 
                        'PreQCTechnician':'ods_preqc_tech', 
-                       'FinalQCTechnician':'ods_final_qc_tech'}
+                       'FinalQCTechnician':'ods_final_qc_tech',
+                       'Order Hours':'order_hours'}
             ,inplace=True)
     
     print("Renamed Columns")
@@ -397,7 +398,7 @@ def create_fact_orderscreen():
     
     print('create_fact_orderscreen')
 
-# create_fact_orderscreen()
+
 
 
 

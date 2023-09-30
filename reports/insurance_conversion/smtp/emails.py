@@ -5,7 +5,6 @@ kenya = [
     'wazeem@optica.africa',
     'yuri@optica.africa', 
     'andrew@optica.africa',
-    'shehan@optica.africa',
     'maxwell@optica.africa', 
     'cavin@optica.africa',
     'joseph.oluoch@optica.africa',
@@ -23,18 +22,10 @@ uganda = [
     'kush@optica.africa',
     'raghav@optica.africa',
     'yuri@optica.africa',
-    'shaik@optica.africa',
+    'fredrick@optica.africa',
+    'tiffany@optica.africa',
     'wairimu@optica.africa',
     'ian.gathumbi@optica.africa'
 ]
 
-# uganda = [
-#     "yuri@optica.africa",
-#     "wairimu@optica.africa"
-# ]
-
-# kenya = [
-#     "yuri@optica.africa",
-#     "wairimu@optica.africa"
-# ]
 

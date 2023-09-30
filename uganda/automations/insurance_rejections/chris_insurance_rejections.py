@@ -41,27 +41,28 @@ from reports.draft_to_upload.utils.utils import get_report_frequency
 # PG Execute(Query)
 from sub_tasks.data.connect import (pg_execute, engine) 
 from sub_tasks.api_login.api_login import(login)
-conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", password="@Akb@rp@$$w0rtf31n")
+conn = psycopg2.connect(host="10.40.16.19",database="mawingu", user="postgres", password="@Akb@rp@$$w0rtf31n")
 
 
-selection = get_report_frequency()
-print(selection)
-if selection == 'Daily':
-    start_date = return_report_daterange(selection)
-    end_date = start_date
-elif selection == 'Weekly':
-    start_date = fourth_week_start
-    end_date = fourth_week_end
-start_date = return_report_daterange(selection)
+# selection = get_report_frequency()
+# print(selection)
+# if selection == 'Daily':
+#     start_date = return_report_daterange(selection)
+#     end_date = start_date
+# elif selection == 'Weekly':
+#     start_date = fourth_week_start
+#     end_date = fourth_week_end
+# start_date = return_report_daterange(selection)
 
-print(datetime.datetime.today())
-print(end_date)
+# print(datetime.datetime.today())
+# print(end_date)
 
-# start_date = '2023-09-18'
-# end_date = '2023-09-24'
+start_date = '2023-08-28'
+end_date = '2023-09-24'
 
 def rejections():
-    branch_data = fetch_gsheet_data()["branch_data"]
+    branch_data = fetch_gsheet_data()["ug_srm_rm"]
+    print(branch_data)
     orderscrnc1 = f"""
             with rej as (
             SELECT os.doc_entry,
@@ -78,10 +79,10 @@ def rejections():
         su.user_name,
         soh.draft_orderno,
         s.ods_insurance_rejectrsn1
-    FROM mabawa_staging.source_orderscreenc1 os
-    left join mabawa_staging.source_orderscreen s on s.doc_entry = os.doc_entry
-    left join mabawa_staging.source_users su on su.user_signature = s."user"    
-    left join mabawa_staging.source_orders_header soh on soh.draft_orderno::text = s.doc_no::text
+    FROM mawingu_staging.source_orderscreenc1 os
+    left join mawingu_staging.source_orderscreen s on s.doc_entry = os.doc_entry
+    left join mawingu_staging.source_users su on su.user_signature = s."user"    
+    left join mawingu_staging.source_orders_header soh on soh.draft_orderno::text = s.doc_no::text
     where odsc_date::date BETWEEN '{start_date}' and '{end_date}'
     and os.odsc_status in ('Rejected by Approvals Team','Rejected by Optica Insurance'))
     select 
@@ -106,7 +107,7 @@ def rejections():
         rej.user_name,
         rej.draft_orderno
         from rej 
-    left join mabawa_staging.source_users suu on suu.user_code = rej.odsc_createdby
+    left join mawingu_staging.source_users suu on suu.user_code = rej.odsc_createdby
     left join report_views.insurances ins on ins.order_number::text = rej.draft_orderno::text
     """
     ##################################
@@ -137,7 +138,7 @@ def rejections():
         ins.feedback_1,
         --case when ins.feedback_1 is null then ins.feedback_2 end as ins_feedback,
         so.ods_insurance_rejectrsn1
-        FROM mabawa_staging.source_orderscreen so
+        FROM mawingu_staging.source_orderscreen so
         left join report_views.insurances ins on ins.order_number::text = so.doc_no::text
         WHERE ods_createdon::date BETWEEN '{start_date}' and '{end_date}'
         and ods_insurance_order = 'Yes'
@@ -263,8 +264,8 @@ def rejections():
     # till_date = '2023-09-24'
 
     sender_email = os.getenv("wairimu_email")
-    # receiver_email = ['wairimu@optica.africa','christopher@optica.africa']
-    receiver_email = ['wairimu@optica.africa','christopher@optica.africa','andrew@optica.africa']
+    receiver_email = ['wairimu@optica.africa']
+    # receiver_email = ['wairimu@optica.africa','christopher@optica.africa','andrew@optica.africa']
     email_message = MIMEMultipart()
     email_message["From"] = sender_email
     email_message["To"] = r','.join(receiver_email)

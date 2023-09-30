@@ -19,7 +19,8 @@ from reports.draft_to_upload.data.fetch_data import (
     fetch_views,
     fetch_insurance_efficiency,
     fetch_daywise_efficiency,
-    fetch_mtd_efficiency
+    fetch_mtd_efficiency,
+    fetch_branch_data
 )
 
 
@@ -28,6 +29,7 @@ database = "mawingu_staging"
 selection = get_report_frequency()
 start_date = return_report_daterange(selection=selection)
 start_date = pd.to_datetime(start_date, format="%Y-%m-%d").date()
+
 
 orders = fetch_orders(
     engine=engine,
@@ -67,9 +69,13 @@ orders = pd.merge(
     how="left"
 )
 
+branch_data = fetch_branch_data(
+    engine=engine,
+    database="reports_tables"
+)
+
 
 def push_uganda_efficiency_data():
-    branch_data = fetch_gsheet_data()["ug_srm_rm"]
     working_hours = fetch_gsheet_data()["ug_working_hours"]
     date = return_report_daterange(selection="Daily")
     date = pd.to_datetime(date, format="%Y-%m-%d").date()
@@ -113,7 +119,6 @@ mtd_efficiency = fetch_mtd_efficiency(
 
 
 def build_branches_efficiency():
-    branch_data = fetch_gsheet_data()["ug_srm_rm"]
     create_draft_upload_report(
         data_orders=data_orders,
         mtd_data=mtd_efficiency,
@@ -127,7 +132,6 @@ def build_branches_efficiency():
     )
 
 def trigger_efficiency_smtp():
-    branch_data = fetch_gsheet_data()["ug_srm_rm"]
     send_branches_efficiency(
         path = uganda_path,
         selection=selection,

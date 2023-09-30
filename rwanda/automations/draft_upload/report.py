@@ -21,7 +21,7 @@ from reports.draft_to_upload.reports.opening_time import (
     push_branch_opening_time_data, 
     create_opening_time_report
 )
-from reports.draft_to_upload.utils.utils import get_report_frequency, return_report_daterange
+from reports.draft_to_upload.utils.utils import get_report_frequency, return_report_daterange, get_start_end_dates
 from reports.draft_to_upload.data.push_data import push_insurance_efficiency_data
 from reports.draft_to_upload.reports.rejections import create_rejection_report
 from reports.draft_to_upload.reports.plano import (
@@ -46,14 +46,15 @@ from reports.draft_to_upload.data.fetch_data import (
     fetch_mtd_efficiency,
     fetch_customers,
     fetch_daywise_rejections,
-    fetch_mtd_rejections
+    fetch_mtd_rejections,
+    fetch_branch_data
 )
 
 
 database = "voler_staging"
 engine = create_rwanda_engine()
 engine2 = createe_engine()
-selection = "Weekly"
+selection = get_report_frequency()
 start_date = return_report_daterange(
     selection=selection
 )
@@ -77,6 +78,11 @@ eyetests = fetch_eyetests(
 orderscreen = fetch_orderscreen(
     database=database,
     engine=engine
+)
+
+branch_data = fetch_branch_data(
+    engine=engine,
+    database="reports_tables"
 )
 
 insurance_companies = fetch_insurance_companies(
@@ -158,7 +164,7 @@ def push_rwanda_opening_time():
         database=database,
         table="source_opening_time",
         engine=engine,
-        form="%d-%b-%y"
+        form="%d-%m-%y"
     )
 
 
@@ -168,7 +174,7 @@ if selection == "Daily":
 if selection == "Weekly":
     date = fourth_week_start
 if selection == "Monthly":
-    date = '2023-07-01'
+    date = '2023-09-01'
 
 opening_data = fetch_opening_time(
     database=database,
@@ -185,7 +191,6 @@ def build_rwanda_opening_time():
 
 
 def push_rwanda_efficiency_data():
-    branch_data = fetch_gsheet_data()["rw_srm_rm"]
     working_hours = fetch_gsheet_data()["rw_working_hours"]
     date = return_report_daterange(selection="Daily")
     date = pd.to_datetime(date, format="%Y-%m-%d").date()
@@ -200,28 +205,36 @@ def push_rwanda_efficiency_data():
     )
 
 
+pstart_date, pend_date = get_start_end_dates(
+    selection=selection
+)
+
 data_orders = fetch_insurance_efficiency(
     database=database,
     engine=engine,
     start_date=start_date,
-    dw="rwanda_dw"
+    dw="voler_dw"
 )
+
 
 daywise_efficiency = fetch_daywise_efficiency(
     database=database,
     engine=engine,
-    dw="rwanda_dw"
+    start_date=pstart_date,
+    end_date=pend_date,
+    dw="voler_dw"
 )
 
 mtd_efficiency = fetch_mtd_efficiency(
     database=database,
     engine=engine,
-    dw="rwanda_dw"
+    start_date=pstart_date,
+    end_date=pend_date,
+    dw="voler_dw"
 )
 
 
 def build_rw_draft_upload():
-    branch_data = fetch_gsheet_data()["rw_srm_rm"]
     create_draft_upload_report(
         mtd_data=mtd_efficiency,
         daywise_data=daywise_efficiency,
@@ -238,17 +251,20 @@ def build_rw_draft_upload():
 daywise_rejections = fetch_daywise_rejections(
     database=database,
     view="voler_mviews",
-    engine=engine
+    engine=engine,
+    start_date=pstart_date,
+    end_date=pend_date
 )
 
 mtd_rejections = fetch_mtd_rejections(
     database=database,
     view="voler_mviews",
-    engine=engine
+    engine=engine,
+    start_date=pstart_date,
+    end_date=pend_date
 )
 
 def build_rw_rejections():
-    branch_data = fetch_gsheet_data()["rw_srm_rm"]
     create_rejection_report(
         orderscreen=orderscreen,
         all_orders=all_orders,
@@ -270,7 +286,6 @@ customers = fetch_customers(
 )
 
 def build_rw_sops():
-    branch_data = fetch_gsheet_data()["rw_srm_rm"]
     create_ug_sops_report(
         selection=selection,
         branch_data=branch_data,
@@ -282,7 +297,6 @@ def build_rw_sops():
 
 
 def build_plano_report():
-    branch_data = fetch_gsheet_data()["rw_srm_rm"]
     create_plano_report(
         branch_data=branch_data,
         path=rwanda_path,
@@ -303,13 +317,15 @@ def trigger_rwanda_smtp():
     send_draft_upload_report(
         selection=selection,
         path=rwanda_path,
-        country="Test",
+        country="Rwanda",
         target=target
     )
 
 
 def clean_rwanda_folder():
     clean_folders(path=rwanda_path)
+
+
 
 
 

@@ -37,6 +37,7 @@ def push_insurance_efficiency_data(database, engine, orderscreen, all_orders, st
         format="%Y-%m-%d %H:%M:%S"
     )
 
+
     initiated = [
         "Pre-Auth Initiated For Optica Insurance",
         "Insurance Order Initiated", 
@@ -85,13 +86,12 @@ def push_insurance_efficiency_data(database, engine, orderscreen, all_orders, st
     )
 
     final_data_orders["Month"] = final_data_orders["Preauth Time"].dt.month_name()
-    
     final_data_orders = final_data_orders[
         (final_data_orders["Upload Time"].dt.date >= pd.to_datetime(start_date).date()) &
         (final_data_orders["Upload Time"].dt.date <= pd.to_datetime(today).date())
     ]
 
-    print(final_data_orders)
+  
 
 
     final_data_orders = final_data_orders.dropna(subset=["Draft Time"])

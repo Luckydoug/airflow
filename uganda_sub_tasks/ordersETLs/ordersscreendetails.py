@@ -19,12 +19,12 @@ from sub_tasks.api_login.api_login import(login_uganda)
 
 SessionId = login_uganda()
 
-FromDate = '2023/08/01'
+# FromDate = '2023/08/01'
 # ToDate = '2023/05/04'
 
 today = date.today()
-# pastdate = today - timedelta(days=1)
-# FromDate = pastdate.strftime('%Y/%m/%d')
+pastdate = today - timedelta(days=1)
+FromDate = pastdate.strftime('%Y/%m/%d')
 ToDate = date.today().strftime('%Y/%m/%d')
 
 print(FromDate)
@@ -40,7 +40,6 @@ def fetch_sap_orderscreendetails():
 
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     data = pagecount_response.json()
-    print('data')
     orderscreendf = pd.DataFrame()
     payload={}
     headers = {}
@@ -276,7 +275,8 @@ def fetch_sap_orderscreendetails():
                        'GiftVoucher':'ods_giftvoucher', 
                        'NaturePrice':'ods_natureprice', 
                        'PreQCTechnician':'ods_preqc_tech', 
-                       'FinalQCTechnician':'ods_final_qc_tech'}
+                       'FinalQCTechnician':'ods_final_qc_tech',
+                       'Order Hours':'order_hours'}
             ,inplace=True)
     
     # print(orderscreendf)

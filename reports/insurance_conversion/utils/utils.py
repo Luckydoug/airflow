@@ -1,6 +1,7 @@
 from airflow.models import variable
 import pandas as pd
 import numpy as np
+from sub_tasks.libraries.utils import get_comparison_months
 
 def seek_feedback(row):
     if pd.isna(row["Feedback"]):
@@ -107,21 +108,21 @@ def get_rm_srm_total(dataframe):
     grouped_rm = df.groupby('RM').sum(numeric_only=True)
 
     grouped_rm[('Insurance Fully Approved', '%Conversion')] = round(
-        (grouped_rm[('Insurance Fully Approved',   'Converted')] / grouped_rm[('Insurance Fully Approved',    'Requests')]) * 100, 0)
+        (grouped_rm[('Insurance Fully Approved',   'Converted')] / grouped_rm[('Insurance Fully Approved',    'Feedbacks')]) * 100, 0)
     grouped_rm[('Insurance Partially Approved', '%Conversion')] = round(
-        (grouped_rm[('Insurance Partially Approved',   'Converted')] / grouped_rm[('Insurance Partially Approved',    'Requests')]) * 100, 0)
+        (grouped_rm[('Insurance Partially Approved',   'Converted')] / grouped_rm[('Insurance Partially Approved',    'Feedbacks')]) * 100, 0)
     grouped_rm[('Use Available Amount on SMART', '%Conversion')] = round(
         (grouped_rm[(('Use Available Amount on SMART',   'Converted'))] /
-         grouped_rm[('Use Available Amount on SMART',    'Requests')]) * 100
+         grouped_rm[('Use Available Amount on SMART',    'Feedbacks')]) * 100
     )
 
     grouped_srm[('Insurance Fully Approved', '%Conversion')] = round(
-        (grouped_srm[('Insurance Fully Approved',   'Converted')] / grouped_srm[('Insurance Fully Approved',    'Requests')]) * 100, 0)
+        (grouped_srm[('Insurance Fully Approved',   'Converted')] / grouped_srm[('Insurance Fully Approved',    'Feedbacks')]) * 100, 0)
     grouped_srm[('Insurance Partially Approved', '%Conversion')] = round(
-        (grouped_srm[('Insurance Partially Approved',   'Converted')] / grouped_srm[('Insurance Partially Approved',    'Requests')]) * 100, 0)
+        (grouped_srm[('Insurance Partially Approved',   'Converted')] / grouped_srm[('Insurance Partially Approved',    'Feedbacks')]) * 100, 0)
     grouped_srm[('Use Available Amount on SMART', '%Conversion')] = round(
         (grouped_srm[(('Use Available Amount on SMART',   'Converted'))] /
-         grouped_srm[('Use Available Amount on SMART',    'Requests')]) * 100
+         grouped_srm[('Use Available Amount on SMART',    'Feedbacks')]) * 100
     )
 
     rm_names = grouped_rm.index.tolist()
@@ -162,12 +163,12 @@ def create_monthly_report(
         columns="Month",
         aggfunc="sum"
     )
-
+    first_month, second_month = get_comparison_months()
     monthly_conversion_stack = monthly_conversion.stack()
     monthly_conversion_stack["%Conversion"] = ((monthly_conversion_stack["Conversion"] / monthly_conversion_stack["Requests"]) * 100).round(0).astype(int).astype(str) + "%"
     monthly_conversion_unstack = monthly_conversion_stack.unstack()
 
-    monthly_conversion_unstack = monthly_conversion_unstack.swaplevel(0, 1, 1).reindex(["July", "August"], level = 0, axis = 1)
+    monthly_conversion_unstack = monthly_conversion_unstack.swaplevel(0, 1, 1).reindex([first_month, second_month], level = 0, axis = 1)
     monthly_conversion_unstack = monthly_conversion_unstack.reindex(["Requests", "Conversion", "%Conversion"], axis = 1, level = 1)
     monthly_conversion_unstack = monthly_conversion_unstack.rename(columns = {"Conversion": "Converted"}, level = 1)
 

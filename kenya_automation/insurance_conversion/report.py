@@ -26,10 +26,14 @@ orders = data_fetcher.fetch_orders()
 sales_orders = data_fetcher.fetch_sales_orders(
     start_date="2023-04-27"
 )
+branch_data = data_fetcher.fetch_branch_data("reports_tables")
+no_feedbacks = data_fetcher.fetch_no_feedbacks(
+    database="report_views",
+    start_date=start_date
+)
 
 
 def build_kenya_insurance_conversion() -> None:
-    branch_data = fetch_gsheet_data()["branch_data"]
     working_hours = fetch_gsheet_data()["working_hours"]
     create_insurance_conversion(
         path=path,
@@ -40,6 +44,7 @@ def build_kenya_insurance_conversion() -> None:
         branch_data=branch_data,
         sales_orders=sales_orders,
         insurance_companies=insurance_companies,
+        no_feedbacks=no_feedbacks,
         date = start_date,
         country="Kenya"
     )
@@ -52,11 +57,10 @@ def send_to_kenya_management() -> None:
     )
 
 def send_to_kenya_branches() -> None:
-    return
-    branch_data = fetch_gsheet_data()["branch_data"]
     send_to_branches(
         path=path,
         branch_data=branch_data,
+        country="Kenya",
         filename=f"{path}insurance_conversion/branch_log.txt"
         
     )

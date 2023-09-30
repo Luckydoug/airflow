@@ -129,15 +129,22 @@ def damage_suppy_time():
         designerdamage_reissued = pd.DataFrame(columns=columns) 
 
     """Main Store Damage Supply time"""
+    """First Rejection """
     print('Main Store Damage Supply time')
     mainrejected = status[status['Status']=='Rejected Frame sent to Frame Store']    
     control = ('control1','control2')
     mainrejected= mainrejected[status['Created User'].isin(control)]
+    mainrejected["Main Store"] = mainrejected.groupby('DocNum').cumcount()
+    mainrejected['Main Store'] += 1
+    mainrejected = mainrejected[mainrejected['Main Store'] == 1]
     mainrejected = mainrejected.sort_values(by = ['Datetime'],ascending =  False)
 
     reissuedframemain = status[status['Status']== 'ReIssued Frame for Order']
     main = ('main1','main2')
     reissuedframemain=reissuedframemain[reissuedframemain['Created User'].isin(main)]
+    reissuedframemain["Main Store"] = reissuedframemain.groupby('DocNum').cumcount()
+    reissuedframemain['Main Store'] += 1
+    reissuedframemain = reissuedframemain[reissuedframemain['Main Store'] == 1]
     reissuedframemain = reissuedframemain[reissuedframemain["Date"] == dateyesterday]
     reissuedframemain.rename(columns={'Datetime':'Datetimeout'}, inplace=True)
 
@@ -195,7 +202,84 @@ def damage_suppy_time():
         print('Main Store Printed')
     else:
         columns = ['Created User', 'Date', 'Time', 'Status','DocNum','OrderCriteria Status','Datetime','Datetimeout','Time taken']
-        mainstoredamage_reissued = pd.DataFrame(columns=columns)    
+        mainstoredamage_reissued = pd.DataFrame(columns=columns)  
+
+    """Main Store Second Damage Supply Time"""
+    """Second Rejection """
+    print('Main Store Damage Supply time')
+    mainrejectedsec = status[status['Status']=='Rejected Frame sent to Frame Store']    
+    control = ('control1','control2')
+    mainrejectedsec= mainrejectedsec[status['Created User'].isin(control)]
+    mainrejectedsec["Main Store"] = mainrejectedsec.groupby('DocNum').cumcount()
+    mainrejectedsec['Main Store'] += 1
+    mainrejectedsec = mainrejectedsec[mainrejectedsec['Main Store'] == 2]
+    mainrejectedsec = mainrejectedsec.sort_values(by = ['Datetime'],ascending =  False)
+
+    reissuedframemainsec = status[status['Status']== 'ReIssued Frame for Order']
+    main = ('main1','main2')
+    reissuedframemainsec=reissuedframemainsec[reissuedframemainsec['Created User'].isin(main)]
+    reissuedframemainsec["Main Store"] = reissuedframemainsec.groupby('DocNum').cumcount()
+    reissuedframemainsec['Main Store'] += 1
+    reissuedframemainsec = reissuedframemainsec[reissuedframemainsec['Main Store'] == 2]
+    reissuedframemainsec = reissuedframemainsec[reissuedframemainsec["Date"] == dateyesterday]
+    reissuedframemainsec.rename(columns={'Datetime':'Datetimeout'}, inplace=True)
+
+    reissueframemainsec= pd.merge(mainrejectedsec,reissuedframemainsec[['DocNum','Datetimeout']], on='DocNum', how='left')
+    reissueframemainsec['Datetimeout'] = pd.to_datetime(reissueframemainsec['Datetimeout'])
+    print(reissueframemainsec.columns)
+    reissueframemainsec['Datetime'] = pd.to_datetime(reissueframemainsec['Datetime'],format="%Y%m%d %H:%M:%S",errors = 'coerce')    
+    reissueframemainsec = reissueframemainsec[reissueframemainsec['Datetimeout'].notna()]
+    print(reissueframemainsec.columns)
+
+    ##Define a working day
+    ####Days of the week
+    workday = businesstimedelta.WorkDayRule(
+        start_time=datetime.time(9),
+        end_time=datetime.time(19),
+        working_days=[0,1, 2, 3, 4])
+
+    cal = Kenya()
+    hl = cal.holidays()
+    vic_holidays = pyholidays.KE() 
+    holidays = businesstimedelta.HolidayRule(vic_holidays)
+    businesshrs = businesstimedelta.Rules([workday, holidays], hl)
+
+    def BusHrs(start, end):
+        if end>=start:
+            return businesshrs.difference(start,end).hours+float(businesshrs.difference(start,end).seconds)/float(3600)
+        else:
+            ""
+        
+    RejectedSentWk_hrs=reissueframemainsec.apply(lambda row: BusHrs(row['Datetime'], row['Datetimeout']), axis=1)
+
+    # Define a working weekend day(Saturday)
+    Saturday = businesstimedelta.WorkDayRule(start_time=datetime.time(9),end_time=datetime.time(17),working_days=[5])
+
+    vic_holidays = pyholidays.KE()
+    holidays = businesstimedelta.HolidayRule(vic_holidays)
+    businesshrs = businesstimedelta.Rules([Saturday, holidays])
+
+    def SatHrs(start, end):
+        if end>=start:
+            return businesshrs.difference(start,end).hours+float(businesshrs.difference(start,end).seconds)/float(3600)
+        else:
+            ""
+
+    RejectedSentSat_hrs=reissueframemainsec.apply(lambda row: BusHrs(row['Datetime'], row['Datetimeout']), axis=1)
+
+    if not reissueframemainsec.empty:
+        reissueframemainsec["delay"]=(RejectedSentWk_hrs+RejectedSentSat_hrs)*60
+        # reissueframemain['delayed dept']=reissueframemain['delay'].apply(lambda x: 'Delayed at Main store' if x>15 else 'Did not delay at Main store' )
+        mainstoredamage_reissuedsec=reissueframemainsec.copy()
+        # mainstoredamage_reissued= mainstoredamage_reissued.drop(columns={'delayed dept'})
+        mainstoredamage_reissuedsec= mainstoredamage_reissuedsec.rename(columns={'delay':'Time taken'})
+        mainstoredamage_reissuedsec= mainstoredamage_reissuedsec.sort_values(by='Time taken',ascending=False)
+        mainstoredamage_reissuedsec = mainstoredamage_reissuedsec[['Created User', 'Date', 'Time', 'Status','DocNum','OrderCriteria Status','Datetime','Datetimeout','Time taken']]
+        print(mainstoredamage_reissuedsec)
+        print('Main Store Printed')
+    else:
+        columns = ['Created User', 'Date', 'Time', 'Status','DocNum','OrderCriteria Status','Datetime','Datetimeout','Time taken']
+        mainstoredamage_reissuedsec = pd.DataFrame(columns=columns)    
 
     """Lens Store Damage Supply Time"""
     lensrejected = status[status['Status']=='Rejected Lenses sent to Lens Store']    
@@ -393,6 +477,7 @@ def damage_suppy_time():
     with pd.ExcelWriter(r"/home/opticabi/Documents/optica_reports/order_efficiency\newdamagesupplytime.xlsx", engine='xlsxwriter') as writer:
         designerdamage_reissued.to_excel(writer, sheet_name='designer',index=False)
         mainstoredamage_reissued.to_excel(writer, sheet_name='mainstore',index=False)
+        mainstoredamage_reissuedsec.to_excel(writer, sheet_name='mainstoresec',index=False)
         lenstoredamage_reissued.to_excel(writer, sheet_name='lensstore',index=False)
         lens_duration.to_excel(writer,sheet_name='control to store', index=False)        
         control_duration.to_excel(writer,sheet_name='store to control', index=False)

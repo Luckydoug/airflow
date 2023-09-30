@@ -9,11 +9,6 @@ from airflow.operators.bash_operator import BashOperator
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.contrib.sensors.file_sensor import FileSensor
 from airflow.operators.python_operator import PythonOperator
-# from airflow.operators.cron_operator import CronOperator
-# from airflow.operators.simple_dag_operator import SimpleDagOperator
-# from airflow.sensors.timedelta_sensor import TimeDeltaSensor
-from airflow.sensors.time_sensor import TimeSensor
-
 
 from uganda_sub_tasks.ordersETLs.ordersscreendetails import (fetch_sap_orderscreendetails,update_to_source_orderscreen)
 from uganda_sub_tasks.ordersETLs.payments import fetch_sap_payments
@@ -33,6 +28,9 @@ from uganda_sub_tasks.ordersETLs.insurance import (fetch_sap_insurance)
 from uganda_sub_tasks.ordersETLs.branch_targets import fetch_sap_branch_targets
 from uganda_sub_tasks.ordersETLs.incentive_slab import fetch_sap_incentive_slab
 from uganda_sub_tasks.ordersETLs.purchaseorder import fetch_purchase_orders
+from uganda_sub_tasks.inventory_transfer.transfer_details import fetch_sap_inventory_transfer
+from uganda_sub_tasks.inventory_transfer.transfer_request import fetch_sap_invt_transfer_request
+
 
 DAG_ID = 'UG_Main_Pipeline'
 
@@ -218,13 +216,6 @@ with DAG(
 
         fetch_sap_branch_targets >> fetch_sap_incentive_slab
 
-    # with TaskGroup('invoices') as invoices:
-
-    #     fetch_sap_invoices = PythonOperator(
-    #         task_id = 'fetch_sap_invoices',
-    #         python_callable = fetch_sap_invoices,
-    #         provide_context = True
-    #     )    
     
     with TaskGroup('insurance') as insurance:
         fetch_sap_insurance = PythonOperator(
@@ -245,8 +236,23 @@ with DAG(
             python_callable = fetch_purchase_orders,
             provide_context = True
         )
+
+    with TaskGroup('inventorytransferdetails') as inventorytransferdetails:
+
+        fetch_sap_inventory_transfer = PythonOperator(
+            task_id = 'fetch_sap_inventory_transfer',
+            python_callable = fetch_sap_inventory_transfer,
+            provide_context = True
+        )
+
+    with TaskGroup('itrdetails') as itrdetails:
+
+        fetch_sap_invt_transfer_request = PythonOperator(
+            task_id = 'fetch_sap_invt_transfer_request',
+            python_callable = fetch_sap_invt_transfer_request,
+            provide_context = True
+        )        
     
-    # start >> orders >> orderlog >> payments >> customers >> prescriptions >> view >> salesorders >> discounts >> users >>invoices >> finish
-    start >> orders >> orderlog >> payments >> customers >> prescriptions >> view >> salesorders >> discounts >> users >> items >> insurance >> targets >> purchaseorders >>finish
+    start >> orders >> orderlog >> payments >> customers >> prescriptions >> view >> salesorders >> discounts >> users >> items >> insurance >> targets >> purchaseorders >> inventorytransferdetails >> itrdetails >> finish
 
 

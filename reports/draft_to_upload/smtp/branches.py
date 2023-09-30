@@ -134,8 +134,6 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection, cou
                 
                 else:
                     receiver_email = [rm_email, branch_email]  
-
-
                 
 
                 if selection == "Daily":
@@ -154,6 +152,7 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection, cou
 
                 if not len(branch_export) and selection == "Daily":
                     continue
+
 
                 if len(branch_export):
                     save_file(

@@ -31,6 +31,8 @@ from rwanda_sub_tasks.ordersETLs.items import (fetch_sap_items, fetch_item_group
 from rwanda_sub_tasks.ordersETLs.branch_targets import fetch_sap_branch_targets
 from rwanda_sub_tasks.ordersETLs.incentive_slab import fetch_sap_incentive_slab
 from rwanda_sub_tasks.ordersETLs.purchaseorder import fetch_purchase_orders
+from rwanda_sub_tasks.inventory_transfer.transfer_details import fetch_sap_inventory_transfer
+from rwanda_sub_tasks.inventory_transfer.transfer_request import fetch_sap_invt_transfer_request
 
 DAG_ID = 'RW_Main_Pipeline'
 
@@ -221,9 +223,25 @@ with DAG(
             python_callable = fetch_purchase_orders,
             provide_context = True
         )
+
+    with TaskGroup('inventorytransferdetails') as inventorytransferdetails:
+
+        fetch_sap_inventory_transfer = PythonOperator(
+            task_id = 'fetch_sap_inventory_transfer',
+            python_callable = fetch_sap_inventory_transfer,
+            provide_context = True
+        )
+
+    with TaskGroup('itrdetails') as itrdetails:
+
+        fetch_sap_invt_transfer_request = PythonOperator(
+            task_id = 'fetch_sap_invt_transfer_request',
+            python_callable = fetch_sap_invt_transfer_request,
+            provide_context = True
+        ) 
   
     finish = DummyOperator(
         task_id = "finish"
     )
     
-    start >> orders >> orderlog >> payments >> customers >> prescriptions >> view >> salesorders >> discounts >> purchaseorders >> users >> items >> targets >> finish
+    start >> orders >> orderlog >> payments >> customers >> prescriptions >> view >> salesorders >> discounts >> purchaseorders >> users >> items >> targets >> inventorytransferdetails >> itrdetails >> finish

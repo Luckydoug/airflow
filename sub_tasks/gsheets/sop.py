@@ -46,6 +46,7 @@ def fetch_sop():
     sh = sh[2]
     sh = pd.DataFrame(sh.get_all_records())
 
+
     sh.rename(columns={
         'Date':'sop_date',
         'Audit Person':'audit_person',
@@ -58,6 +59,11 @@ def fetch_sop():
         '%_ge Non-compliance':'perc_non_compliance',
         'Order Number (If any)':'order_number',
         'Name of Non-compliant Staff':'name_of_non_compliant_staff',
+        'Payroll Number Of Staff':'payroll_number_of_staff',
+        'Classification':'classification',
+        'Others Remarks':'others_remarks',
+        'Branch Remarks':'branch_remarks',
+        'Action Taken':'action_taken',
         'Remark on Morning Cleaning':'remark_on_morning_cleaning',
         'Time of Check':'time_of_check',
         'Designation':'designation',
@@ -68,24 +74,26 @@ def fetch_sop():
         'Time of Unauthorized Exit':'time_of_unauthorized_exit',
         'Time of Returning':'time_of_returning',
         'Time of Late Main Door Opening':'time_of_late_opening',
-        'Time of Early Closure':'time_of_early_closure'
+        'Time of Early Closure':'time_of_early_closure',
+        'Time of Return from Extended Lunch Break':'time_of_return_from_extended_lunch_break'
         },inplace=True)
     
-    cols = ['sop_date', 'audit_person','srm_name', 'rm_name', 'branch', 'sop', 'no_of_times',
-            'sap_count', 'perc_non_compliance', 'order_number',
-            'name_of_non_compliant_staff', 'remark_on_morning_cleaning',
-            'time_of_check', 'designation', 'name_of_branch_staff',
-            'time_of_late_reporting', 'allocated_lunch_timings',
-            'time_gone_for_lunch', 'time_of_unauthorized_exit', 'time_of_returning',
-            'time_of_late_opening', 'time_of_early_closure']
+    cols = ['sop_date','audit_person','srm_name','rm_name','branch','sop','no_of_times',
+            'sap_count','perc_non_compliance','order_number','name_of_non_compliant_staff', 
+            'payroll_number_of_staff','classification','others_remarks','branch_remarks','action_taken',
+            'remark_on_morning_cleaning','time_of_check','designation','name_of_branch_staff',
+            'time_of_late_reporting','allocated_lunch_timings','time_gone_for_lunch','time_of_unauthorized_exit', 
+            'time_of_returning','time_of_late_opening','time_of_early_closure','time_of_return_from_extended_lunch_break']
 
     query = """truncate mabawa_staging.source_sop;"""
     query = pg_execute(query)
 
     sh['sop_date'] = pd.to_datetime(sh['sop_date'], dayfirst=True, errors='coerce')
 
+    # print(sh.columns)
     sh[cols].to_sql('source_sop', con=engine, schema='mabawa_staging', if_exists = 'append', index=False)
 
+# fetch_sop()
     
 
 

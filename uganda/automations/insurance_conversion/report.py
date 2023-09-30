@@ -27,6 +27,11 @@ orders = data_fetcher.fetch_orders()
 sales_orders = data_fetcher.fetch_sales_orders(
     start_date=start_date
 )
+branch_data = data_fetcher.fetch_branch_data(database="reports_tables")
+no_feedbacks = data_fetcher.fetch_no_feedbacks(
+    database="report_views",
+    start_date=start_date
+)
 
 
 def build_uganda_insurance_conversion() -> None:
@@ -42,6 +47,7 @@ def build_uganda_insurance_conversion() -> None:
         branch_data=branch_data,
         sales_orders=sales_orders,
         insurance_companies=insurance_companies,
+        no_feedbacks=no_feedbacks,
         country="Uganda"
     )
 
@@ -53,18 +59,18 @@ def send_to_uganda_management() -> None:
     )
 
 def send_to_uganda_branches() -> None:
-    return
     branch_data = fetch_gsheet_data()["ug_srm_rm"]
     send_to_branches(
         path=uganda_path,
         branch_data=branch_data,
+        country="Uganda",
         filename=f"{uganda_path}insurance_conversion/branch_log.txt"
         
     )
 
 def clean_uganda_folder() -> None:
-    return
     mop_folder(path=uganda_path)
+
 
 
 
