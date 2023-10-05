@@ -9,7 +9,7 @@ def fetch_eyetests_conversion(engine, database, start_date, end_date, users, use
         patient_to_ophth, "RX",plano_rx, sales_employees, handed_over_to, view_date, view_creator, 
         last_viewed_by, branch_viewed, order_converted,  date_converted,
         days, on_after, on_after_createdon, on_after_cancelled, on_after_status,
-        on_before_prescription_order, on_before_mode, reg_cust_type, mode_of_pay,
+        on_before_prescription_order, on_before_mode, reg_cust_type, mode_of_pay, conversion_remarks,
         case when "RX" = 'High Rx' then 1 else 0 end as high_rx,
         case when "RX" = 'Low Rx' then 1 else 0 end as low_rx,
         case when days::int <=7 then 1 else 0 end as conversion,
@@ -53,7 +53,8 @@ def fetch_registrations_conversion(engine, database, start_date, end_date, users
     conv.draft_orderno as "Order Number", 
     conv.code as "Code",
     conv.days as "Days",
-    case when conv.days <=7 then 1 else 0 end as "Conversion"
+    case when conv.days <=7 then 1 else 0 end as "Conversion",
+    conversion_remark as "Conversion Remarks"
     from {database}.{view} as conv
     left join {users}.{users_table} as users 
     on conv.cust_sales_employeecode::text = users.se_optom::text

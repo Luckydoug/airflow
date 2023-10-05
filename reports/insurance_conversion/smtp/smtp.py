@@ -27,7 +27,8 @@ from reports.insurance_conversion.html.html import (
 from reports.insurance_conversion.smtp.emails import (
     test,
     kenya,
-    uganda
+    uganda,
+    rwanda
 )
 
 email = os.getenv("douglas_email")
@@ -159,6 +160,8 @@ def send_to_management(selection, country, path) -> None:
         receiver_email = kenya
     elif country == "Uganda":
         receiver_email = uganda
+    elif country == "Rwanda":
+        receiver_email = rwanda
     else:
         return
 

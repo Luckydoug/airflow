@@ -240,7 +240,7 @@ branch_efficiency_html = """
     <p><b>Hi {branch_name},</b></p> </br>
     <p>I Hope this email finds you well.</p> </br>
     This report shows the Draft to Upload efficiency for the entire branch and each salesperson. <br>
-    Kindly use the details in these tables to identify areas that need improvement.</p> <br>
+    Use the attached to see if any orders have delayed and share the reason for the delay in the reply to this email.</p> <br>
     <p>The formula to calculate efficiency is:</p> <br>
     <div class="equation">
         % Efficiency =

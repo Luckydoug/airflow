@@ -264,7 +264,9 @@ def fetch_prescriptions ():
                         "NV in Cyl":"nv_in_cyl",
                         "LastRx Prsc Prog":"lastrx_prsc_prog",
                         "LastRx Prsc BF":"lastrx_prsc_bf",
-                        "U_VSPACTNO":"activity_no"
+                        "U_VSPACTNO":"activity_no",
+                        "Conversion Reason":"conversion_reason",
+                        "Conversion Remark":"conversion_remarks"
                         },
                         inplace=True)
 

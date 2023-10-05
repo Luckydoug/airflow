@@ -21,7 +21,7 @@ def check_status():
 from sqlalchemy import create_engine
 
 load_dotenv()
-
+postgres_key = os.getenv("postgres_password")
 service_file = r"/home/opticabi/airflow/dags/sub_tasks/gsheets/keys2.json"
 uganda_path = r"/home/opticabi/Documents/uganda_reports/"
 rwanda_path = r"/home/opticabi/Documents/rwanda_reports/"
@@ -220,15 +220,13 @@ def clean_folder_rwanda(dir_name=r"/home/opticabi/Documents/rwanda_reports/"):
 
 
 def create_unganda_engine():
-    key = "@Akb@rp@$$w0rtf31n"
-    encoded_password = urllib.parse.quote(key)
+    encoded_password = urllib.parse.quote(postgres_key)
     conn_string = f'postgresql://postgres:{encoded_password}@10.40.16.19:5432/mawingu'
     engine = create_engine(conn_string)
     return engine
 
 def create_rwanda_engine():
-    key = "@Akb@rp@$$w0rtf31n"
-    encoded_password = urllib.parse.quote(key)
+    encoded_password = urllib.parse.quote(postgres_key)
     conn_string = f'postgresql://postgres:{encoded_password}@10.40.16.19:5432/voler'
     engine = create_engine(conn_string)
     return engine
@@ -335,8 +333,7 @@ def get_comparison_months():
 
 
 def createe_engine():
-    key = "@Akb@rp@$$w0rtf31n"
-    encoded_password = urllib.parse.quote(key)
+    encoded_password = urllib.parse.quote(postgres_key)
     conn_string = f'postgresql://postgres:{encoded_password}@10.40.16.19:5432/mabawa'
     return create_engine(conn_string)
 

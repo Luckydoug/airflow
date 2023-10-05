@@ -317,7 +317,7 @@ def trigger_rwanda_smtp():
     send_draft_upload_report(
         selection=selection,
         path=rwanda_path,
-        country="Rwanda",
+        country="Test",
         target=target
     )
 

@@ -37,7 +37,7 @@ yesterday = today - datetime.timedelta(days=1)
 start_month = datetime.date(today.year,today.month,1)
 
 # today = datetime.date.today()
-# yesterday = today - datetime.timedelta(days=5)
+# yesterday = today - datetime.timedelta(days=2)
 # start_month = datetime.date(yesterday.year,yesterday.month,1)
 
 def daily_net_payments():
@@ -145,7 +145,6 @@ def daily_net_payments():
         payment_summary.to_excel(writer,sheet_name='daily', index=False)    
         payment_summarymtd.to_excel(writer,sheet_name='monthly', index=False)
      
-# daily_net_payments()
 
     #------------------------------------MERGE THE MTD AND THE DAILY DATA---------------------------------------------------------------------------------
 def daily_mtd_payments():
@@ -173,7 +172,7 @@ def daily_mtd_payments():
     with pd.ExcelWriter(r"/home/opticabi/Documents/uganda_reports/Final Summary Net Sales.xlsx", engine='xlsxwriter') as writer:    
         daily_mtd.to_excel(writer,sheet_name='daily_monthly', index=False)    
  
-# daily_mtd_payments()
+
 def mtd_daily_net_payments():
     paymentsmtd_daily = """
     SELECT doc_entry, doc_no, user_sign, createdon, createdat,case
@@ -275,3 +274,7 @@ def mtd_daily_net_payments():
             name = f'{group}'
             dataframe.to_excel(writer,sheet_name=name,index=False)
         netsalesnew.to_excel(writer,sheet_name='MTD', index=False)   
+
+# daily_net_payments()
+# daily_mtd_payments()
+# mtd_daily_net_payments()

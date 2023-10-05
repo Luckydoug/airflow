@@ -52,7 +52,7 @@ def create_gross_payments():
     query = pg_execute(query) 
     print('truncate finished')  
 
-# create_gross_payments()
+
 def summary_gross_payments():
     #####################Get the gross payments for the current year only
     grosspayments = """
@@ -202,7 +202,7 @@ def summary_gross_payments():
         num_format.set_align('right')
         worksheet1.set_column('A:BW', None, num_format)
 
-# summary_gross_payments()
+
 def summary_net_payments():
     netpay = """
     SELECT branch_code as "Branch", warehouse_name as "Branch name",month_year, "year", case when month like '%March%' then replace(month,'March','Mar')
@@ -285,8 +285,6 @@ def summary_net_payments():
             num_format.set_align('right')
             worksheet.set_column('A:BW', None, num_format)
    
-# summary_net_payments()
-
 def shops_ytd_net_sales():
     netpay = """
     SELECT branch_code,warehouse_name as "Branch name", month_year, "year", case when month like '%March%' then replace(month,'March','Mar')
@@ -392,4 +390,7 @@ def shops_ytd_net_sales():
         num_format.set_align('right')
         worksheet1.set_column('A:BW', None, num_format)             
 
-# shops_ytd_net_sales()    
+# create_gross_payments()
+# summary_gross_payments()
+# summary_net_payments()
+# shops_ytd_net_sales()   

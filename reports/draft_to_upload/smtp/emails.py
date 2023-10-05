@@ -9,8 +9,7 @@ their email from this list.
 
 
 test = [
-  "raghav@optica.africa",
-  "wairimu@optica.africa"
+    "tstbranch@gmail.com"
 ]
 
 kenya_daily = [
@@ -67,6 +66,7 @@ uganda_daily = [
     'raghav@optica.africa',
     'wairimu@optica.africa',
     'fredrick@optica.africa',
+    'larry.larsen@optica.africa',
     'tiffany@optica.africa'
 ]
     
@@ -76,6 +76,7 @@ uganda_weekly = [
     'yuri@optica.africa',
     'wairimu@optica.africa',
     'fredrick@optica.africa',
+    'larry.larsen@optica.africa',
     'tiffany@optica.africa'
 ]
     
@@ -85,6 +86,7 @@ uganda_monthly = [
     'yuri@optica.africa',
     'wairimu@optica.africa',
     'fredrick@optica.africa',
+    'larry.larsen@optica.africa',
     'tiffany@optica.africa' 
 ]
 

@@ -24,6 +24,17 @@ uganda = [
     'yuri@optica.africa',
     'fredrick@optica.africa',
     'tiffany@optica.africa',
+    'larry.larsen@optica.africa',
+    'wairimu@optica.africa',
+    'ian.gathumbi@optica.africa'
+]
+
+rwanda = [
+    'kush@optica.africa',
+    'raghav@optica.africa',
+    'yuri@optica.africa',
+    'nilesh@optica.africa',
+    'john@optica.africa',
     'wairimu@optica.africa',
     'ian.gathumbi@optica.africa'
 ]

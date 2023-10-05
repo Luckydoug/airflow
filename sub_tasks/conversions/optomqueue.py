@@ -24,13 +24,13 @@ from sub_tasks.api_login.api_login import(login)
 
 SessionId = login()
 
-FromDate = '2023/03/08'
-ToDate = '2023/03/16'
+# FromDate = '2023/03/16'
+# ToDate = '2023/10/02'
 
-# today = date.today()
-# pastdate = today - timedelta(days=1)
-# FromDate = pastdate.strftime('%Y/%m/%d')
-# ToDate = date.today().strftime('%Y/%m/%d')
+today = date.today()
+pastdate = today - timedelta(days=2)
+FromDate = pastdate.strftime('%Y/%m/%d')
+ToDate = date.today().strftime('%Y/%m/%d')
 
 # api details
 pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetOptomQManagment&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"

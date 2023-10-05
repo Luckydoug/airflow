@@ -8,7 +8,6 @@ import pygsheets
 import sys
 sys.path.append(".")
 
-
 def fetch_kenya_branch_data():
     gc = pygsheets.authorize(
         service_file='/home/opticabi/airflow/dags/sub_tasks/gsheets/keys2.json'
@@ -102,5 +101,3 @@ def fetch_uganda_branch_data():
            if_row_exists='update',
            create_table=False)
     
-
-fetch_uganda_branch_data()

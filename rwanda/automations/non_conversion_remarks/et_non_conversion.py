@@ -153,7 +153,7 @@ def smtp():
 
             # receiver_email = ["tstbranch@gmail.com"]
             # receiver_email = ["wairimu@optica.africa"]
-            receiver_email = [branchemail,RMemail,"raghav@optica.africa","wairimu@optica.africa","felicity@optica.africa","lenah@optica.africa","john@optica.africa"]
+            receiver_email = [branchemail,RMemail,"raghav@optica.africa","wairimu@optica.africa","john@optica.africa"]
            
         # Create a MIMEMultipart class, and set up the From, To, Subject fields
             email_message = MIMEMultipart()

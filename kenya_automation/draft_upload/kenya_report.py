@@ -171,7 +171,7 @@ if selection == "Daily":
 if selection == "Weekly":
     date = fourth_week_start
 if selection == "Monthly":
-    date = '2023-08-01'
+    date = '2023-09-01'
 
 pstart_date, pend_date = get_start_end_dates(
     selection=selection
@@ -397,7 +397,6 @@ def build_kenya_insurance_conversion() -> None:
 
 
 
-trigger_kenya_branches_smtp()
 
 
 

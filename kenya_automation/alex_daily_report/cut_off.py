@@ -101,7 +101,9 @@ def cutoff():
     main2=Replacements[Replacements["Created User"]=="main2"]
 
     lens1=Replacements[Replacements["Created User"]=="lens1"]
+    print(lens1)
     lens2=Replacements[Replacements["Created User"]=="lens2"]
+    print(lens2)
 
     designer1=Replacements[Replacements["Created User"]=="designer1"]
     designer2=Replacements[Replacements["Created User"]=="designer2"]
@@ -253,7 +255,8 @@ def cutoff():
     count_summary_ug=pd.pivot_table(NormalRepRegion_ug,index=['Type', "Region"],values="BRS CUT OFF",aggfunc='count',margins=True).reset_index()
 
     sum_summary_ug=pd.pivot_table(NormalRepRegion_ug,index=['Type', "Region"],values="BRS CUT OFF",aggfunc=np.sum,margins=True).reset_index()
-  
+    print(NormalRepRegion_ug.columns)
+    print(NormalRepRegion_ug)
     count_ITR_ug=pd.pivot_table(NormalRepRegion_ug,index=['Type', "Region"],values="ITR Number",aggfunc=pd.Series.nunique,margins=True).reset_index()
 
     ###Merging the data
@@ -419,6 +422,7 @@ def cutoff():
 
     """ 4. Lens Store Cut Off """
     LensStore_data=pd.concat([lens1,lens2])
+    print(LensStore_data.columns)
     LensStore_data=LensStore_data[LensStore_data.Status=="Rep Sent to Control Room"]
     LensStore_data=LensStore_data.rename(columns={"ITR No":"Internal Number"})
     LensStore_data['Internal Number'] = LensStore_data['Internal Number'].astype(int)
@@ -441,6 +445,7 @@ def cutoff():
     issuesLens = LensStore_data[((LensStore_data['DEPARTMENT'].isin(filterlens)) | (LensStore_data['DEPARTMENT 2'].isin(filterlens)))]
     issuesLens = issuesLens["ITR Number"].to_list()
     LensStore_data = LensStore_data[~LensStore_data["ITR Number"].isin(issuesLens)]
+    print(LensStore_data)
 
     
     ###Grouping per Department and region
@@ -613,4 +618,4 @@ def cutoff():
                 df.to_excel(writer,'sheet%s' % n)
             writer.save()            
 
-# cutoff()            
+cutoff()            

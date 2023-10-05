@@ -165,12 +165,12 @@ def create_monthly_report(
     )
     first_month, second_month = get_comparison_months()
     monthly_conversion_stack = monthly_conversion.stack()
-    monthly_conversion_stack["%Conversion"] = ((monthly_conversion_stack["Conversion"] / monthly_conversion_stack["Requests"]) * 100).round(0).astype(int).astype(str) + "%"
+    monthly_conversion_stack["%Conversion"] = ((monthly_conversion_stack["Conversion"] / monthly_conversion_stack["Requests"]) * 100).round(0).replace([np.inf, -np.inf], np.nan).astype(str) + "%"
     monthly_conversion_unstack = monthly_conversion_stack.unstack()
 
     monthly_conversion_unstack = monthly_conversion_unstack.swaplevel(0, 1, 1).reindex([first_month, second_month], level = 0, axis = 1)
     monthly_conversion_unstack = monthly_conversion_unstack.reindex(["Requests", "Conversion", "%Conversion"], axis = 1, level = 1)
-    monthly_conversion_unstack = monthly_conversion_unstack.rename(columns = {"Conversion": "Converted"}, level = 1)
+    monthly_conversion_unstack = monthly_conversion_unstack.rename(columns = {"Conversion": "Converted", "Requests": "Feedbacks"}, level = 1)
 
     return monthly_conversion_unstack
 
@@ -227,6 +227,8 @@ def create_branch_report(
          level = 1, 
          axis = 1
     )
+
+    branches_final = branches_final.rename(columns={"Requests": "Feedbacks"}, level = 1)
 
     """
     RETURN SOMETHING.

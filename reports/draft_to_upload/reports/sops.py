@@ -253,7 +253,13 @@ def create_ug_sops_report(
         monthly_sops = sop_compliance.copy()
         monthly_sops["Month"] = pd.to_datetime(monthly_sops["Date"], dayfirst="%Y-%m-%d").dt.month_name()
         monthly_sops_data = monthly_sops[(monthly_sops["Month"] == first_month) | (monthly_sops["Month"] == second_month)].copy()
-        monthly_sops_data["RM Name"] = monthly_sops_data["RM Name"].str.replace("Mayanne", "Maryanne")
+        monthly_sops_data = monthly_sops_data[["Date", "Outlet", "Branch", "SOP", "No of times", "Month"]]
+        monthly_sops_data = pd.merge(
+            monthly_sops_data,
+            branch_data[["Outlet", "RM", "SRM"]],
+            on = "Outlet",
+            how = "left"
+        )
 
         monthly_customers = customers.copy()
         monthly_customers["Month"] = pd.to_datetime(monthly_customers["Date"], format="%Y-%m-%d").dt.month_name()
@@ -277,12 +283,13 @@ def create_ug_sops_report(
         )
 
         monthly_sops_pivot = pd.pivot_table(
-            monthly_sops_data.rename(columns = {"RM Name": "RM", "SRM Name": "SRM"}),
+            monthly_sops_data,
             index=["Outlet", "RM", "SRM"],
             values="No of times",
             columns="Month",
             aggfunc="sum"           
         )
+
 
         column_sop = pd.pivot_table(
             monthly_sops_data,
@@ -303,7 +310,7 @@ def create_ug_sops_report(
             col_name = (month, '%Sops/Customers')
             final_monthly_sops.insert(
                 final_monthly_sops.columns.get_loc((month, 'Sops')) + 1, col_name,
-                (final_monthly_sops[(month, 'Sops')] / final_monthly_sops[(month, 'Customers')] * 100).round().astype(int)
+                (final_monthly_sops[(month, 'Sops')] / final_monthly_sops[(month, 'Customers')] * 100).round().replace([np.inf, -np.inf], np.nan).fillna(0).astype(int)
             )
 
         # save_dataframes_to_excel(
@@ -314,7 +321,6 @@ def create_ug_sops_report(
         # )
 
         
-
         with pd.ExcelWriter(f"{path}draft_upload/sop_compliance.xlsx") as writer:
             final_monthly_sops.to_excel(writer, sheet_name="monthly_summary")
             column_sop.to_excel(writer, sheet_name = "sop_wise")

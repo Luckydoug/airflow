@@ -378,13 +378,14 @@ with DAG(
             provide_context=True
         )
 
-        create_fact_dropped_orders = PythonOperator(
-            task_id = 'create_fact_dropped_orders',
-            python_callable=create_fact_dropped_orders,
-            provide_context=True
-        )
+        # create_fact_dropped_orders = PythonOperator(
+        #     task_id = 'create_fact_dropped_orders',
+        #     python_callable=create_fact_dropped_orders,
+        #     provide_context=True
+        # )
 
-        get_source_dropped_orders >> update_source_dropped_orders >> get_source_dropped_orders_staging >> create_fact_dropped_orders
+        get_source_dropped_orders >> update_source_dropped_orders >> get_source_dropped_orders_staging 
+        # >> create_fact_dropped_orders
 
     finish = DummyOperator(
         task_id = "finish"

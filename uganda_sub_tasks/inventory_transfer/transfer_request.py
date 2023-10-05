@@ -161,7 +161,10 @@ def fetch_sap_invt_transfer_request ():
     
 
     return 'something' 
+
 # fetch_sap_invt_transfer_request ()
+
+
 # def create_fact_itr_details ():
 
 #     query = """

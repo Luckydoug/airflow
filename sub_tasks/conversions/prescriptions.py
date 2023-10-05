@@ -282,8 +282,6 @@ def fetch_prescriptions ():
        if_row_exists='update',
        create_table=True)
 
-    # prescription_details = prescription_details.to_sql('source_test', con = engine, schema='mabawa_staging', if_exists = 'append', index=False)
-
     print("Prescriptions Inserted")
 
     '''

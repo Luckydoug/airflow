@@ -79,7 +79,8 @@ def create_eyetests_conversion(data, country, path, selection):
             "on_after_createdon": "Order Created On",
             "on_after_cancelled": "Order Cancelled",
             "on_after_status": "Order Status",
-            "view_creator": "Who Viewed RX"
+            "view_creator": "Who Viewed RX",
+            "conversion_remarks": "Conversion Remarks"
         })
 
         non_conversions_data = non_conversions_data[[
@@ -105,7 +106,8 @@ def create_eyetests_conversion(data, country, path, selection):
             "Order Created",
             "Order Created On",
             "Order Cancelled",
-            "Order Status"
+            "Order Status",
+            "Conversion Remarks"
         ]]
 
         weekly_data = conversions[conversions["week range"] == last_date_range]

@@ -74,7 +74,8 @@ def update_calculated_field():
     
     dept_orders = departments[departments['dept'].isin(['Control', 'Designer', 'Main Store', 'Packaging', 'Lens Store'])]
     print(dept_orders)
-    dept_orders['finish'] = dept_orders['finish'].astype(str)
+    # dept_orders['finish'] = dept_orders['finish'].astype(str)
+    dept_orders['finish'] = dept_orders['finish'].fillna('')
     dept_orders[['Day', 'Time']] = dept_orders['finish'].str.split(' ', expand=True)    
     dept_orders['Time'] = pd.to_datetime(dept_orders['Time'], format='%H:%M:%S')
     dept_orders['Hour'] = dept_orders['Time'].dt.strftime('%H')  

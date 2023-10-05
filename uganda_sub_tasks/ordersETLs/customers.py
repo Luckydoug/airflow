@@ -25,12 +25,12 @@ from sub_tasks.api_login.api_login import(login_uganda)
 
 SessionId = login_uganda()
 
-# FromDate = '2023/01/01'
+FromDate = '2023/03/01'
 # ToDate = '2023/05/07'
 
 today = date.today()
 pastdate = today - timedelta(days=1)
-FromDate = pastdate.strftime('%Y/%m/%d')
+# FromDate = pastdate.strftime('%Y/%m/%d')
 ToDate = date.today().strftime('%Y/%m/%d')
 
 
@@ -85,7 +85,9 @@ def fetch_sap_customers():
                        'Outlet':'cust_outlet', 
                        'Old_New_BusnsPartnr':'cust_old_new_bp', 
                        'Loyalty_OPT_IN':'cust_loyalty_optin', 
-                       'Promotional_SMS':'cust_promo_sms'}
+                       'Promotional_SMS':'cust_promo_sms',
+                       'Conversion Reason':'conversion_reason',
+                       'Conversion Remark':'conversion_remark'}
             ,inplace=True)
     
     print('INFO! %d rows' %(len(customersdf)))

@@ -145,4 +145,4 @@ def fetch_sap_inventory_transfer():
 
     return "IT Complete"
 
-fetch_sap_inventory_transfer()
+# fetch_sap_inventory_transfer()

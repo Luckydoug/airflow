@@ -338,7 +338,9 @@ def send_draft_upload_report(
                 f"{lower}_summary",
                 index_col=[0],
                 header=[0, 1]
-            ).dropna(axis=0)
+            )
+
+            draft_toupload_report = draft_toupload_report.drop(draft_toupload_report.index[0])
 
             draft_toupload_report = draft_toupload_report.reset_index()
             draft_toupload_report = draft_toupload_report.rename(
@@ -1169,7 +1171,7 @@ def send_to_branches(branch_data, selection, path, filename, country):
                     rejection_message = rejection_message
                 )
 
-            if branch == random_branch and country == "Kenya":
+            if branch == random_branch and country == "Kenya" and branch != "OHO":
                 receiver_email = [
                     "wazeem@optica.africa",
                     "yuri@optica.africa",
@@ -1212,9 +1214,6 @@ def send_to_branches(branch_data, selection, path, filename, country):
 
             else:
                 receiver_email = [rm_email, branch_email, "christopher@optica.africa"]
-
-            receiver_email = ["tstbrach@gmail.com"]
-            
 
 
             html_content = quopri.encodestring(
