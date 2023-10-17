@@ -3,7 +3,6 @@ from airflow.models import variable
 from reports.draft_to_upload.utils.utils import target
 from sub_tasks.libraries.utils import (
     rwanda_path,
-    fetch_gsheet_data,
     create_rwanda_engine,
     createe_engine,
     fourth_week_start
@@ -11,6 +10,7 @@ from sub_tasks.libraries.utils import (
 
 from reports.draft_to_upload.smtp.smtp import (
     send_draft_upload_report,
+    send_to_branches,
     clean_folders
 )
 
@@ -18,7 +18,6 @@ from reports.draft_to_upload.reports.draft import (
     create_draft_upload_report
 )
 from reports.draft_to_upload.reports.opening_time import (
-    push_branch_opening_time_data, 
     create_opening_time_report
 )
 from reports.draft_to_upload.utils.utils import get_report_frequency, return_report_daterange, get_start_end_dates
@@ -47,7 +46,8 @@ from reports.draft_to_upload.data.fetch_data import (
     fetch_customers,
     fetch_daywise_rejections,
     fetch_mtd_rejections,
-    fetch_branch_data
+    fetch_branch_data,
+    fetch_working_hours
 )
 
 
@@ -143,31 +143,6 @@ registrations = fetch_registrations(
     table2="source_users"
 )
 
-
-def push_rwanda_opening_time():
-    #This function is tested and working. But it can fail at some point.
-    #To Debrw this function, kindly proceed to this G-Sheet; https://docs.google.com/spreadsheets/d/1jTTvbk8g--Q3FWKMLZaLquDiJJ5a03hsJEtZcUTTFr8/edit#gid=0
-    #On the sheet name called rwanda Opening Time, check if the columns are defined exactly the way the appear on the rename object below
-    #The Keys for the rename object are the column names expected on the G-Sheet.
-    #Modify the column names accordingly.
-    rwanda_opening = fetch_gsheet_data()["rwanda_opening"]
-    push_branch_opening_time_data(
-        opening_time=rwanda_opening,
-        rename={
-            "Date": "date",
-            "Day": "day",
-            "Branch": "branch",
-            "Reporting Time": "reporting_time",
-            "Opening Time": "opening_time",
-            "Time Opened": "time_opened"
-        },
-        database=database,
-        table="source_opening_time",
-        engine=engine,
-        form="%d-%m-%y"
-    )
-
-
 date = ''
 if selection == "Daily":
     date = str(start_date)
@@ -189,9 +164,13 @@ def build_rwanda_opening_time():
         rwanda_path
     )
 
+def working_hours() -> pd.DataFrame:
+    working_hours = fetch_working_hours(
+        engine=engine
+    )
+    return working_hours
 
 def push_rwanda_efficiency_data():
-    working_hours = fetch_gsheet_data()["rw_working_hours"]
     date = return_report_daterange(selection="Daily")
     date = pd.to_datetime(date, format="%Y-%m-%d").date()
     push_insurance_efficiency_data(
@@ -200,7 +179,7 @@ def push_rwanda_efficiency_data():
         all_orders=all_orders,
         start_date=date,
         branch_data=branch_data,
-        working_hours=working_hours,
+        working_hours=working_hours(),
         database=database
     )
 
@@ -317,10 +296,18 @@ def trigger_rwanda_smtp():
     send_draft_upload_report(
         selection=selection,
         path=rwanda_path,
-        country="Test",
+        country="Rwanda",
         target=target
     )
 
+def trigger_rwanda_branches_smtp():
+    send_to_branches(
+        branch_data=branch_data,
+        selection=selection,
+        path=rwanda_path,
+        country="Rwanda",
+        filename=f"{rwanda_path}draft_upload/log.txt"
+    )
 
 def clean_rwanda_folder():
     clean_folders(path=rwanda_path)

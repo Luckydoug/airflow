@@ -22,6 +22,7 @@ from sub_tasks.api_login.api_login import(login)
 SessionId = login()
 
 # FromDate = '2023/01/11'
+# FromDate = pastdate.strftime('%Y/%m/%d')
 # ToDate = '2023/02/05'
 
 today = date.today()

@@ -25,9 +25,7 @@ def fetch_eyetests_conversion(engine, database, start_date, end_date, users, use
         and a.create_date::date >=  %(From)s
         and a.create_date::date <= %(To)s
         and a.branch_code not in ('0MA','null', 'HOM')
-        and a.cust_code <> 'U10000002'
-        and a.cust_code <> 'U10002522'
-        and a.cust_code <> 'U10002693';
+        and a.cust_code not in ('U10000002', 'U10002522', 'U10002693', 'R10000888', 'R10000429');
         """
 
     data = pd.read_sql_query(
@@ -62,8 +60,7 @@ def fetch_registrations_conversion(engine, database, start_date, end_date, users
     conv.cust_createdon::date >=  %(From)s
     and conv.cust_createdon::date <= %(To)s
     and conv.cust_outlet not in ('0MA','null', 'HOM')
-    and conv.cust_code <> 'U10000825'
-    and conv.cust_code <> 'U10000002'
+    and conv.cust_code not in ('U10000825', 'U10000002', 'R10000888')
     and conv.cust_campaign_master <> 'GMC'
     """
 

@@ -26,14 +26,14 @@ from sub_tasks.api_login.api_login import(login)
 
 SessionId = login()
 
-# FromDate = '2023/06/01'
-#ToDate = '2021/12/31'
+# FromDate = '2023/10/13'
+# ToDate = '2023/10/16'
 
 
 today = date.today()
-# pastdate = today - timedelta(days=2)
-pastdate = today
-FromDate = pastdate.strftime('%Y/%m/%d')
+pastdate = today - timedelta(days=2)
+# pastdate = today
+# FromDate = pastdate.strftime('%Y/%m/%d')
 ToDate = date.today().strftime('%Y/%m/%d')
 
 # api details
@@ -74,6 +74,8 @@ def fetch_sap_invt_transfer_request ():
     """
 
     transfer_request_details = transfer_request['details'].apply(pd.Series)
+    print(transfer_request_details)
+    print('transfer_request_details')
 
     print("Created Details DF")
 
@@ -124,7 +126,7 @@ def fetch_sap_invt_transfer_request ():
         itemdetails_df = itemdetails_df.append(data1, ignore_index=True)
 
     print("Created Item Details DF")
-
+    print(itemdetails_df)
     itemdetails_df.rename (columns = {
             'Document_Internal_ID':'doc_internal_id',
             'RowNumber':'row_no',
@@ -163,7 +165,7 @@ def fetch_sap_invt_transfer_request ():
     
 
     return 'something' 
-
+# fetch_sap_invt_transfer_request ()
 def create_fact_itr_details ():
 
     query = """

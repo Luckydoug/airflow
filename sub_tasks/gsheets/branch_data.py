@@ -36,7 +36,8 @@ def fetch_kenya_branch_data():
            schema='reports_tables',
            table_name='branch_data',
            if_row_exists='update',
-           create_table=False)
+           create_table=False
+    )
     
 
 
@@ -100,4 +101,5 @@ def fetch_uganda_branch_data():
            table_name='branch_data',
            if_row_exists='update',
            create_table=False)
+
     

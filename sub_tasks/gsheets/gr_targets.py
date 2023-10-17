@@ -26,10 +26,10 @@ def fetch_gr_targets():
     csv_string = sh.to_csv(index=False,header=False)
     sh = pd.read_csv(io.StringIO(csv_string), na_values='')
 
-    drop_table = """truncate table mabawa_dw.branch_gr_targets;"""
+    drop_table = """truncate table mabawa_dw.google_reviews_targets;"""
     drop_table = pg_execute(drop_table)
     
-    sh[sh['country']=='KE'][['branch','target']].to_sql('branch_gr_targets', con = engine, schema='mabawa_dw', if_exists = 'append', index=False)
+    sh[sh['country']=='KE'][['branch','target']].to_sql('google_reviews_targets', con = engine, schema='mabawa_dw', if_exists = 'append', index=False)
 
     print('google reviews targets pulled')
 

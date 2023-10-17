@@ -127,6 +127,7 @@ def send_draft_upload_report(
     planos_path = f"{path}draft_upload/planorx_not_submitted.xlsx"
     dectractors_path = f"{path}draft_upload/detractors_report.xlsx"
     opening_path = f"{path}draft_upload/opening_time.xlsx"
+    non_views_path = f"{path}draft_upload/non_view.xlsx"
     if not os.path.exists(draft_path) and not os.path.exists(rejections_path) and not os.path.exists(sops_path) and not os.path.exists(planos_path):
         return
 
@@ -141,6 +142,8 @@ def send_draft_upload_report(
     detractors_html = ""
     detractors_attachment = ""
     opening_html = ""
+    no_view_html = ""
+    no_view_attachment = ""
 
     if selection == "Daily":
         todate = get_yesterday_date(truth=True)
@@ -185,6 +188,13 @@ def send_draft_upload_report(
 
         else:
             plano_html = "There were no plano eye tests for the above period."
+
+        if os.path.exists(non_views_path):
+            no_view_html = "Please find attached a list of non-converted eye tests that were not viewed."
+            no_view_attachment = non_views_path
+        
+        else:
+            no_view_html = "All non-converted eye tests were viewed."
 
         if os.path.exists(dectractors_path):
             detractors = pd.ExcelFile(dectractors_path)
@@ -310,6 +320,13 @@ def send_draft_upload_report(
         else:
             plano_html = "There were no plano eye tests for the above period."
 
+        if os.path.exists(non_views_path):
+            no_view_html = "Please find attached a list of non-converted eye tests that were not viewed."
+            no_view_attachment = non_views_path
+        
+        else:
+            no_view_html = "All non-converted eye tests were viewed."
+
         if os.path.exists(opening_path):
             opening_report = pd.read_excel(opening_path, index_col=False)
             opening_style = opening_report.style.hide_index().set_table_styles(
@@ -409,6 +426,13 @@ def send_draft_upload_report(
         else:
             plano_html = "There were no plano eye tests for the above period."
 
+        if os.path.exists(non_views_path):
+            no_view_html = "Please find attached a list of non-converted eye tests that were not viewed."
+            no_view_attachment = non_views_path
+        
+        else:
+            no_view_html = "All non-converted eye tests were viewed."
+
         if os.path.exists(opening_path):
             opening_report = pd.read_excel(opening_path, index_col=False)
             opening_style = opening_report.style.hide_index().set_table_styles(
@@ -435,7 +459,8 @@ def send_draft_upload_report(
         sops_html=sops_html,
         plano_html=plano_html,
         detractors_html=detractors_html,
-        opening_html=opening_html
+        opening_html=opening_html,
+        no_view_html = no_view_html
     )
 
     html_content = quopri.encodestring(html.encode("utf-8")).decode("utf-8")
@@ -484,6 +509,13 @@ def send_draft_upload_report(
             "detractors_report.xlsx"
         )
 
+    if os.path.exists(no_view_attachment):
+        attach_file(
+            email_message,
+            no_view_attachment,
+            "Non_Converted_Non_Views.xlsx"
+        )
+
     context = ssl.create_default_context()
     with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
         server.login(sender_email, password)
@@ -521,7 +553,6 @@ rej_cols = [
 def send_to_branches(branch_data, selection, path, filename, country):
     create_initial_file(filename)
     todate = get_yesterday_date(truth=True)
-    # todate = "Today"
     branches = branch_data["Outlet"].to_list()
     html = ""
     branch_data = branch_data.set_index("Outlet")
@@ -531,63 +562,45 @@ def send_to_branches(branch_data, selection, path, filename, country):
     feedback = f"{path}draft_upload/insurance_daily.xlsx"
     no_feedbacks = f"{path}draft_upload/no_feedbacks.xlsx"
 
-    if os.path.exists(rejections_path) and os.path.exists(planos_path) and os.path.exists(feedback):
-        feedbacks = pd.ExcelFile(feedback)
-        feedbacks_data = feedbacks.parse(
-            "daily_data",
-            index_col=False
-        )
+    if os.path.exists(rejections_path) or os.path.exists(planos_path) or os.path.exists(feedback) or os.path.exists(no_feedbacks):
+        rejection_branches = []
+        planos_branches = []
+        feedback_branches = []
+        no_feedback_branches = []
 
-        feedbacks_summary = feedbacks.parse(
-            "daily_summary",
-            index_col=False
-        )
-
-        non_feedback = pd.ExcelFile(no_feedbacks)
-        no_feedbacks_data = non_feedback.parse(
-            "no_feedback",
-            index_col=False
-        )
-
-        rejections = pd.ExcelFile(rejections_path)
-        rejections_data = rejections.parse(
-            f"{selections_lower}_rejections_data", 
-            index_col=False
-        )
-        planos = pd.ExcelFile(planos_path)
-        planos_data = planos.parse(f"{selections_lower}_data", index_col=False)
-        plano_branches_summary = planos.parse(
-            f"{selections_lower}_submission_branch", 
-            index_col=False
-        )
-        plano_ewc_summary = planos.parse(
-            f"{selections_lower}_submission_ewc", 
-            index_col=False
-        )
-        
-        planos_data = planos_data[
-            planos_data["Submission"]== "Not Submitted"
-        ]
-        if selection == "Daily":
-            rejection_branches_summary = rejections.parse(
-                f"{selections_lower}_summary", 
+        if os.path.exists(feedback):
+            feedbacks = pd.ExcelFile(feedback)
+            feedbacks_data = feedbacks.parse(
+                "daily_data",
                 index_col=False
             )
-        elif selection == "Weekly":
-            rejection_branches_summary = rejections.parse(
-                "branch_summary", 
+            feedback_branches = feedbacks_data["Outlet"].to_list()
+
+        if os.path.exists(no_feedbacks):
+            non_feedback = pd.ExcelFile(no_feedbacks)
+            no_feedbacks_data = non_feedback.parse(
+                "no_feedback",
                 index_col=False
             )
-        else:
-            return
-        rejections_ewc_summary = rejections.parse(
-            "ewc_summary", 
-            index_col=False
-        )
-        rejection_branches = rejections_data["Outlet"].to_list()
-        planos_branches = planos_data["Branch"].to_list()
-        feedback_branches = feedbacks_summary["Outlet"].to_list()
-        no_feedback_branches = no_feedbacks_data["Outlet"].to_list()
+            no_feedback_branches = no_feedbacks_data["Outlet"].to_list()
+
+        if os.path.exists(rejections_path):
+            rejections = pd.ExcelFile(rejections_path)
+            rejections_data = rejections.parse(
+                f"{selections_lower}_rejections_data", 
+                index_col=False
+            )
+            rejection_branches = rejections_data["Outlet"].to_list()
+            
+        if os.path.exists(planos_path):
+            planos = pd.ExcelFile(planos_path)
+            planos_data = planos.parse(f"{selections_lower}_data", index_col=False)
+            planos_data = planos_data[
+                planos_data["Submission"]== "Not Submitted"
+            ]
+
+            planos_branches = planos_data["Branch"].to_list()
+
         all_branches = planos_branches + rejection_branches + feedback_branches + no_feedback_branches
         random_branch = random.choice(all_branches)
         
@@ -624,26 +637,21 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 else:
                     return
                 
-                planos_html, plano_branch_summary_html, plano_ewc_summary_html = planos_template(
+                planos_html = planos_template(
                     req_columns=req_columns,
                     planos_data=planos_data,
-                    plano_branches_summary=plano_branches_summary,
-                    plano_ewc_summary=plano_ewc_summary,
                     branch=branch
                 )
 
-                rejections_html, rejections_branch_summary_html, rejections_ewc_summary_html = rejections_template(
+                rejections_html = rejections_template(
                     branch=branch,
                     rejections_data=rejections_data,
-                    rejection_branches_summary=rejection_branches_summary,
                     rej_cols=rej_cols,
-                    rejections_ewc_summary=rejections_ewc_summary
                 )
 
-                feedback_html, feedback_data_html = feedback_template(
+                feedback_data_html = feedback_template(
                     branch=branch,
-                    feedbacks_data=feedbacks_data,
-                    feedbacks_summary=feedbacks_summary
+                    feedbacks_data=feedbacks_data
                 )
 
                 no_feedback_html = no_feedback_template(
@@ -658,13 +666,8 @@ def send_to_branches(branch_data, selection, path, filename, country):
                     no_feedback_message = no_feedback_message,
                     planos=planos_html,
                     rejections=rejections_html,
-                    rejections_branch_summary_html=rejections_branch_summary_html,
-                    rejections_ewc_summary_html=rejections_ewc_summary_html,
-                    plano_branch_summary_html=plano_branch_summary_html,
-                    plano_ewc_summary_html=plano_ewc_summary_html,
                     plano_message = plano_message,
                     rejection_message = rejection_message,
-                    feedback_html = feedback_html,
                     feedback_data_html = feedback_data_html,
                     feedback_message = feedback_message
                 )
@@ -679,26 +682,21 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 else:
                     return
                 
-                planos_html, plano_branch_summary_html, plano_ewc_summary_html = planos_template(
+                planos_html = planos_template(
                     req_columns=req_columns,
                     planos_data=planos_data,
-                    plano_branches_summary=plano_branches_summary,
-                    plano_ewc_summary=plano_ewc_summary,
                     branch=branch
                 )
 
-                rejections_html, rejections_branch_summary_html, rejections_ewc_summary_html = rejections_template(
+                rejections_html = rejections_template(
                     branch=branch,
                     rejections_data=rejections_data,
-                    rejection_branches_summary=rejection_branches_summary,
                     rej_cols=rej_cols,
-                    rejections_ewc_summary=rejections_ewc_summary
                 )
 
-                feedback_html, feedback_data_html = feedback_template(
+                feedback_data_html = feedback_template(
                     branch=branch,
                     feedbacks_data=feedbacks_data,
-                    feedbacks_summary=feedbacks_summary
                 )
 
                 html = all_reports_html.format(
@@ -706,13 +704,8 @@ def send_to_branches(branch_data, selection, path, filename, country):
                     rejections=rejections_html,
                     branch=branch_name,
                     branch_manager=branch_manager,
-                    rejections_branch_summary_html=rejections_branch_summary_html,
-                    rejections_ewc_summary_html=rejections_ewc_summary_html,
-                    plano_branch_summary_html=plano_branch_summary_html,
-                    plano_ewc_summary_html=plano_ewc_summary_html,
                     plano_message = plano_message,
                     rejection_message = rejection_message,
-                    feedback_html = feedback_html,
                     feedback_data_html = feedback_data_html,
                     feedback_message = feedback_message
                 )
@@ -728,20 +721,16 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 else:
                     return
 
-                planos_html, plano_branch_summary_html, plano_ewc_summary_html = planos_template(
+                planos_html = planos_template(
                     req_columns=req_columns,
                     planos_data=planos_data,
-                    plano_branches_summary=plano_branches_summary,
-                    plano_ewc_summary=plano_ewc_summary,
                     branch=branch
                 )
 
-                rejections_html, rejections_branch_summary_html, rejections_ewc_summary_html = rejections_template(
+                rejections_html = rejections_template(
                     branch=branch,
                     rejections_data=rejections_data,
-                    rejection_branches_summary=rejection_branches_summary,
                     rej_cols=rej_cols,
-                    rejections_ewc_summary=rejections_ewc_summary
                 )
 
                 html = branches_html.format(
@@ -749,10 +738,6 @@ def send_to_branches(branch_data, selection, path, filename, country):
                     rejections=rejections_html,
                     branch=branch_name,
                     branch_manager=branch_manager,
-                    rejections_branch_summary_html=rejections_branch_summary_html,
-                    rejections_ewc_summary_html=rejections_ewc_summary_html,
-                    plano_branch_summary_html=plano_branch_summary_html,
-                    plano_ewc_summary_html=plano_ewc_summary_html,
                     plano_message = plano_message,
                     rejection_message = rejection_message
                 )
@@ -769,14 +754,12 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 else:
                     return
                 
-                feedback_html, feedback_data_html = feedback_template(
+                feedback_data_html = feedback_template(
                     branch=branch,
-                    feedbacks_data=feedbacks_data,
-                    feedbacks_summary=feedbacks_summary
+                    feedbacks_data=feedbacks_data
                 )
 
                 html = html_feedback.format(
-                    feedback_html = feedback_html,
                     branch=branch_name,
                     branch_manager=branch_manager,
                     feedback_data_html = feedback_data_html,
@@ -818,20 +801,16 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 else:
                     return
                
-                rejections_html, rejections_branch_summary_html, rejections_ewc_summary_html = rejections_template(
+                rejections_html = rejections_template(
                     branch=branch,
                     rejections_data=rejections_data,
-                    rejection_branches_summary=rejection_branches_summary,
-                    rej_cols=rej_cols,
-                    rejections_ewc_summary=rejections_ewc_summary
+                    rej_cols=rej_cols
                 )
 
                 html = html_rejections.format(
                     rejections=rejections_html,
                     branch=branch_name,
                     branch_manager=branch_manager,
-                    rejections_branch_summary_html=rejections_branch_summary_html,
-                    rejections_ewc_summary_html=rejections_ewc_summary_html,
                     rejection_message = rejection_message
                 )
 
@@ -846,11 +825,9 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 else:
                     return
 
-                planos_html, plano_branch_summary_html, plano_ewc_summary_html = planos_template(
+                planos_html = planos_template(
                     req_columns=req_columns,
                     planos_data=planos_data,
-                    plano_branches_summary=plano_branches_summary,
-                    plano_ewc_summary=plano_ewc_summary,
                     branch=branch
                 )
 
@@ -858,8 +835,6 @@ def send_to_branches(branch_data, selection, path, filename, country):
                     planos=planos_html,
                     branch=branch_name,
                     branch_manager=branch_manager,
-                    plano_branch_summary_html=plano_branch_summary_html,
-                    plano_ewc_summary_html=plano_ewc_summary_html,
                     plano_message = plano_message
                 )
 
@@ -874,18 +849,15 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 else:
                     return
 
-                rejections_html, rejections_branch_summary_html, rejections_ewc_summary_html = rejections_template(
+                rejections_html = rejections_template(
                     branch=branch,
                     rejections_data=rejections_data,
-                    rejection_branches_summary=rejection_branches_summary,
                     rej_cols=rej_cols,
-                    rejections_ewc_summary=rejections_ewc_summary
                 )
 
-                feedback_html, feedback_data_html = feedback_template(
+                feedback_data_html = feedback_template(
                     branch = branch,
-                    feedbacks_data=feedbacks_data,
-                    feedbacks_summary=feedbacks_summary
+                    feedbacks_data=feedbacks_data
                 )
 
 
@@ -894,11 +866,8 @@ def send_to_branches(branch_data, selection, path, filename, country):
                     feedback_message = feedback_message,
                     branch=branch_name,
                     branch_manager=branch_manager,
-                    rejections_branch_summary_html=rejections_branch_summary_html,
-                    rejections_ewc_summary_html=rejections_ewc_summary_html,
                     rejection_message = rejection_message,
-                    feedback_data_html=feedback_data_html,
-                    feedback_html= feedback_html
+                    feedback_data_html=feedback_data_html
                 )
 
                 """
@@ -913,18 +882,15 @@ def send_to_branches(branch_data, selection, path, filename, country):
                     return
                 
 
-                planos_html, plano_branch_summary_html, plano_ewc_summary_html = planos_template(
+                planos_html = planos_template(
                     req_columns=req_columns,
                     planos_data=planos_data,
-                    plano_branches_summary=plano_branches_summary,
-                    plano_ewc_summary=plano_ewc_summary,
                     branch=branch
                 )
 
-                feedback_html, feedback_data_html = feedback_template(
+                feedback_data_html = feedback_template(
                     branch = branch,
-                    feedbacks_data=feedbacks_data,
-                    feedbacks_summary=feedbacks_summary
+                    feedbacks_data=feedbacks_data
                 )
 
                 
@@ -932,11 +898,8 @@ def send_to_branches(branch_data, selection, path, filename, country):
                     planos=planos_html,
                     branch=branch_name,
                     branch_manager=branch_manager,
-                    plano_branch_summary_html=plano_branch_summary_html,
-                    plano_ewc_summary_html=plano_ewc_summary_html,
                     plano_message = plano_message,
                     feedback_data_html=feedback_data_html,
-                    feedback_html=feedback_html,
                     feedback_message = feedback_message
                 )
 
@@ -952,11 +915,9 @@ def send_to_branches(branch_data, selection, path, filename, country):
                     return
                 
 
-                planos_html, plano_branch_summary_html, plano_ewc_summary_html = planos_template(
+                planos_html = planos_template(
                     req_columns=req_columns,
                     planos_data=planos_data,
-                    plano_branches_summary=plano_branches_summary,
-                    plano_ewc_summary=plano_ewc_summary,
                     branch=branch
                 )
 
@@ -986,12 +947,10 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 else:
                     return
                 
-                rejections_html, rejections_branch_summary_html, rejections_ewc_summary_html = rejections_template(
+                rejections_html = rejections_template(
                     branch=branch,
                     rejections_data=rejections_data,
-                    rejection_branches_summary=rejection_branches_summary,
                     rej_cols=rej_cols,
-                    rejections_ewc_summary=rejections_ewc_summary
                 )
 
                 no_feedback_html = no_feedback_template(
@@ -1003,8 +962,6 @@ def send_to_branches(branch_data, selection, path, filename, country):
                     rejections=rejections_html,
                     branch=branch_name,
                     branch_manager=branch_manager,
-                    rejections_branch_summary_html=rejections_branch_summary_html,
-                    rejections_ewc_summary_html=rejections_ewc_summary_html,
                     rejection_message = rejection_message,
                     no_feedback_message = no_feedback_message,
                     no_feedback_html = no_feedback_html
@@ -1021,10 +978,9 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 else:
                     return
                 
-                feedback_html, feedback_data_html = feedback_template(
+                feedback_data_html = feedback_template(
                     branch=branch,
-                    feedbacks_data=feedbacks_data,
-                    feedbacks_summary=feedbacks_summary
+                    feedbacks_data=feedbacks_data
                 )
 
                 no_feedback_html = no_feedback_template(
@@ -1033,7 +989,6 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 )
 
                 html = feedback_no_feedback_html.format(
-                    feedback_html = feedback_html,
                     branch=branch_name,
                     branch_manager=branch_manager,
                     feedback_data_html = feedback_data_html,
@@ -1053,20 +1008,16 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 else:
                     return
                 
-                planos_html, plano_branch_summary_html, plano_ewc_summary_html = planos_template(
+                planos_html = planos_template(
                     req_columns=req_columns,
                     planos_data=planos_data,
-                    plano_branches_summary=plano_branches_summary,
-                    plano_ewc_summary=plano_ewc_summary,
                     branch=branch
                 )
 
-                rejections_html, rejections_branch_summary_html, rejections_ewc_summary_html = rejections_template(
+                rejections_html = rejections_template(
                     branch=branch,
                     rejections_data=rejections_data,
-                    rejection_branches_summary=rejection_branches_summary,
-                    rej_cols=rej_cols,
-                    rejections_ewc_summary=rejections_ewc_summary
+                    rej_cols=rej_cols
                 )
 
                 no_feedback_html = no_feedback_template(
@@ -1078,8 +1029,6 @@ def send_to_branches(branch_data, selection, path, filename, country):
                     rejections=rejections_html,
                     branch=branch_name,
                     branch_manager=branch_manager,
-                    rejections_branch_summary_html=rejections_branch_summary_html,
-                    rejections_ewc_summary_html=rejections_ewc_summary_html,
                     rejection_message = rejection_message,
                     no_feedback_message = no_feedback_message,
                     no_feedback_html = no_feedback_html,
@@ -1098,18 +1047,15 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 else:
                     return
 
-                planos_html, plano_branch_summary_html, plano_ewc_summary_html = planos_template(
+                planos_html = planos_template(
                     req_columns=req_columns,
                     planos_data=planos_data,
-                    plano_branches_summary=plano_branches_summary,
-                    plano_ewc_summary=plano_ewc_summary,
                     branch=branch
                 )
 
-                feedback_html, feedback_data_html = feedback_template(
+                feedback_data_html = feedback_template(
                     branch=branch,
-                    feedbacks_data=feedbacks_data,
-                    feedbacks_summary=feedbacks_summary
+                    feedbacks_data=feedbacks_data
                 )
 
                 no_feedback_html = no_feedback_template(
@@ -1124,7 +1070,6 @@ def send_to_branches(branch_data, selection, path, filename, country):
                     no_feedback_html = no_feedback_html,
                     planos = planos_html,
                     plano_message = plano_message,
-                    feedback_html = feedback_html,
                     feedback_data_html = feedback_data_html,
                     feedback_message = feedback_message,
                 )
@@ -1138,18 +1083,15 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 else:
                     return
 
-                rejections_html, rejections_branch_summary_html, rejections_ewc_summary_html = rejections_template(
+                rejections_html = rejections_template(
                     branch=branch,
                     rejections_data=rejections_data,
-                    rejection_branches_summary=rejection_branches_summary,
-                    rej_cols=rej_cols,
-                    rejections_ewc_summary=rejections_ewc_summary
+                    rej_cols=rej_cols
                 )
 
-                feedback_html, feedback_data_html = feedback_template(
+                feedback_data_html = feedback_template(
                     branch=branch,
                     feedbacks_data=feedbacks_data,
-                    feedbacks_summary=feedbacks_summary
                 )
 
                 no_feedback_html = no_feedback_template(
@@ -1162,12 +1104,9 @@ def send_to_branches(branch_data, selection, path, filename, country):
                     branch_manager=branch_manager,
                     no_feedback_message = no_feedback_message,
                     no_feedback_html = no_feedback_html,
-                    feedback_html = feedback_html,
                     feedback_data_html = feedback_data_html,
                     feedback_message = feedback_message,
                     rejections=rejections_html,
-                    rejections_branch_summary_html=rejections_branch_summary_html,
-                    rejections_ewc_summary_html=rejections_ewc_summary_html,
                     rejection_message = rejection_message
                 )
 
@@ -1206,8 +1145,17 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 receiver_email = [
                     "kush@optica.africa",
                     "raghav@optica.africa",
+                    "larry.larsen@optica.africa",
                     'fredrick@optica.africa',
                     'tiffany@optica.africa',
+                    "wairimu@optica.africa",
+                    branch_email
+                ]
+            
+            elif country == "Rwanda":
+                receiver_email = [
+                    "kush@optica.africa",
+                    "raghav@optica.africa",
                     "wairimu@optica.africa",
                     branch_email
                 ]
@@ -1215,9 +1163,14 @@ def send_to_branches(branch_data, selection, path, filename, country):
             else:
                 receiver_email = [rm_email, branch_email, "christopher@optica.africa"]
 
+            
+            if country == "Test":
+                receiver_email = ["tstbranch@gmail.com"]
+
 
             html_content = quopri.encodestring(
-                html.encode("utf-8")).decode("utf-8")
+                html.encode("utf-8")
+            ).decode("utf-8")
             email_message = MIMEMultipart("alternative")
             email_message["From"] = sender_email
             email_message["To"] = ",".join(receiver_email)

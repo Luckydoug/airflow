@@ -150,9 +150,6 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection, cou
                 email_message["Subject"] = subject
                 email_message.attach(MIMEText(html, "html"))
 
-                if not len(branch_export) and selection == "Daily":
-                    continue
-
 
                 if len(branch_export):
                     save_file(

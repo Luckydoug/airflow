@@ -85,6 +85,8 @@ def replacements():
 
     lens1=Replacements[Replacements["Created User"]=="lens1"]
     lens2=Replacements[Replacements["Created User"]=="lens2"]
+    print(lens1)
+    print(lens2)
 
     designer1=Replacements[Replacements["Created User"]=="designer1"]
     designer2=Replacements[Replacements["Created User"]=="designer2"]
@@ -310,6 +312,8 @@ def replacements():
     Designer_pivot
     ###########
     Lens=MasterData[MasterData.StoresCreatedUser=="lens"]
+    print('print lens store')
+    print(Lens)
     Lens_pivot=pd.pivot_table(Lens,index="Hour",values=["ITR No","No. of Items",'PLP_To_STC Time'],aggfunc={"ITR No":np.count_nonzero,
                                                                                                                     "No. of Items":np.sum,
                                                                                                                     'PLP_To_STC Time':np.mean},
@@ -402,4 +406,4 @@ def replacements():
                 df.to_excel(writer,'sheet%s' % n)
             writer.save()
             
-# replacements()
+replacements()

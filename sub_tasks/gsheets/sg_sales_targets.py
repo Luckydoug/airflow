@@ -26,10 +26,10 @@ def fetch_sg_targets():
     csv_string = sh.to_csv(index=False,header=False)
     sh = pd.read_csv(io.StringIO(csv_string), na_values='')
 
-    drop_table = """truncate table mabawa_dw.branch_sg_sales_targets;"""
+    drop_table = """truncate table mabawa_dw.sunglasses_targets;"""
     drop_table = pg_execute(drop_table)
 
-    sh[['branch','target']].to_sql('branch_sg_sales_targets', con = engine, schema='mabawa_dw', if_exists = 'append', index=False)
+    sh[['branch','target']].to_sql('sunglasses_targets', con = engine, schema='mabawa_dw', if_exists = 'append', index=False)
 
     print('sg sales targets pulled')
 
@@ -54,6 +54,6 @@ def create_sg_summary():
     """
     query = pg_execute(query)
 
-    
+# fetch_sg_targets() 
 
 

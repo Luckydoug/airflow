@@ -29,8 +29,8 @@ conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", p
 SessionId = login()
 
 
-# FromDate = '2023/08/01'
-# ToDate = '2023/05/07'
+# FromDate = '2023/10/14'
+# ToDate = '2023/10/15'
 
 today = date.today()
 pastdate = today - timedelta(days=1)

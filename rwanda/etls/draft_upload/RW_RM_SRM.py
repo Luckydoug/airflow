@@ -41,7 +41,6 @@ with DAG(
                 build_rw_rejections,
                 build_rw_sops,
                 build_plano_report,
-                push_rwanda_opening_time,
                 build_rwanda_opening_time
 
             )
@@ -76,11 +75,6 @@ with DAG(
                 provide_context=True
             )
 
-            push_rwanda_opening_time = PythonOperator(
-                task_id='push_rwanda_opening_time',
-                python_callable=push_rwanda_opening_time,
-                provide_context=True
-            )
 
             build_rwanda_opening_time = PythonOperator(
                 task_id='build_rwanda_opening_time',
@@ -89,13 +83,14 @@ with DAG(
             )
 
             
-            push_rwanda_efficiency_data >> build_rw_draft_upload >> build_rw_sops >> build_rw_rejections >> build_plano_report >> push_rwanda_opening_time >> build_rwanda_opening_time
+            push_rwanda_efficiency_data >> build_rw_draft_upload >> build_rw_sops >> build_rw_rejections >> build_plano_report >> build_rwanda_opening_time
             
 
     with TaskGroup('smtp') as smtp:
         with TaskGroup('send') as sends:
             from rwanda.automations.draft_upload.report import (
                 trigger_rwanda_smtp,
+                trigger_rwanda_branches_smtp,
                 clean_rwanda_folder
             )
 
@@ -105,13 +100,19 @@ with DAG(
                 provide_context=True
             )
 
+            trigger_rwanda_branches_smtp = PythonOperator(
+                task_id='trigger_rwanda_branches_smtp',
+                python_callable=trigger_rwanda_branches_smtp,
+                provide_context=True
+            )
+
             clean_rwanda_folder = PythonOperator(
                 task_id='clean_rwanda_folder',
                 python_callable=clean_rwanda_folder,
                 provide_context=True
             )
 
-            trigger_rwanda_smtp >> clean_rwanda_folder
+            trigger_rwanda_smtp >> trigger_rwanda_branches_smtp >> clean_rwanda_folder
 
         build >> sends
 

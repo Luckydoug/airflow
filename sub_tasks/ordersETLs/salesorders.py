@@ -289,7 +289,7 @@ def create_fact_orders_header_with_categories():
 
     print("create_fact_orders_header_with_categories")
 
-# fetch_sap_orders()
+fetch_sap_orders()
 # source_orders_header_with_prescriptions()
 # update_source_orders_line()
 # update_mviews_salesorders_with_item_whse()

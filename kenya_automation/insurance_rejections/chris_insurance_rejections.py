@@ -57,8 +57,8 @@ start_date = return_report_daterange(selection)
 print(datetime.datetime.today())
 print(end_date)
 
-# start_date = '2023-09-01'
-# end_date = '2023-09-30'
+# start_date = '2023-10-09'
+# end_date = '2023-10-15'
 
 def rejections():
     branch_data = fetch_gsheet_data()["branch_data"]
@@ -260,11 +260,11 @@ def rejections():
 
     to_date = get_todate()
 
-    # to_date = '2023-09-01'
-    # till_date = '2023-09-30'
+    # to_date = '2023-10-09'
+    # till_date = '2023-10-15'
 
     sender_email = os.getenv("wairimu_email")
-    # receiver_email = ['wairimu@optica.africa','christopher@optica.africa']
+    # receiver_email = ['wairimu@optica.africa']
     receiver_email = ['wairimu@optica.africa','christopher@optica.africa','andrew@optica.africa']
     email_message = MIMEMultipart()
     email_message["From"] = sender_email

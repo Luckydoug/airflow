@@ -55,14 +55,14 @@ def cutoff():
     """Replacement ITR over date range to distinguish between branch stock and stock borrow"""
     """KENYA"""    
     Repdata = repdata(database="mabawa",engine=conn )
-    print(Repdata)
-    print('Repdata printed')
     Repdata['Creation Date']=pd.to_datetime(Repdata['Creation Date'],dayfirst=True  ).dt.date
     Repdata['Creatn Time - Incl. Secs']=pd.to_datetime(Repdata["Creatn Time - Incl. Secs"],format="%H%M%S",errors = 'coerce').dt.time
+    
     """UGANDA"""   
     Repdata_ug = repdata(database="mawingu",engine=uganda_engine)
     Repdata_ug['Creation Date']=pd.to_datetime(Repdata_ug['Creation Date'],dayfirst=True  ).dt.date
     Repdata_ug['Creatn Time - Incl. Secs']=pd.to_datetime(Repdata_ug["Creatn Time - Incl. Secs"],format="%H%M%S",errors = 'coerce').dt.time
+    
     """RWANDA""" 
     Repdata_rw = repdata(database="voler",engine=rwanda_engine)
     Repdata_rw['Creation Date']=pd.to_datetime(Repdata_rw['Creation Date'],dayfirst=True  ).dt.date
@@ -83,6 +83,7 @@ def cutoff():
     Replacements=Replacements[["Date","Time",'Created User', 'Status', 'Item Code', 'ITR No','Day_End','Date_Time']]
     Replacements['Date'] = Replacements.Date.astype('datetime64[ns]')
     Replacements=Replacements.rename(columns={"ITR No":"Internal Number"})
+    print(Replacements)
 
     """ITR Created by BRS with Date and Time"""    
     towhse = to_warehouse(database="mabawa",engine=conn)
@@ -129,9 +130,6 @@ def cutoff():
     NormalRep =pd.merge(NormalRep,towhse,  on = 'Internal Number', how = 'left')
     NormalRep = NormalRep.rename(columns = {"To Warehouse Code": "Branch"})
     NormalRepRegion=NormalRep.copy()
-    print(NormalRepRegion)
-    print(NormalRepRegion.columns)
-    print('NormalRepRegion')
 
     ###Separating First and Second cut offs then finding the max value per [Branch,Day & Cut off]
     NormalRepRegion["Type"]=np.where(NormalRepRegion['Creatn Time - Incl. Secs']>=datetime.time(12, 0, 0),"Second","First")
@@ -144,8 +142,7 @@ def cutoff():
     NormalRepRegion = pd.merge(NormalRepRegion,Branches2,  on = ['Branch',"Type"], how = 'left')
     NormalRepRegion['Region'] = ['YOR/OHO' if x=='YOR OHO' else "CBD" if x=='CBD Messenger' else 'Nairobi' if x=='Rider 2 Karen' or x=='Rider 3 Eastlands' or x=='Rider 4 Thika Rd' or x=='Rider 1 Westlands'
                         else 'Uganda/Rwanda' if x== 'Rider' else 'G4S' if x=='Rider G4S' else 'Upcountry'  for x in NormalRepRegion['Address']]
-    
-    print(NormalRepRegion[['Creatn Time - Incl. Secs','BRS Cut']])
+
     NormalRepRegion['Creatn Time - Incl. Secs'] = NormalRepRegion['Creatn Time - Incl. Secs'].astype(str)
     NormalRepRegion['BRS CUT OFF'] = np.where(NormalRepRegion['Creatn Time - Incl. Secs'] > NormalRepRegion["BRS Cut"],0, 1)
     NormalRepRegion['Region']=np.where(((NormalRepRegion['Warehouse Name']=="Junction") |
@@ -185,6 +182,8 @@ def cutoff():
 
     NormalRepRegion = NormalRepRegion[~NormalRepRegion["ITR Number"].isin(issuesBRS)]
     print(NormalRepRegion.columns)
+    print(NormalRepRegion)
+    print('This has been printed NormalRepRegion')
 
     ###Grouping per Department and region
     count_summary=pd.pivot_table(NormalRepRegion,index=['Type', "Region"],values="BRS CUT OFF",aggfunc='count',margins=True)
@@ -255,8 +254,7 @@ def cutoff():
     count_summary_ug=pd.pivot_table(NormalRepRegion_ug,index=['Type', "Region"],values="BRS CUT OFF",aggfunc='count',margins=True).reset_index()
 
     sum_summary_ug=pd.pivot_table(NormalRepRegion_ug,index=['Type', "Region"],values="BRS CUT OFF",aggfunc=np.sum,margins=True).reset_index()
-    print(NormalRepRegion_ug.columns)
-    print(NormalRepRegion_ug)
+
     count_ITR_ug=pd.pivot_table(NormalRepRegion_ug,index=['Type', "Region"],values="ITR Number",aggfunc=pd.Series.nunique,margins=True).reset_index()
 
     ###Merging the data
@@ -338,10 +336,13 @@ def cutoff():
     MainStore_data=MainStore_data[MainStore_data.Status=="Rep Sent to Control Room"]
     MainStore_data['Internal Number'] = MainStore_data['Internal Number'].astype(int)
     NormalRepRegion['Internal Number'] = NormalRepRegion['Internal Number'].astype(int)
+    print(NormalRepRegion)
+    print(NormalRepRegion.columns)
+    print('NormalRepRegion')
     MainStore_data=pd.merge(MainStore_data,NormalRepRegion,on="Internal Number",how="inner")
     MainStore_data=MainStore_data.drop_duplicates(subset=['Internal Number'],keep="first", inplace=False)
     MainStore_data=MainStore_data[['Region',"Type","Internal Number","ITR Number","Created User","Status","Address","Warehouse Name","Branch","Date_Time","Date" ,"Time","Main Store Cut","DEPARTMENT","DEPARTMENT 2"]]
-
+    print(MainStore_data)
 
     Main_Pivot=pd.pivot_table(MainStore_data,index=["Warehouse Name",'Date',"Type"],values='Time',aggfunc=np.max)
     Main_Pivot = Main_Pivot.reset_index()
@@ -618,4 +619,4 @@ def cutoff():
                 df.to_excel(writer,'sheet%s' % n)
             writer.save()            
 
-cutoff()            
+# cutoff()            

@@ -164,7 +164,9 @@ def fetch_sap_insurance():
         create_table=False,
         add_new_columns=True)
 
-        # insurance_itemdetails_df.to_sql('source_insurance_plan', con = engine, schema='voler_staging', if_exists = 'append', index=False)
+       
+         # insurance_itemdetails_df.to_sql('source_insurance_plan', con = engine, schema='voler_staging', if_exists = 'append', index=False)
+         
 fetch_sap_insurance()
 
 

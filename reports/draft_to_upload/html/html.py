@@ -42,7 +42,9 @@ drafts_html = """
                 <table>{sops_html}</table>
             </div>
             <br><br>
-            <b><i>{plano_html}</i></b>
+            <b>{plano_html}</b>
+            <br><br>
+            <b><{no_view_html}</b>
         </div>
     </body>
     </html>

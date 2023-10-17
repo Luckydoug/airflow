@@ -133,6 +133,8 @@ def smtp():
             branchcode = row['Outlet']
             branchname = row['Branch']
             branchemail = row['Email']
+            srmemail = row['SRM Email']
+            
             # if branchcode not in ["OHO","COR","YOR"]:
             #     continue
             try:
@@ -159,11 +161,12 @@ def smtp():
                         )
             # receiver_email = ["tstbranch@gmail.com"]
             # receiver_email = ["cavin@optica.africa","kimstone@optica.africa","shehan@optica.africa"]
-            receiver_email = [branchemail,"cavin@optica.africa","kimstone@optica.africa",'kush@optica.africa','wazeem@optica.africa']
+
+            receiver_email = [branchemail,srmemail,'kush@optica.africa','wazeem@optica.africa']
             if branchcode == "OHO":
-                receiver_email = [branchemail,"cavin@optica.africa","kimstone@optica.africa",'kush@optica.africa','wazeem@optica.africa',"susan@optica.africa","wairimu@optica.africa"]
+                receiver_email = [branchemail,srmemail,'kush@optica.africa','wazeem@optica.africa',"susan@optica.africa","wairimu@optica.africa"]
             if branchcode == "YOR":
-                receiver_email = ["cavin@optica.africa","kimstone@optica.africa",'kush@optica.africa','wazeem@optica.africa',"yh.manager@optica.africa","wairimu@optica.africa"]
+                receiver_email = [srmemail,'kush@optica.africa','wazeem@optica.africa',"yh.manager@optica.africa","wairimu@optica.africa"]
             if branchcode == "JUN":
                 receiver_email = [branchemail,"cavin@optica.africa","wairimu@optica.africa"]
 

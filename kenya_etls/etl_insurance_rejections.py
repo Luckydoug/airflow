@@ -56,5 +56,6 @@ with DAG(
     finish = DummyOperator(
     task_id = "finish"
         )      
-    
+
     start >>  daily_update >> finish
+

@@ -22,10 +22,10 @@ def fetch_perc_det():
     sh = sh[0]
     sh = pd.DataFrame(sh.get_all_records())
 
-    # drop_table = """truncate table mabawa_dw.de_perc_det;"""
+    # drop_table = """truncate table mabawa_dw.detractors_incentive_slab;"""
     # drop_table = pg_execute(drop_table)
 
-    sh.to_sql('de_perc_det', con = engine, schema='mabawa_dw', if_exists = 'replace', index=False)
+    sh.to_sql('detractors_incentive_slab', con = engine, schema='mabawa_dw', if_exists = 'replace', index=False)
 
 
 def fetch_perc_ins_rej():
@@ -34,10 +34,10 @@ def fetch_perc_ins_rej():
     sh = sh[1]
     sh = pd.DataFrame(sh.get_all_records())
 
-    # drop_table = """truncate table mabawa_dw.de_perc_ins_rej;"""
+    # drop_table = """truncate table mabawa_dw.rejections_incentive_slab;"""
     # drop_table = pg_execute(drop_table)
 
-    sh.to_sql('de_perc_ins_rej', con = engine, schema='mabawa_dw', if_exists = 'replace', index=False)
+    sh.to_sql('rejections_incentive_slab', con = engine, schema='mabawa_dw', if_exists = 'replace', index=False)
 
 
 def fetch_perc_sop():
@@ -46,10 +46,10 @@ def fetch_perc_sop():
     sh = sh[2]
     sh = pd.DataFrame(sh.get_all_records())
 
-    # drop_table = """truncate table mabawa_dw.de_perc_sop;"""
+    # drop_table = """truncate table mabawa_dw.sop_incentive_slab;"""
     # drop_table = pg_execute(drop_table)
 
-    sh.to_sql('de_perc_sop', con = engine, schema='mabawa_dw', if_exists = 'replace', index=False)
+    sh.to_sql('sop_incentive_slab', con = engine, schema='mabawa_dw', if_exists = 'replace', index=False)
 
 
 def fetch_perc_nps():
@@ -64,9 +64,9 @@ def fetch_perc_nps():
     sh.to_sql('de_perc_nps', con = engine, schema='mabawa_dw', if_exists = 'replace', index=False)
 
 
-# fetch_perc_det()
-# fetch_perc_ins_rej()
-# fetch_perc_sop()
+fetch_perc_det()
+fetch_perc_ins_rej()
+fetch_perc_sop()
 # fetch_perc_nps()
 
 

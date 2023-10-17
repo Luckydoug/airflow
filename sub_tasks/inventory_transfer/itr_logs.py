@@ -26,15 +26,15 @@ from sub_tasks.api_login.api_login import(login)
 
 SessionId = login()
 
-# FromDate = '2020/01/01'
-# ToDate = '2020/05/31'
+FromDate = '2023/10/15'
+ToDate = '2023/10/16'
 
 
-today = date.today()
+# today = date.today()
 # pastdate = today - timedelta(days=2)
-pastdate = today
-FromDate = pastdate.strftime('%Y/%m/%d')
-ToDate = date.today().strftime('%Y/%m/%d')
+# # pastdate = today
+# # FromDate = pastdate.strftime('%Y/%m/%d')
+# ToDate = date.today().strftime('%Y/%m/%d')
 
 # api details
 pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetITRLOGDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
@@ -99,6 +99,7 @@ def fetch_sap_itr_logs ():
     
     #itr_log.to_sql('source_itr_log', con = engine, schema='mabawa_staging', if_exists = 'append', index=False)
     return "Fetched ITR Logs"
+# fetch_sap_itr_logs()
 
 def create_mviews_source_itr_log ():
 

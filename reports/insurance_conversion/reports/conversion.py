@@ -230,7 +230,7 @@ def create_insurance_conversion(
             creator_summary.to_excel(writer, sheet_name="daily_summary", index=False)
             feedback_non[cols].to_excel(writer, sheet_name = "daily_data", index = False)
 
-        not_received["Request Date"] = not_received["Request Date"].astype(str)
+        not_received["Request Date"] = pd.to_datetime(not_received["Request Date"]).dt.strftime('%Y-%m-%d %H:%M')
         with pd.ExcelWriter(f"{path}draft_upload/no_feedbacks.xlsx", engine='xlsxwriter') as writer:
             not_received[[
                 "Outlet",

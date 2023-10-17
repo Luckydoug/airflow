@@ -84,10 +84,12 @@ def manipulate_et_non_conversions():
         'mode_of_pay':'Customer Type',
         'handed_over_to':'Handed Over To',
         'last_viewed_by':'Last Viewed By',
-        'view_date':'View Date'
+        'view_date':'View Date',
+        'conversion_reason':'Conversion Reason',
+        'conversion_remarks':'Conversion Remarks'
     },axis=1,inplace=True)
 
-    non_q_cols = ['ET Date','ET Time','Branch','Customer Code','Optom','Handed Over To','Last Viewed By']
+    non_q_cols = ['ET Date','ET Time','Branch','Customer Code','Optom','Handed Over To','Last Viewed By','Conversion Reason','Conversion Remarks']
     non_q  = non_q[non_q_cols]
     non_q["Remarks"] = ""
     non_q["EWC Sign"] = ""

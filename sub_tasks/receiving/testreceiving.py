@@ -24,6 +24,7 @@ from workalendar.africa import Kenya
 import pygsheets
 import mysql.connector as database
 import urllib.parse
+from datetime import date, timedelta
 
 # PG Execute(Query)
 from sub_tasks.data.connect import (pg_execute, engine) 
@@ -47,8 +48,9 @@ def create_receivingdata():
 
 
 def receiving():
+    fromdate = '2023/09/01'
     today = datetime.date.today()
-    yesterday = today - datetime.timedelta(days=2)
+    yesterday = today - datetime.timedelta(days=1)
 
     receiving = pd.read_sql("""
     SELECT "DocEntry", "Order No.", odsc_date::date, odsc_time, "Customer Code", "Normal(Or)Repair Order", "Status", odsc_status,"Order Criteria Status",odsc_createdby, "Order Total Amount", "Outlet"
@@ -70,16 +72,19 @@ def receiving():
      # Riders Information
     riders = pd.read_sql("""
     SELECT trip_date, trip, westlands_time_from_hq, westlands_time_back_at_hq, karen_time_from_hq, karen_time_back_at_hq, eastlands_time_from_hq, 
-    eastlands_time_back_at_hq, thika_time_from_hq, thika_time_back_at_hq, mombasa_time_from_hq, "mombasa_time_back_at_hq", "rongai_time_from_hq", 
-    rongai_time_back_at_hq, upcountry, "CBD  time from Hq", cbd_time_back_at_hq, "CBD2  time from Hq", cbd2_time_back_at_hq,
-    rider5_thikatown_from_hq, rider5_thikatown_at_hq            
+    eastlands_time_back_at_hq, thika_time_from_hq, thika_time_back_at_hq, "THINDIGUA  TIME FROM HQ","THINDIGUA  TIME BACK @ HQ",mombasa_time_from_hq, 
+    "mombasa_time_back_at_hq", "rongai_time_from_hq", rongai_time_back_at_hq, upcountry, "CBD  time from Hq", 
+    cbd_time_back_at_hq, "CBD2  time from Hq", cbd2_time_back_at_hq,rider5_thikatown_from_hq,
+    rider5_thikatown_at_hq            
     FROM mabawa_staging.source_riders
     """,con=engine)
+
+    riders = riders.rename(columns = {'THINDIGUA  TIME FROM HQ': 'thindigua_time_from_hq','THINDIGUA  TIME BACK @ HQ':'thindigua_time_at_hq'})
 
     #Routes data
     routes = pd.read_sql("""
                         select "Date", "Trip", "Westlands", "Karen", "Eastlands", "Thika Road", "Mombasa Road",
-                        "Rongai", "Upcountry", "CBD", "Rider 5 - Thika Town" 
+                        "Rongai", "Upcountry", "CBD", "Rider 5 - Thika Town","Thindigua"
                         from mabawa_staging.source_rider_routes
     """,con=engine)
     print('The routes information has been fetched')
@@ -100,19 +105,14 @@ def receiving():
     thi = pd.merge(thikaroad, thika, on=['trip_date','trip'], how='left')
     thi['trip_date'] = pd.to_datetime(thi['trip_date']).dt.date
     thi['Thika Branches'] = thi['Thika Branches'].str.strip()
-    # print(thi[thi['trip_date'] == '2023-07-27'])
 
-    # Merge based on the date and branch
-    thikabranches = thi[thi['trip_date'] == yesterday]
+    # Merge based on the date and branch  
+    thikabranches = thi[(thi['trip_date'] >= pd.to_datetime(fromdate)) & (thi['trip_date'] <= pd.to_datetime(yesterday))]
     thikas = thikabranches['Thika Branches'].to_list()
     thika = receiving[receiving['ods_outlet'].isin(thikas)]
     thika['odsc_date'] = pd.to_datetime(thika['odsc_date']).dt.date
-    print('printed')
-    print(thika)
-    print(thi)
     print('order')
     thika.sort_values(by=['odsc_date'], ascending=True, inplace=True)
-
 
     # Thika Receiving
     thika = pd.merge(thika, thi, left_on=['odsc_date','ods_outlet'], right_on=['trip_date','Thika Branches'], how='right')
@@ -160,7 +160,7 @@ def receiving():
     up['Upcountry Branches'] = up['Upcountry Branches'].str.strip()
 
     # Merge based on the date and branch
-    upcountrybranches = up[up['trip_date'] == yesterday]
+    upcountrybranches = up[(up['trip_date'] >= pd.to_datetime(fromdate)) & (up['trip_date'] <= pd.to_datetime(yesterday))]
     ups = upcountrybranches['Upcountry Branches'].to_list()
     upcountry = receiving[receiving['ods_outlet'].isin(ups)]
     upcountry.sort_values(by=['odsc_date'], ascending=True, inplace=True)
@@ -188,7 +188,7 @@ def receiving():
     kar['Karen Branches'] = kar['Karen Branches'].str.strip()
 
     # Merge based on the date and branch
-    karenbranches = kar[kar['trip_date'] == yesterday]
+    karenbranches = kar[(kar['trip_date'] >= pd.to_datetime(fromdate)) & (kar['trip_date'] <= pd.to_datetime(yesterday))]
     karens = karenbranches['Karen Branches'].to_list()
     karen = receiving[receiving['ods_outlet'].isin(karens)]
     karen.sort_values(by=['odsc_date'], ascending=True, inplace=True)
@@ -232,7 +232,7 @@ def receiving():
     east['Eastlands Branches'] = east['Eastlands Branches'].str.strip()
 
     # Merge based on the date and branch
-    eastlandsbranches = east[east['trip_date'] == yesterday]
+    eastlandsbranches = east[(east['trip_date'] >= pd.to_datetime(fromdate)) & (east['trip_date'] <= pd.to_datetime(yesterday))]
     easts = eastlandsbranches['Eastlands Branches'].to_list()
     eastlands = receiving[receiving['ods_outlet'].isin(easts)]
     eastlands.sort_values(by=['odsc_date'], ascending=True, inplace=True)
@@ -279,7 +279,7 @@ def receiving():
     msa['Mombasa Road Branches'] = msa['Mombasa Road Branches'].str.strip()
 
     # Merge based on the date and branch
-    mombasabranches = msa[msa['trip_date'] == yesterday]
+    mombasabranches = msa[(msa['trip_date'] >= pd.to_datetime(fromdate)) & (msa['trip_date'] <= pd.to_datetime(yesterday))]
     msas = mombasabranches['Mombasa Road Branches'].to_list()
     mombasa = receiving[receiving['ods_outlet'].isin(msas)]
     mombasa.sort_values(by=['odsc_date'], ascending=True, inplace=True)
@@ -324,7 +324,7 @@ def receiving():
 
 
     # Merge based on the date and branch
-    westlandsbranches = we[we['trip_date'] == yesterday]
+    westlandsbranches = we[(we['trip_date'] >= pd.to_datetime(fromdate)) & (we['trip_date'] <= pd.to_datetime(yesterday))]
     wes = westlandsbranches['Westlands Branches'].to_list()
     westlands = receiving[receiving['ods_outlet'].isin(wes)]
     westlands.sort_values(by=['odsc_date'], ascending=True, inplace=True)
@@ -367,7 +367,7 @@ def receiving():
     ron['Rongai Branches'] = ron['Rongai Branches'].str.strip()
 
     # Merge based on the date and branch
-    rongaibranches = ron[ron['trip_date'] == yesterday]
+    rongaibranches = ron[(ron['trip_date'] >= pd.to_datetime(fromdate)) & (ron['trip_date'] <= pd.to_datetime(yesterday))]
     rons = rongaibranches['Rongai Branches'].to_list()
     rongai = receiving[receiving['ods_outlet'].isin(rons)]
     rongai.sort_values(by=['odsc_date'], ascending=True, inplace=True)
@@ -413,7 +413,7 @@ def receiving():
     cbd11['CBD Branches'] = cbd11['CBD Branches'].str.strip()
     
     # Merge based on the date and branch
-    cbdbranches = cbd11[cbd11['trip_date'] == yesterday]
+    cbdbranches = cbd11[(cbd11['trip_date'] >= pd.to_datetime(fromdate)) & (cbd11['trip_date'] <= pd.to_datetime(yesterday))]
     cbds = cbdbranches['CBD Branches'].to_list()
     cbds = list(set(cbds))
     cbd = receiving[receiving['ods_outlet'].isin(cbds)]
@@ -461,7 +461,7 @@ def receiving():
     thika_trip['Thika_Town Branches'] = thika_trip['Thika_Town Branches'].str.strip()
 
     # Merge based on the date and branch
-    thikatownbranches = thika_trip[thika_trip['trip_date'] == yesterday]
+    thikatownbranches = thika_trip[(thika_trip['trip_date'] >= pd.to_datetime(fromdate)) & (thika_trip['trip_date'] <= pd.to_datetime(yesterday))]
     thika_townlist = thikatownbranches['Thika_Town Branches'].to_list()
     print('thika_townlist')   
     print(thika_townlist)
@@ -472,7 +472,6 @@ def receiving():
 
     # Thika Receiving
     thikatown = pd.merge(thikatown, thika_trip, left_on=['odsc_date','ods_outlet'], right_on=['trip_date','Thika_Town Branches'], how='left')
-    print(thikatown[thikatown['doc_no'] == '232506685'])
     print(thikatown['doc_no'].nunique())
 
     # Selecting the trip that came with the orders
@@ -495,6 +494,50 @@ def receiving():
     print(thikatown)    
     thikatown['region'] = 'Rider 5 - Thika Town'
 
+    # THINDIGUA
+    thindingua = routes[['Date','Trip','Thindigua']]
+    thindingua['Thindigua Branches'] = thindingua['Thindigua'].str.split(',')
+    thindingua = thindingua.explode('Thindigua Branches')
+
+    # Thika Time back at Hq based on the full/partial trips
+    thindinguaroad = riders[['trip_date','trip','thindigua_time_at_hq']]
+    thindingua_town = thindingua[['Date','Trip','Thindigua Branches']].rename(columns={'Date':'trip_date','Trip':'trip'})
+    thindingua_trip = pd.merge(thindinguaroad, thindingua_town, on=['trip_date','trip'], how='left')
+    thindingua_trip['trip_date'] = pd.to_datetime(thindingua_trip['trip_date']).dt.date
+    thindingua_trip['Thindigua Branches'] = thindingua_trip['Thindigua Branches'].str.strip()
+
+    # Merge based on the date and branch
+    thindinguabranches = thindingua_trip[(thindingua_trip['trip_date'] >= pd.to_datetime(fromdate)) & (thindingua_trip['trip_date'] <= pd.to_datetime(yesterday))]
+    thindingua_townlist = thindinguabranches['Thindigua Branches'].to_list()
+    print('thindingua_townlist')   
+
+    thindingua = receiving[receiving['ods_outlet'].isin(thindingua_townlist)]
+    thindingua.sort_values(by=['odsc_date'], ascending=True, inplace=True)
+    thindingua['odsc_date'] = pd.to_datetime(thindingua['odsc_date']).dt.date
+    print(thindingua['doc_no'].nunique())
+
+    # Thika Receiving
+    thindingua = pd.merge(thindingua, thindingua_trip, left_on=['odsc_date','ods_outlet'], right_on=['trip_date','Thindigua Branches'], how='left')
+    print(thindingua['doc_no'].nunique())
+
+    # Selecting the trip that came with the orders
+    thindingua['thindigua_time_at_hq2'] = thindingua.groupby('doc_no', as_index=False)['thindigua_time_at_hq'].shift(-1)
+
+    # Fill the nulls with the closing time for OHO 
+    thindingua['thindigua_time_at_hq2'] = thindingua['thindigua_time_at_hq2'].fillna('19:00:00')
+
+    # thika['odsc_time']= pd.to_datetime(thika['odsc_time']).dt.time
+    thindingua['thindigua_time_at_hq']= pd.to_datetime(thindingua['thindigua_time_at_hq']).dt.time
+    thindingua['thindigua_time_at_hq2']= pd.to_datetime(thindingua['thindigua_time_at_hq2']).dt.time
+
+    thindingua['trip'] = thindingua['trip'].str.strip()
+    thindingua['thindigua_time_at_hq'] = np.where((thindingua['odsc_time'] < thindingua['thindigua_time_at_hq']) & (thindingua['trip'] == "Trip 1"),
+                                                      (pd.to_datetime('09:00:00').time()),thindingua['thindigua_time_at_hq'])
+
+    # Pick the correct trip the orders came with 
+    thindingua['CorrectTrip'] = np.where((thindingua['odsc_time'] >= thindingua['thindigua_time_at_hq']) & (thindingua['odsc_time'] <= thindingua['thindigua_time_at_hq2']) | (thindingua['odsc_time'] >= thindingua['thindigua_time_at_hq']) & (thindingua['thindigua_time_at_hq2'].isnull()),1,0)
+    print(thindingua)    
+    thindingua['region'] = 'Thindigua'
 
     # Picking only the correct trips for now (Changes the logic because of orders that come earlier)
     rongai = rongai[rongai['CorrectTrip']==1] 
@@ -505,6 +548,7 @@ def receiving():
     thika = thika[thika['CorrectTrip']==1]
     cbd = cbd[cbd['CorrectTrip']==1]
     thikatown = thikatown[thikatown['CorrectTrip']==1]
+    thindingua = thindingua[thindingua['CorrectTrip']==1]
 
     print('picking of correct trip is done')
     
@@ -517,7 +561,7 @@ def receiving():
     thika['thika_time'] = pd.to_datetime(thika['trip_date'].astype(str) + ' ' + thika['thika_time_back_at_hq'].astype(str))
     cbd['CBD_time'] = pd.to_datetime(cbd['trip_date'].astype(str) + ' ' + cbd['cbd_time_back_at_hq'].astype(str))
     thikatown['thikatown_time'] = pd.to_datetime(thikatown['trip_date'].astype(str) + ' ' + thikatown['rider5_thikatown_at_hq'].astype(str))
-
+    thindingua['thindingua_time'] = pd.to_datetime(thindingua['trip_date'].astype(str) + ' ' + thindingua['thindigua_time_at_hq'].astype(str))
     print('done converting to datetime')
 
     # Renaming the columns & Applu function where if an order does not have the correct time, it should give the same time receiving updated
@@ -531,7 +575,7 @@ def receiving():
     thika.rename(columns={'thika_time':'receiving_time'}, inplace=True)
     cbd.rename(columns={'CBD_time':'receiving_time'}, inplace=True)
     thikatown.rename(columns={'thikatown_time':'receiving_time'}, inplace=True)
- 
+    thindingua.rename(columns={'thindingua_time':'receiving_time'}, inplace=True)
 
     print('adjusting of orders is done')
 
@@ -544,8 +588,8 @@ def receiving():
     thika = thika[['doc_entry','odsc_date','odsc_time','odsc_status','odsc_createdby','doc_no','cust_code','ods_outlet','DateTime','trip_date','receiving_time','order_criteria_status','region']]
     cbd = cbd[['doc_entry','odsc_date','odsc_time','odsc_status','odsc_createdby','doc_no','cust_code','ods_outlet','DateTime','trip_date','receiving_time','order_criteria_status','region']]
     thikatown = thikatown[['doc_entry','odsc_date','odsc_time','odsc_status','odsc_createdby','doc_no','cust_code','ods_outlet','DateTime','trip_date','receiving_time','order_criteria_status','region']]
-
-    receiving = pd.concat([thika,westlands,mombasa,eastlands,karen,upcountry,rongai,cbd,thikatown], axis=0)   
+    thindingua = thindingua[['doc_entry','odsc_date','odsc_time','odsc_status','odsc_createdby','doc_no','cust_code','ods_outlet','DateTime','trip_date','receiving_time','order_criteria_status','region']]
+    receiving = pd.concat([thika,westlands,mombasa,eastlands,karen,upcountry,rongai,cbd,thikatown,thindingua], axis=0)   
     print(receiving)
 
     query = """truncate mabawa_dw.dim_receiving_data;"""

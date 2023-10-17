@@ -114,7 +114,11 @@ def update_calculated_field():
 
     """ Delayed Orders"""
     control_delay = control[control['Delay'] == 1]
-    controldelay = pd.pivot_table(control_delay, index=['Hour', 'Doc No'], values='Time Min', aggfunc='mean', fill_value=0)
+    if not control_delay.empty:
+        controldelay = pd.pivot_table(control_delay, index=['Hour', 'Doc No'], values='Time Min', aggfunc='mean', fill_value=0)
+    else:
+        columns = ['Hour', 'Doc No', 'Time Min']
+        controldelay = pd.DataFrame(columns=columns)     
     print('Let us print controldelay')
     print(controldelay)
 
@@ -164,7 +168,11 @@ def update_calculated_field():
 
     """ Delayed Orders"""
     designer_delay = designer[designer['Delay'] == 1]
-    designerdelay = pd.pivot_table(designer_delay, index=['Hour', 'Doc No'], values='Time Min', aggfunc='mean', fill_value=0)
+    if not designer_delay.empty:
+        designerdelay = pd.pivot_table(designer_delay, index=['Hour', 'Doc No'], values='Time Min', aggfunc='mean', fill_value=0)
+    else:
+        columns = ['Hour', 'Doc No', 'Time Min']
+        designerdelay = pd.DataFrame(columns=columns) 
 
     """Cut Off"""
     designer['Time Taken'] = designer.apply 
@@ -212,7 +220,11 @@ def update_calculated_field():
 
     """ Delayed Orders"""
     mainstore_delay = mainstore[mainstore['Delay'] == 1]
-    mainstoredelay = pd.pivot_table(mainstore_delay, index=['Hour', 'Doc No'], values='Time Min', aggfunc='mean', fill_value=0)
+    if not mainstore_delay.empty:
+        mainstoredelay = pd.pivot_table(mainstore_delay, index=['Hour', 'Doc No'], values='Time Min', aggfunc='mean', fill_value=0)
+    else:
+        columns = ['Hour', 'Doc No', 'Time Min']
+        mainstore_delay = pd.DataFrame(columns=columns) 
 
     """Cut Off"""
     mainstore['Time Taken'] = mainstore.apply 
@@ -261,7 +273,11 @@ def update_calculated_field():
 
     """ Delayed Orders"""
     packaging_delay = packaging[packaging['Delay'] == 1]
-    packagingdelay = pd.pivot_table(packaging_delay, index=['Hour', 'Doc No'], values='Time Min', aggfunc='mean', fill_value=0)
+    if not packaging_delay.empty:
+        packagingdelay = pd.pivot_table(packaging_delay, index=['Hour', 'Doc No'], values='Time Min', aggfunc='mean', fill_value=0)
+    else:    
+        columns = ['Hour', 'Doc No', 'Time Min']
+        packagingdelay = pd.DataFrame(columns=columns)     
 
     """Cut Off"""
     packaging['Time Taken'] = packaging.apply 
@@ -310,9 +326,12 @@ def update_calculated_field():
 
     """ Delayed Orders"""
     lensstore_delay = lensstore[lensstore['Delay'] == 1]
-    lensstoredelay = pd.pivot_table(lensstore_delay, index=['Hour', 'Doc No'], values='Time Min', aggfunc='mean', fill_value=0)
-    print(lensstoredelay)
-
+    if not lensstore_delay.empty:
+        lensstoredelay = pd.pivot_table(lensstore_delay, index=['Hour', 'Doc No'], values='Time Min', aggfunc='mean', fill_value=0)
+        print(lensstoredelay)
+    else:
+        columns = ['Hour', 'Doc No', 'Time Min']
+        lensstoredelay = pd.DataFrame(columns=columns) 
 
     """Cut Off"""
     lensstore['Time Taken'] = lensstore.apply 

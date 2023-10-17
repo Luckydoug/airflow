@@ -8,7 +8,8 @@ from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python_operator import PythonOperator
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-DAG_ID = 'KE_RM_SRM_ETL'
+DAG_ID = 'KENYA_SRM_RM_ETL'
+
 
 default_args = {
     'owner': 'Data',
@@ -42,9 +43,9 @@ with DAG(
                 build_kenya_sops,
                 build_kenya_plano_report,
                 build_kenya_ratings_report,
-                push_kenya_opening_time,
                 build_kenya_opening_time,
-                build_kenya_insurance_conversion
+                build_kenya_insurance_conversion,
+                build_kenya_non_view_non_conversions
             )
 
             push_kenya_efficiency_data = PythonOperator(
@@ -83,12 +84,6 @@ with DAG(
                 provide_context=True
             )
 
-            push_kenya_opening_time = PythonOperator(
-                task_id='push_kenya_opening_time',
-                python_callable=push_kenya_opening_time,
-                provide_context=True
-            )
-
             
             build_kenya_opening_time = PythonOperator(
                 task_id='build_kenya_opening_time',
@@ -102,8 +97,14 @@ with DAG(
                 provide_context=True
             )
 
+            build_kenya_non_view_non_conversions = PythonOperator(
+                task_id='build_kenya_non_view_non_conversions',
+                python_callable= build_kenya_non_view_non_conversions,
+                provide_context=True
+            )
+
             
-            push_kenya_efficiency_data >> build_kenya_draft_upload >> build_kenya_sops >> build_kenya_rejections >> build_kenya_plano_report >> build_kenya_ratings_report >> push_kenya_opening_time >> build_kenya_opening_time >> build_kenya_insurance_conversion
+            push_kenya_efficiency_data >> build_kenya_draft_upload >> build_kenya_sops >> build_kenya_rejections >> build_kenya_plano_report >> build_kenya_ratings_report >> build_kenya_opening_time >> build_kenya_insurance_conversion >>  build_kenya_non_view_non_conversions
             
 
     with TaskGroup('smtp') as smtp:
