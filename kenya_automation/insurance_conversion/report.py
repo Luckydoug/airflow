@@ -31,7 +31,7 @@ WITH THIS APPROACH WE REQUIRE THAT THE DATA BE FETCHED WHEN IT'S ONLY REQUIRED.
 """
 
 """
-FETCH ORDERSCREE LOGS
+FETCH ORDERSCREEN LOGS
 """
 def orderscreen():
     orderscreen = data_fetcher.fetch_orderscreen(
