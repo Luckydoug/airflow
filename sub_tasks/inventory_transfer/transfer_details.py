@@ -26,13 +26,13 @@ from sub_tasks.api_login.api_login import(login)
 
 SessionId = login()
 
-FromDate = '2023/10/13'
-ToDate = '2023/10/16'
+# FromDate = '2023/10/13'
+# ToDate = '2023/10/16'
 
-# today = date.today()
-# pastdate = today - timedelta(days=2)
-# # FromDate = pastdate.strftime('%Y/%m/%d')
-# ToDate = date.today().strftime('%Y/%m/%d')
+today = date.today()
+pastdate = today - timedelta(days=2)
+FromDate = pastdate.strftime('%Y/%m/%d')
+ToDate = date.today().strftime('%Y/%m/%d')
 
 
 # api details
@@ -140,4 +140,4 @@ def fetch_sap_inventory_transfer():
         create_table=False)
 
     return "IT Complete"
-fetch_sap_inventory_transfer()
+# fetch_sap_inventory_transfer()

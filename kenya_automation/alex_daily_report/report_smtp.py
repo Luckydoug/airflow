@@ -129,6 +129,8 @@ def order_efficiency_smtp():
     else:
         report_date = (today - relativedelta(days=1)).strftime('%d-%m-%Y')
 
+    # report_date = '2023-10-13'
+
     i=0
     j=0
 
@@ -498,13 +500,14 @@ def order_efficiency_smtp():
         if department == "BRS":
             # receiver_email = ['tstbranch@gmail.com']
             receiver_email = [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','shyam@optica.africa','stock@optica.africa','wanjiru.kinyara@optica.africa']
+            # [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','shyam@optica.africa','stock@optica.africa','wanjiru.kinyara@optica.africa']
         else:    
             if pd.to_numeric((table1['Total'].iloc[-1]).replace("%","")) < 95:
                 receiver_email = [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','shyam@optica.africa','yuri@optica.africa','wanjiru.kinyara@optica.africa']
-                # receiver_email = ['wairimu@optica.africa']
+                # receiver_email = [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','wanjiru.kinyara@optica.africa']
             else:
                 receiver_email = [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','shyam@optica.africa','wanjiru.kinyara@optica.africa']
-                # receiver_email = ['tstbranch@gmail.com']
+                # receiver_email = [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','wanjiru.kinyara@optica.africa']
 
         # Create a MIMEMultipart class, and set up the From, To, Subject fields
         email_message = MIMEMultipart()

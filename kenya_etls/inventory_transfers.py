@@ -32,6 +32,7 @@ create_mviews_all_itr_logs_2, update_all_dropstatus, transpose_mviews_all_itr_lo
 update_missing_dates_dept,
 create_mviews_fact_all_itr_logs, create_fact_all_itr_logs,update_fact_all_itr_logs_dropped, update_fact_all_itr_logs_dept,
 create_all_branch_itr_logs, update_branch_itr_dropstatus, transpose_mviews_all_branch_itr_logs)
+from sub_tasks.dimensionsETLs.items import fetch_sap_items
 
 # from tmp.python_test
 DAG_ID = 'Inventory_Transfer_Pipeline'
@@ -225,6 +226,16 @@ with DAG(
 
         fetch_sap_itr_logs >> create_mviews_source_itr_log >> create_mviews_branchstock_itrlogs >> update_drop_status >> create_mviews_salesorders_with_item_whse >> create_mviews_itr_whse_details >> create_mviews_itr_with_details >> create_mviews_fact_branchstock_rep_itrlogs #>> transpose_branchstock_rep_itrlogs
     
+
+    with TaskGroup('items') as items:
+
+            fetch_sap_items = PythonOperator(
+                task_id = 'fetch_sap_items',
+                python_callable=fetch_sap_items,
+                provide_context=True
+            )
+
+
     with TaskGroup('stores') as stores:  
         
         create_mviews_stores_branchstockrep_logs = PythonOperator(

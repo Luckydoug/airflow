@@ -19,8 +19,8 @@ from reports.draft_to_upload.reports.draft import (
     create_draft_upload_report
 )
 from reports.draft_to_upload.utils.utils import (
-    get_report_frequency, 
-    return_report_daterange, 
+    get_report_frequency,
+    return_report_daterange,
     get_start_end_dates
 )
 
@@ -61,7 +61,8 @@ from reports.draft_to_upload.data.fetch_data import (
     fetch_customers,
     fetch_branch_data,
     fetch_non_conversion_non_viewed,
-    fetch_working_hours
+    fetch_working_hours,
+    fetch_no_views_data
 )
 
 
@@ -83,6 +84,8 @@ so that the data is only fetched when it is needed!.
 """
 RETURN ORDERS
 """
+
+
 def return_orders():
     orders = fetch_orders(
         database=database,
@@ -90,9 +93,12 @@ def return_orders():
     )
     return orders
 
+
 """
 RETURN EYE TESTS
 """
+
+
 def eyetests():
     eyetests = fetch_eyetests(
         database=database,
@@ -101,9 +107,12 @@ def eyetests():
 
     return eyetests
 
+
 """
 RETURN ORDERSCREEN LOGS
 """
+
+
 def orderscreen():
     orderscreen = fetch_orderscreen(
         database=database,
@@ -167,6 +176,7 @@ def payments():
     )
     return payments
 
+
 def planos():
     planos = fetch_planos(
         engine=engine,
@@ -190,7 +200,6 @@ def plano_orderscreen():
     )
 
     return plano_orderscreen
-
 
 
 def sops_info():
@@ -227,6 +236,7 @@ def branch_data():
 
     return branch_data
 
+
 date = ''
 if selection == "Daily":
     date = str(start_date)
@@ -249,11 +259,13 @@ def opening_data():
 
     return opening_data
 
+
 def working_hours() -> pd.DataFrame:
     working_hours = fetch_working_hours(
         engine=engine
     )
     return working_hours
+
 
 def push_kenya_efficiency_data():
     date = return_report_daterange(selection="Daily")
@@ -274,9 +286,10 @@ def data_orders():
         database=database,
         engine=engine,
         start_date=start_date,
-        dw = "mabawa_dw"
+        dw="mabawa_dw"
     )
     return data_orders
+
 
 def daywise_efficiency():
     daywise_efficiency = fetch_daywise_efficiency(
@@ -300,6 +313,7 @@ def mtd_efficiency():
     )
 
     return mtd_efficiency
+
 
 def no_view_non_conversions():
     no_view_non_conversions = fetch_non_conversion_non_viewed(
@@ -336,6 +350,7 @@ def daywise_rejections():
 
     return daywise_rejections
 
+
 def mtd_rejections():
     mtd_rejections = fetch_mtd_rejections(
         database=database,
@@ -360,8 +375,9 @@ def build_kenya_rejections():
         sales_orders=sales_orders(),
         mtd_data=mtd_rejections(),
         daywise_data=daywise_rejections(),
-        drop = to_drop
+        drop=to_drop
     )
+
 
 def customers():
     customers = fetch_customers(
@@ -371,6 +387,7 @@ def customers():
     )
 
     return customers
+
 
 def build_kenya_sops():
     create_ug_sops_report(
@@ -405,6 +422,94 @@ def build_kenya_ratings_report():
     )
 
 
+def build_kenya_opening_time():
+    create_opening_time_report(
+        opening_data(),
+        path
+    )
+
+
+data_fetcher = FetchData(
+    engine=engine,
+    database="mabawa_staging"
+)
+
+
+def orderscreen():
+    orderscreen = data_fetcher.fetch_orderscreen(
+        start_date=start_date
+    )
+
+    return orderscreen
+
+
+def insurance_companies():
+    insurance_companies = data_fetcher.fetch_insurance_companies()
+    return insurance_companies
+
+
+def orders():
+    orders = data_fetcher.fetch_orders()
+    return orders
+
+
+def sales_orders():
+    sales_orders = data_fetcher.fetch_sales_orders(
+        start_date=first_week_start
+    )
+
+    return sales_orders
+
+
+def no_feedbacks():
+    no_feedbacks = data_fetcher.fetch_no_feedbacks(
+        database="report_views",
+        start_date=start_date
+    )
+
+    return no_feedbacks
+
+
+def build_kenya_insurance_conversion() -> None:
+    create_insurance_conversion(
+        path=path,
+        all_orders=orders(),
+        orderscreen=orderscreen(),
+        branch_data=branch_data(),
+        sales_orders=sales_orders(),
+        insurance_companies=insurance_companies(),
+        selection=selection,
+        date=start_date,
+        working_hours=working_hours(),
+        country="Kenya",
+        no_feedbacks=no_feedbacks()
+    )
+
+
+def no_views_data() -> pd.DataFrame:
+    no_views_data = fetch_no_views_data(
+        database="mabawa_mviews",
+        engine=engine,
+        start_date=start_date
+    )
+
+    return no_views_data
+
+
+def build_kenya_non_view_non_conversions():
+    create_non_conversions_non_view(
+        path=path,
+        data=no_view_non_conversions(),
+        selection=selection,
+        start_date=fourth_week_start,
+        no_views_data=no_views_data()
+    )
+
+
+"""
+LOWER LEVEL CODE
+"""
+
 def trigger_kenya_smtp():
     send_draft_upload_report(
         selection=selection,
@@ -424,96 +529,14 @@ def trigger_kenya_branches_smtp():
     )
 
 
-def build_kenya_opening_time():
-    create_opening_time_report(
-        opening_data(),
-        path
-    )
-
-
 def clean_kenya_folder():
     clean_folders(path=path)
 
 
-data_fetcher = FetchData(
-    engine=engine,
-    database="mabawa_staging"
-)
+"""
+DATA TEAM DEVELOPMENTS
+IT SHOULD BE UNIQUE THOUGH
 
-def orderscreen():
-    orderscreen = data_fetcher.fetch_orderscreen(
-        start_date=start_date
-    )
-
-    return orderscreen
-
-def insurance_companies():
-    insurance_companies = data_fetcher.fetch_insurance_companies()
-    return insurance_companies
-
-def orders():
-    orders = data_fetcher.fetch_orders()
-    return orders
-
-def sales_orders():
-    sales_orders = data_fetcher.fetch_sales_orders(
-        start_date=first_week_start
-    )
-
-    return sales_orders
-
-def no_feedbacks():
-    no_feedbacks = data_fetcher.fetch_no_feedbacks(
-        database="report_views",
-        start_date=start_date
-    )
-
-    return no_feedbacks
-
-
-
-
-def build_kenya_insurance_conversion() -> None:
-    create_insurance_conversion(
-        path=path,
-        all_orders = orders(),
-        orderscreen=orderscreen(),
-        branch_data=branch_data(),
-        sales_orders=sales_orders(),
-        insurance_companies=insurance_companies(),
-        selection=selection,
-        date = start_date,
-        working_hours=working_hours(),
-        country="Kenya",
-        no_feedbacks=no_feedbacks()
-    )
-
-def build_kenya_non_view_non_conversions():
-    create_non_conversions_non_view(
-        path=path,
-        data=no_view_non_conversions(),
-        selection=selection,
-        start_date=fourth_week_start
-    )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+SIGNED BY
+DOUGLAS KATHURIMA
+"""

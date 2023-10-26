@@ -40,11 +40,10 @@ conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", p
 
 """We shall recreate the query :3rd floor  all user Replacement & Replacement ITR over date range to distinguish between branch stock and stock borrow"""
 
-##Define the days that is yesterday
+#Define the days that is yesterday
 today = datetime.date.today()
 yesterday = today - datetime.timedelta(days=1)
 formatted_date = yesterday.strftime('%Y-%m-%d')
-
 
 def replacements():
     """Replacement ITR over date range to distinguish between branch stock and stock borrow"""
@@ -406,4 +405,4 @@ def replacements():
                 df.to_excel(writer,'sheet%s' % n)
             writer.save()
             
-replacements()
+# replacements()

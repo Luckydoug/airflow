@@ -3,18 +3,13 @@ sys.path.insert(0,os.path.abspath(os.path.dirname(__file__)))
 from airflow import DAG
 from datetime import datetime, timedelta
 from airflow.utils.task_group import TaskGroup
-# from airflow.example_dags.subdags.subdag import subdag
-# from airflow.operators.bash_operator import BashOperator
 from airflow.operators.dummy_operator import DummyOperator
-# from airflow.contrib.sensors.file_sensor import FileSensor
 from airflow.operators.python_operator import PythonOperator
 
-# from tmp.python_test
 DAG_ID = 'Main_ETLs_Pipeline'
 
 default_args = {
     'owner': 'Data Team',
-    # 'depends_on_past': False,
     'retries': 3,
     'retry_delay': timedelta(seconds=15),
     'start_date': datetime(2021, 12, 13),

@@ -30,6 +30,7 @@ from uganda_sub_tasks.ordersETLs.incentive_slab import fetch_sap_incentive_slab
 from uganda_sub_tasks.ordersETLs.purchaseorder import fetch_purchase_orders
 from uganda_sub_tasks.inventory_transfer.transfer_details import fetch_sap_inventory_transfer
 from uganda_sub_tasks.inventory_transfer.transfer_request import fetch_sap_invt_transfer_request
+from uganda_sub_tasks.ordersETLs.ajua_info import fetch_ajua_info
 
 
 DAG_ID = 'UG_Main_Pipeline'
@@ -253,6 +254,13 @@ with DAG(
             provide_context = True
         )        
     
-    start >> orders >> orderlog >> payments >> customers >> prescriptions >> view >> salesorders >> discounts >> users >> items >> insurance >> targets >> purchaseorders >> inventorytransferdetails >> itrdetails >> finish
+    with TaskGroup('nps_survey') as nps_survey:
+
+        fetch_ajua_info = PythonOperator(
+            task_id = 'fetch_ajua_info',
+            python_callable = fetch_ajua_info,
+            provide_context = True
+        ) 
+    start >> orders >> orderlog >> payments >> customers >> prescriptions >> view >> salesorders >> discounts >> users >> items >> insurance >> targets >> purchaseorders >> nps_survey >> inventorytransferdetails >> itrdetails >> finish
 
 

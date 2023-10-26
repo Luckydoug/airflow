@@ -56,9 +56,10 @@ with DAG(
 
         fetch_sap_branch_targets >> fetch_sap_incentive_slab
     
-    with TaskGroup('gr_targets') as gr: 
+    with TaskGroup('google_reviews') as google_reviews: 
 
-        from sub_tasks.gsheets.gr_targets import (fetch_gr_targets, create_gr_summary)
+        from sub_tasks.gsheets.gr_targets import (fetch_gr_targets)
+        from sub_tasks.incentives.incentive_factors import(refresh_google_reviews_summary)
             
         fetch_gr_targets = PythonOperator(
             task_id = 'fetch_gr_targets',
@@ -66,17 +67,18 @@ with DAG(
             provide_context = True
         )
 
-        create_gr_summary = PythonOperator(
-            task_id = 'create_gr_summary',
-            python_callable = create_gr_summary,
+        refresh_google_reviews_summary = PythonOperator(
+            task_id = 'refresh_google_reviews_summary',
+            python_callable = refresh_google_reviews_summary,
             provide_context = True
         )
 
-        fetch_gr_targets >> create_gr_summary
+        fetch_gr_targets >> refresh_google_reviews_summary
     
-    with TaskGroup('sg_targets') as sg:
+    with TaskGroup('sunglasses') as sunglasses:
 
-        from sub_tasks.gsheets.sg_sales_targets import (fetch_sg_targets, create_source_sg_sales, create_sg_summary)
+        from sub_tasks.gsheets.sg_sales_targets import (fetch_sg_targets, create_sg_summary)
+        from sub_tasks.incentives.incentive_factors import refresh_sunglass_sales_summary
     
         fetch_sg_targets = PythonOperator(
             task_id = 'fetch_sg_targets',
@@ -84,24 +86,18 @@ with DAG(
             provide_context = True
         ) 
 
-        create_source_sg_sales = PythonOperator(
-            task_id = 'create_source_sg_sales',
-            python_callable = create_source_sg_sales,
-            provide_context = True
-        ) 
-
-        create_sg_summary = PythonOperator(
-            task_id = 'create_sg_summary',
-            python_callable = create_sg_summary,
+        refresh_sunglass_sales_summary = PythonOperator(
+            task_id = 'refresh_sunglass_sales_summary',
+            python_callable = refresh_sunglass_sales_summary,
             provide_context = True
         )
 
-        fetch_sg_targets >> create_source_sg_sales >> create_sg_summary
+        fetch_sg_targets >> refresh_sunglass_sales_summary
     
-    with TaskGroup('nps_det') as nps_det:
+    with TaskGroup('nps_survey') as nps_survey:
 
         from sub_tasks.gsheets.ded_earn import fetch_perc_det
-        from sub_tasks.incentives.incentive_factors import create_nps_summary
+        from sub_tasks.incentives.incentive_factors import refresh_nps_summary
                                                
         fetch_perc_det = PythonOperator(
             task_id = 'fetch_perc_det',
@@ -109,18 +105,18 @@ with DAG(
             provide_context = True
         )
  
-        create_nps_summary = PythonOperator(
-            task_id = 'create_nps_summary',
-            python_callable = create_nps_summary,
+        refresh_nps_summary = PythonOperator(
+            task_id = 'refresh_nps_summary',
+            python_callable = refresh_nps_summary,
             provide_context = True
         )
 
-        fetch_perc_det >> create_nps_summary
+        fetch_perc_det >> refresh_nps_summary
 
-    with TaskGroup('ins_rej') as ins_rej:
+    with TaskGroup('insurance_rejections') as insurance_rejections:
 
         from sub_tasks.gsheets.ded_earn import fetch_perc_ins_rej
-        from sub_tasks.incentives.incentive_factors import create_ins_rejections,create_ins_rejection_summary
+        from sub_tasks.incentives.incentive_factors import refresh_insurance_rejections
         from sub_tasks.gsheets.insurancetodrop import fetch_insurance_errors_to_drop
 
         fetch_perc_ins_rej = PythonOperator(
@@ -135,26 +131,20 @@ with DAG(
             provide_context = True
         )
 
-        create_ins_rejections = PythonOperator(
-            task_id = 'create_ins_rejections',
-            python_callable = create_ins_rejections,
+        refresh_insurance_rejections = PythonOperator(
+            task_id = 'refresh_insurance_rejections',
+            python_callable = refresh_insurance_rejections,
             provide_context = True
         )
 
-        create_ins_rejection_summary = PythonOperator(
-            task_id = 'create_ins_rejection_summary',
-            python_callable = create_ins_rejection_summary,
-            provide_context = True
-        )
-
-        fetch_perc_ins_rej >> fetch_insurance_errors_to_drop >> create_ins_rejections >>create_ins_rejection_summary
+        fetch_perc_ins_rej >> fetch_insurance_errors_to_drop >> refresh_insurance_rejections
 
     with TaskGroup('sop') as sop:
 
         from sub_tasks.gsheets.ded_earn import fetch_perc_sop
         from sub_tasks.gsheets.sop import (fetch_sop_branch_info, fetch_sop)
-        from sub_tasks.incentives.incentive_factors import create_sop, create_sop_summary
-        
+        from sub_tasks.incentives.incentive_factors import refresh_sop   
+
         fetch_perc_sop = PythonOperator(
             task_id = 'fetch_perc_sop',
             python_callable = fetch_perc_sop,
@@ -173,45 +163,41 @@ with DAG(
             provide_context=True
         )
 
-        create_sop = PythonOperator(
-            task_id = 'create_sop',
-            python_callable = create_sop,
+        refresh_sop = PythonOperator(
+            task_id = 'refresh_sop',
+            python_callable = refresh_sop,
             provide_context = True
         )
 
-        create_sop_summary = PythonOperator(
-            task_id = 'create_sop_summary',
-            python_callable = create_sop_summary,
-            provide_context = True
-        )
-
-        fetch_perc_sop >> fetch_sop_branch_info >> fetch_sop >> create_sop >> create_sop_summary
+        fetch_perc_sop >> fetch_sop_branch_info >> fetch_sop >> refresh_sop 
     
-    with TaskGroup('ins_conv') as ins_conv:
+    with TaskGroup('insurance_feedback_conversion') as insurance_feedback_conversion:
 
-        from sub_tasks.incentives.incentive_factors import (create_ins_feedback_conv, create_ins_direct_conv)
+        from sub_tasks.incentives.incentive_factors import refresh_insurance_feedback_conversion
 
-        create_ins_feedback_conv = PythonOperator(
-            task_id = 'create_ins_feedback_conv',
-            python_callable = create_ins_feedback_conv,
-            provide_context = True
-        )
-
-        create_ins_direct_conv = PythonOperator(
-            task_id = 'create_ins_direct_conv',
-            python_callable = create_ins_direct_conv,
+        refresh_insurance_feedback_conversion = PythonOperator(
+            task_id = 'refresh_insurance_feedback_conversion',
+            python_callable = refresh_insurance_feedback_conversion,
             provide_context = True
         )
     
-    create_ins_feedback_conv >> create_ins_direct_conv
-
-    from sub_tasks.incentives.incentive_factors import create_all_activity
+    from sub_tasks.incentives.incentive_factors import refresh_all_activity
     
-    create_all_activity = PythonOperator(
-        task_id = 'create_all_activity',
-        python_callable = create_all_activity,
+    refresh_all_activity = PythonOperator(
+        task_id = 'refresh_all_activity',
+        python_callable = refresh_all_activity,
         provide_context = True
     )
+
+        
+    from sub_tasks.incentives.incentive_factors import refresh_order_contents
+    
+    refresh_order_contents = PythonOperator(
+        task_id = 'refresh_order_contents',
+        python_callable = refresh_order_contents,
+        provide_context = True
+    )
+
 
     from sub_tasks.incentives.incentive_factors import refresh_lens_silh
 
@@ -225,6 +211,6 @@ with DAG(
         task_id = "finish"
     )
     
-    start >> sales >> gr >> sg >> nps_det >> create_all_activity >> ins_rej >> sop >> ins_conv >> refresh_lens_silh >> finish
+    start >> sales >> refresh_all_activity >> refresh_order_contents >> refresh_lens_silh >> google_reviews >> sunglasses >> nps_survey  >> insurance_feedback_conversion >> insurance_rejections >> sop >> finish
     # start >> gr >> sg >> nps_det >> create_all_activity >> ins_rej >> sop >> ins_conv >>  finish
     

@@ -100,6 +100,9 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection, cou
                     message = message
                 )
 
+                if branch == "KAM" or branch == "OAS":
+                    continue
+
                 if branch == random_branch:
                     receiver_email = [
                         rm_email, 

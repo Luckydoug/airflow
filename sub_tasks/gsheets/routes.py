@@ -39,5 +39,6 @@ def fetch_routesdata():
      routes.to_sql('source_rider_routes', con = engine, schema='mabawa_staging', if_exists = 'append', index=False)   
      
      print('rider_routes pulled')
+
 # fetch_routesdata()   
        

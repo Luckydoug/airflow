@@ -19,7 +19,9 @@ from uganda_sub_tasks.postgres.salesorders_views import (refresh_order_line_with
                                                     refresh_fact_orders_header,refresh_order_contents)
 
 from uganda_sub_tasks.postgres.prescriptions_views import refresh_et_conv
-from uganda_sub_tasks.postgres.incentives import refresh_lens_silh
+
+from uganda_sub_tasks.postgres.incentives import (refresh_lens_silh, refresh_insurance_rejections, refresh_insurance_feedback_conversion,
+                                                  refresh_sop, refresh_nps_summary, refresh_google_reviews_summary, refresh_sunglass_sales_summary)
 
 DAG_ID = 'UG_Update_Views'
 
@@ -83,7 +85,7 @@ with DAG(
             provide_context = True
         )
     
-    with TaskGroup('lens_silh') as lens_silh:
+    with TaskGroup('incentive_factors') as incentive_factors:
 
         refresh_lens_silh = PythonOperator(
             task_id = 'refresh_lens_silh',
@@ -91,8 +93,47 @@ with DAG(
             provide_context = True
         )
         
+        refresh_insurance_rejections = PythonOperator(
+            task_id = 'refresh_insurance_rejections',
+            python_callable = refresh_insurance_rejections,
+            provide_context = True
+        )
+
+        refresh_insurance_feedback_conversion = PythonOperator(
+            task_id = 'refresh_insurance_feedback_conversion',
+            python_callable = refresh_insurance_feedback_conversion,
+            provide_context = True
+        )
+
+        refresh_sop = PythonOperator(
+            task_id = 'refresh_sop',
+            python_callable = refresh_sop,
+            provide_context = True
+        )
+
+        refresh_nps_summary = PythonOperator(
+            task_id = 'refresh_nps_summary',
+            python_callable = refresh_nps_summary,
+            provide_context = True
+        )
+
+        refresh_google_reviews_summary = PythonOperator(
+            task_id = 'refresh_google_reviews_summary',
+            python_callable = refresh_google_reviews_summary,
+            provide_context = True
+        )
+
+        refresh_sunglass_sales_summary = PythonOperator(
+            task_id = 'refresh_sunglass_sales_summary',
+            python_callable = refresh_sunglass_sales_summary,
+            provide_context = True
+        )
+
+        refresh_lens_silh >> refresh_insurance_rejections >> refresh_insurance_feedback_conversion >> refresh_sop >> refresh_nps_summary >> refresh_google_reviews_summary >> refresh_sunglass_sales_summary
+
+
     finish = DummyOperator(
         task_id = "finish"
     )
 
-    start >> salesorders >> prescriptions >> lens_silh >> finish
+    start >> salesorders >> prescriptions >> incentive_factors >> finish

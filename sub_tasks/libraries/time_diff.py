@@ -2,7 +2,6 @@ from workalendar.africa import Kenya
 from sub_tasks.libraries.utils import (service_file)
 from airflow.models import Variable
 import holidays as pyholidays
-from sqlalchemy import create_engine
 import datetime
 import pygsheets
 import businesstimedelta
@@ -26,14 +25,18 @@ hl_ls = list(hl_dict.keys())
 
 def return_working_hours_dict(row, working_hours):
     branch_working_hours = {row["Outlet"]: {}}
-    branch_work = working_hours[working_hours["Warehouse Code"]
-                                == row["Outlet"]]
+    branch_work = working_hours[
+        working_hours["Warehouse Code"]== row["Outlet"]
+    ]
     working_days = branch_work["Days"].tolist()
     for single_day in working_days:
         day_work = branch_work[branch_work["Days"] == single_day]
         index1 = day_work.set_index("Days")
-        branch_working_hours[row["Outlet"]].update({single_day: {
-                                                   "Start Time": index1.loc[single_day, "Start Time"], "End Time": index1.loc[single_day, "End Time"]}})
+        branch_working_hours[row["Outlet"]].update(
+            {
+                single_day: {"Start Time": index1.loc[single_day, "Start Time"], 
+                "End Time": index1.loc[single_day, "End Time"]}
+            })
     return branch_working_hours
 
 

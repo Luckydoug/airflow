@@ -18,6 +18,7 @@ today = datetime.date.today()
 yesterday = today - datetime.timedelta(days=1)
 formatted_date = yesterday.strftime('%Y-%m-%d')
 
+
 from sub_tasks.data.connect import (pg_execute, engine) 
 from sub_tasks.api_login.api_login import(login)
 

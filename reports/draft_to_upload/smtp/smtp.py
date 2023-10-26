@@ -12,6 +12,7 @@ from sub_tasks.libraries.utils import (
     attach_file,
     clean_folder,
     get_yesterday_date,
+    first_week_start,
     fourth_week_start,
     fourth_week_end,
     get_comparison_months,
@@ -128,6 +129,9 @@ def send_draft_upload_report(
     dectractors_path = f"{path}draft_upload/detractors_report.xlsx"
     opening_path = f"{path}draft_upload/opening_time.xlsx"
     non_views_path = f"{path}draft_upload/non_view.xlsx"
+    if country == "Kenya" and not os.path.exists(draft_path) and not os.path.exists(rejections_path):
+        return
+    
     if not os.path.exists(draft_path) and not os.path.exists(rejections_path) and not os.path.exists(sops_path) and not os.path.exists(planos_path):
         return
 

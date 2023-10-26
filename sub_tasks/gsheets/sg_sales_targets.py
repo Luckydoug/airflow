@@ -29,28 +29,14 @@ def fetch_sg_targets():
     drop_table = """truncate table mabawa_dw.sunglasses_targets;"""
     drop_table = pg_execute(drop_table)
 
-    sh[['branch','target']].to_sql('sunglasses_targets', con = engine, schema='mabawa_dw', if_exists = 'append', index=False)
+    sh[sh['country']=='KE'][['branch','target']].to_sql('sunglasses_targets', con = engine, schema='mabawa_dw', if_exists = 'append', index=False)
 
     print('sg sales targets pulled')
-
-def create_source_sg_sales():
-
-    query = """
-    truncate mabawa_staging.source_sg_sales;
-    insert into mabawa_staging.source_sg_sales
-    SELECT doc_internal_id, target_doc_internal_id, item_no, item_desc, item_category, qty, internal_number, document_number, order_canceled, cust_vendor_code, sales_employee, creation_date, creation_time, order_branch, draft_orderno
-    FROM mabawa_staging.v_sg_sales;
-    """
-
-    query = pg_execute(query)
 
 def create_sg_summary():
 
     query = """
-    truncate mabawa_mviews.branch_sg_summary;
-    insert into mabawa_mviews.branch_sg_summary
-    SELECT pk_date, branch_code, sales, target, days_in_month
-    FROM mabawa_mviews.v_branch_sg_summary;
+    refresh materialized view mabawa_mviews.sunglass_sales_summary;
     """
     query = pg_execute(query)
 

@@ -141,3 +141,18 @@ class FetchData:
         """
 
         return self.fetch_data(query)
+
+
+    def fetch_working_hours(self):
+        query = f"""
+        select warehouse_code as "Warehouse Code",
+        warehouse_name as "Warehouse Name",
+        docnum as "DocNum",
+        days "Days",
+        start_time as "Start Time",
+        end_time as "End Time",
+        auto_time as "Auto Time"
+        from reports_tables.working_hours 
+        """
+
+        return self.fetch_data(query)

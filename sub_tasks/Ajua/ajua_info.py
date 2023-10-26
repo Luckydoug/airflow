@@ -148,3 +148,5 @@ def update_log_nps():
     """
 
     query = pg_execute(query)
+
+# fetch_ajua_info()

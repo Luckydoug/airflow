@@ -92,7 +92,9 @@ def fetch_sap_discounts():
         'Discount_Reason': 'discount_reason',
         'Order_Discount_Category': 'order_discount_category',
         'Old_Order_No': 'old_order_no',
-        'Order_RX_Tolerance': 'order_rx_tolerance'
+        'Order_RX_Tolerance': 'order_rx_tolerance',
+        'Discount Summary': 'discount_summary',
+        'Staff Negligence': 'staff_negligence'
         },inplace=True)
 
     print("Header Columns Renamed")

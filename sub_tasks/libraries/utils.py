@@ -269,7 +269,7 @@ def return_sent_emails(filename):
 
 def get_four_weeks_date_range():
     today = datetime.datetime.now().date()
-    end_date = today - datetime.timedelta(days=28)
+    end_date = today  - datetime.timedelta(days=28)
     start_date = end_date
     date_range = []
     for i in range(4):

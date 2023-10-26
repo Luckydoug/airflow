@@ -39,7 +39,7 @@ def fetch_et_non_conversions():
             code, create_date, create_time, optom, optom_name, rx_type, branch_code, a.cust_code, status,
             patient_to_ophth, "RX", sales_employees, handed_over_to, view_doc_entry, view_date, view_creator, 
             last_viewed_by, branch_viewed, order_converted, a.ods_insurance_order, order_converted_mode, date_converted, on_after,  on_after_status,
-            case when "RX" = 'High Rx' then 1 else 0 end as high_rx,
+            case when "RX" = 'High Rx' then 1 else 0 end as high_rx,conversion_reason,conversion_remarks,
             case when (a.days >= %(Days)s or on_after is null or (on_after_status in ('Draft Order Created','Pre-Auth Initiated For Optica Insurance','Customer to Revert','Cancel Order') and order_converted is null)) then 1 else 0 end as non_conversion
     from
     (select row_number() over(partition by cust_code, create_date order by days, rx_type, code desc) as r, *
@@ -57,7 +57,7 @@ def fetch_et_non_conversions():
     conv = pd.read_sql_query(et_q,con=engine,params={'From':datefrom,'To':today,'Days':14})
     return conv
 
-
+# fetch_et_non_conversions()
 def manipulate_et_non_conversions():
     conv = fetch_et_non_conversions()
     #create daterange
@@ -102,7 +102,7 @@ def manipulate_et_non_conversions():
                 dataframe.to_excel(writer,sheet_name=name, index=False)
 
 
-
+# manipulate_et_non_conversions()
 def smtp():
     ug_srm_rm = fetch_gsheet_data()["ug_srm_rm"]
     log_file=f"{uganda_path}et_non_conversions/branch_log.txt"

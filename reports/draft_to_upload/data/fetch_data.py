@@ -535,3 +535,37 @@ def fetch_working_hours(engine):
 
     data = pd.read_sql_query(query, con=engine)
     return data
+
+
+def fetch_no_views_data(database, engine, start_date):
+    query = f"""
+    select code as "Code",
+    create_date::date as "CreateDate",
+    cust_code as "Customer Code",
+    "RX",
+    branch_code as "Branch",
+    CASE
+        WHEN length(create_time::text) in (1,2) THEN null
+        ELSE (left(create_time::text,(length(create_time::text)-2))||':'||right(create_time::text, 2))::time 
+    END AS "CreateTime",
+    optom_name as "Optom Name",
+    case when handed_over_to is null then 'Not handed over' 
+    else handed_over_to end as "Handed Over To",
+    last_viewed_by as "RX Last Viewed By",
+    conversion_reason as "Conversion Reason",
+    conversion_remarks as "Conversion Remarks",
+    case when days is not null then 1 else 0 end as "Conversion",
+    case when days is not null and "RX" = 'High Rx' then 1 else 0 end as "High RX Conversion",
+    case when days is not null and "RX" = 'Low Rx' then 1 else 0 end as "Low RX Conversion",
+    case when last_viewed_by is null and days is null then 1 else 0 end as "No View NoN",
+    case when last_viewed_by is null and days is null and "RX" = 'High Rx' then 1 else 0 end as "High_Non",
+    case when last_viewed_by is null and days is null and "RX" = 'Low Rx' then 1 else 0 end as "Low_Non"
+    from {database}.et_conv ec 
+    where status not in ('Cancel', 'Unstable', 'CanceledEyeTest', 'Hold') 
+    and branch_code not in ('HOM', 'null', '0MA')
+    and (patient_to_ophth not in ('Yes') or patient_to_ophth is null)
+    and create_date::date between '{start_date}' and '{today}'
+    """
+
+    data = pd.read_sql_query(query, con = engine)
+    return data

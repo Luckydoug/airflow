@@ -5,7 +5,7 @@ sys.path.append(".")
 import json
 import psycopg2
 import requests
-from datetime import date
+from datetime import date,timedelta
 import pandas as pd
 from pandas.io.json._normalize import nested_to_record 
 from sqlalchemy import create_engine
@@ -20,10 +20,13 @@ from sub_tasks.api_login.api_login import(login)
 # get session id
 SessionId = login()
 
-# FromDate = '2022/11/30'
-# ToDate = '2022/11/30'
+# FromDate = '2023/10/16'
+# ToDate = '2023/10/16'
 
-FromDate = date.today().strftime('%Y/%m/%d')
+today = date.today()
+pastdate = today - timedelta(days=2)
+# pastdate = today
+FromDate = pastdate.strftime('%Y/%m/%d')
 ToDate = date.today().strftime('%Y/%m/%d')
 
 # api details
@@ -165,6 +168,8 @@ def fetch_sap_items():
 
         print('Update successful')
 
+# fetch_sap_items()
+
 def fetch_item_groups():
     
     group_pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetItemgroups&pageNo=1&SessionId={SessionId}"
@@ -203,6 +208,7 @@ def fetch_item_groups():
         if_row_exists='update',
         create_table=False,
         add_new_columns=True)
+# fetch_item_groups()
 
 def create_items_live():
 
@@ -229,4 +235,4 @@ def create_items_live():
 
     query = pg_execute(query)
 
-
+# create_items_live()

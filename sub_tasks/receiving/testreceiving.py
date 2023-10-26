@@ -48,7 +48,7 @@ def create_receivingdata():
 
 
 def receiving():
-    fromdate = '2023/09/01'
+    fromdate = '2023/10/01'
     today = datetime.date.today()
     yesterday = today - datetime.timedelta(days=1)
 
@@ -117,6 +117,7 @@ def receiving():
     # Thika Receiving
     thika = pd.merge(thika, thi, left_on=['odsc_date','ods_outlet'], right_on=['trip_date','Thika Branches'], how='right')
     print('Thika orders printed')
+    print(thika)
 
     # Selecting the trip that came with the orders
     thika['thika_time_back_at_hq2'] = thika.groupby('doc_no', as_index=False)['thika_time_back_at_hq'].shift(-1)
@@ -126,6 +127,7 @@ def receiving():
 
     # thika['odsc_time']= pd.to_datetime(thika['odsc_time']).dt.time
     thika['thika_time_back_at_hq']= pd.to_datetime(thika['thika_time_back_at_hq']).dt.time
+    print(thika[['thika_time_back_at_hq']])
     thika['thika_time_back_at_hq2']= pd.to_datetime(thika['thika_time_back_at_hq2']).dt.time
 
     thika['trip'] = thika['trip'].str.strip()
@@ -656,28 +658,15 @@ def create_time_difference():
     print(receiving)
 
      # Truncate the existing table before appending the new table
-    truncate_table = """drop table mabawa_staging.source_receiving_data;"""
+    truncate_table = """truncate table mabawa_staging.source_receiving_data;"""
     truncate_table = pg_execute(truncate_table)
 
     receiving.to_sql('source_receiving_data', con = engine, schema='mabawa_staging', if_exists = 'append', index=False)   
      
     print('Receiving information has been successfully appended')
 
-# def update_source_receiving_data():
 
-#     reviseddata = """
-#     truncate mabawa_staging.source_receiving_data;
-#     insert into mabawa_staging.source_receiving_data
-#     select doc_entry, odsc_date::date, odsc_time, odsc_status, odsc_createdby, doc_no, cust_code, ods_outlet, "DateTime", trip_date, receiving_time, order_criteria_status, region, cutoff, duration, "hour" from
-#     (select row_number() over(partition by doc_entry) as r,doc_entry, odsc_date, odsc_time, odsc_status, odsc_createdby, doc_no, cust_code, ods_outlet, "DateTime", trip_date, receiving_time, order_criteria_status, region, cutoff, duration, "hour" from mabawa_staging.source_receiving_data) as t
-#     where t.r = 1
-#     """
-#     reviseddata = pg_execute(reviseddata)
-#     print('lets print revised data')
-#     print(reviseddata)
-    
 
-# create_receivingdata()
-# receiving()
-# create_time_difference()
-# update_source_receiving_data()
+create_receivingdata()
+receiving()
+create_time_difference()

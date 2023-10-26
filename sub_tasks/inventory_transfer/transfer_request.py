@@ -32,8 +32,8 @@ SessionId = login()
 
 today = date.today()
 pastdate = today - timedelta(days=2)
-# pastdate = today
-# FromDate = pastdate.strftime('%Y/%m/%d')
+pastdate = today
+FromDate = pastdate.strftime('%Y/%m/%d')
 ToDate = date.today().strftime('%Y/%m/%d')
 
 # api details
@@ -166,6 +166,8 @@ def fetch_sap_invt_transfer_request ():
 
     return 'something' 
 # fetch_sap_invt_transfer_request ()
+
+
 def create_fact_itr_details ():
 
     query = """

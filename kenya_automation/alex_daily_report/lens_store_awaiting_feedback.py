@@ -39,10 +39,12 @@ from sub_tasks.api_login.api_login import(login)
 conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", password="@Akb@rp@$$w0rtf31n")
 
 
-##Define the days that is yesterday
+#Define the days that is yesterday
 today = datetime.date.today()
 yesterday = today - datetime.timedelta(days=1)
 formatted_date = yesterday.strftime('%Y-%m-%d')
+
+
 
 
 def awaiting_feedback():

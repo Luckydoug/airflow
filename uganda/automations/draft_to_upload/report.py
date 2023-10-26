@@ -431,3 +431,5 @@ def trigger_uganda_branches_smtp() -> pd.DataFrame:
 
 def clean_uganda_folder() -> pd.DataFrame:
     clean_folders(path=uganda_path)
+
+build_plano_report()

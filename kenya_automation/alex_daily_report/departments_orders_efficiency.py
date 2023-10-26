@@ -44,11 +44,13 @@ conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", p
 
 
 
-##Define the days that is yesterday
+#Define the days that is yesterday
 today = datetime.date.today()
 yesterday = today - datetime.timedelta(days=1)
 print(yesterday)
 formatted_date = yesterday.strftime('%Y-%m-%d')
+
+
 
 def update_calculated_field():
     OrdersWithIssues = fetch_gsheet_data()["orders_with_issues"]

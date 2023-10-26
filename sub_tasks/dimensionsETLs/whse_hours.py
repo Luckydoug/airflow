@@ -51,7 +51,7 @@ def fetch_sap_whse_hours():
 
     print('Update successful')
     #whsehrs.to_sql('source_whse_hrs', con = engine, schema='mabawa_staging', if_exists = 'append', index=False)
-
+fetch_sap_whse_hours()
 def create_mviews_whse_hrs():
 
     query = """
@@ -62,7 +62,7 @@ def create_mviews_whse_hrs():
     """
 
     query = pg_execute(query)
-
+create_mviews_whse_hrs()
 
 def create_mviews_branch_hours_array():
 

@@ -8,6 +8,7 @@ from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python_operator import PythonOperator
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
+from uganda_sub_tasks.ordersETLs.prescriptions import fetch_prescriptions
 from uganda.automations.non_conversion_remarks.et_non_conversion import (manipulate_et_non_conversions,smtp,clean_folder)
 # from tmp.python_test
 DAG_ID = 'ET_Non_converstions_UG_ETL'
@@ -39,6 +40,15 @@ with DAG(
     """
     UPDATE
     """
+    with TaskGroup('prescriptions_update') as prescriptions_update:
+
+        fetch_prescriptions = PythonOperator(
+            task_id = 'fetch_prescriptions',
+            python_callable = fetch_prescriptions,
+            provide_context = True
+        )
+
+        fetch_prescriptions
 
     with TaskGroup('manipulate') as manipulate:
         
@@ -71,4 +81,4 @@ with DAG(
         task_id="finish"
     )
 
-    start >> manipulate >> send_smtp >> clean_excels >> finish
+    start >> prescriptions_update >> manipulate >> send_smtp >> clean_excels >> finish

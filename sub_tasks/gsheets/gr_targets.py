@@ -36,10 +36,7 @@ def fetch_gr_targets():
 def create_gr_summary():
 
     query = """
-    truncate mabawa_mviews.branch_gr_summary;
-    insert into mabawa_mviews.branch_gr_summary
-    SELECT pk_date, branch_code, total, good, average, poor, monthly_target, days_in_month
-    FROM mabawa_mviews.v_branch_gr_summary;
+    refresh materialized view mabawa_mviews.google_reviews_summary
     """
 
     query = pg_execute(query)

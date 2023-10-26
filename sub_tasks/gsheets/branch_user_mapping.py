@@ -48,7 +48,9 @@ def fetch_branch_user_mappings():
                           'RM Email':'rm_email',
                           'Senior RM':'senior_rm_name',
                           'SRM BI Username':'srm_username', 
-                          'SRM Email':'srm_email'
+                          'SRM Email':'srm_email',
+                          'Field Trainer':'field_trainer',
+                          'Field Trainer Email':'field_trainer_email'
                           }
         ,inplace=True)
 
@@ -83,3 +85,5 @@ def create_dim_branch_user_mapping():
     query = pg_execute(query)
      
     data.to_sql('branch_user_mapping', con = engine, schema='mabawa_dw', if_exists = 'append', index=False)
+
+fetch_branch_user_mappings()
