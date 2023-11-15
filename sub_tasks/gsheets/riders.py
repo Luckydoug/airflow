@@ -75,4 +75,4 @@ def fetch_rider_times():
      riders.to_sql('source_riders', con = engine, schema='mabawa_staging', if_exists = 'append', index=False)   
      
      print('Riders information has been successfully appended')
-# fetch_rider_times()
+fetch_rider_times()

@@ -182,25 +182,25 @@ def smtp():
 
             attach_file(email_message,NonConversionsfilename, f"{branchcode} Non Conversions Remarks - {report_date}.xlsx")
 
-            # Convert it as a string
-            email_string = email_message.as_string()
+            # # Convert it as a string
+            # email_string = email_message.as_string()
 
-            if branchemail not in return_sent_emails(log_file):
-                context = ssl.create_default_context()
-                with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
-                    server.login(your_email, password)
-                    server.sendmail(
-                        your_email, 
-                        receiver_email, 
-                        email_string
-                    )
-                    record_sent_branch(
-                        branchemail, 
-                        log_file
-                    )
+            # if branchemail not in return_sent_emails(log_file):
+            #     context = ssl.create_default_context()
+            #     with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
+            #         server.login(your_email, password)
+            #         server.sendmail(
+            #             your_email, 
+            #             receiver_email, 
+            #             email_string
+            #         )
+            #         record_sent_branch(
+            #             branchemail, 
+            #             log_file
+            #         )
 
-            else:
-                continue
+            # else:
+            #     continue
 
 def clean_folder(dir_name=f"{uganda_path}et_non_conversions/branches/"):
     files = os.listdir(dir_name)

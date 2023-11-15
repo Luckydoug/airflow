@@ -37,6 +37,7 @@ with DAG(
         with TaskGroup('build') as build:
             from uganda.automations.draft_to_upload.report import (
                 push_uganda_efficiency_data,
+                build_uganda_ratings_report,
                 build_ug_draft_upload,
                 build_ug_rejections,
                 build_ug_sops,
@@ -70,6 +71,12 @@ with DAG(
                 provide_context=True
             )
 
+            build_uganda_ratings_report = PythonOperator(
+                task_id='build_uganda_ratings_report',
+                python_callable=build_uganda_ratings_report,
+                provide_context=True
+            )
+
             build_plano_report = PythonOperator(
                 task_id='build_plano_report',
                 python_callable=build_plano_report,
@@ -89,7 +96,7 @@ with DAG(
                 provide_context=True
             )
 
-            push_uganda_efficiency_data >> build_ug_draft_upload >> build_ug_sops >> build_ug_rejections >> build_plano_report >>  build_uganda_opening_time >> build_uganda_insurance_conversion
+            push_uganda_efficiency_data >> build_ug_draft_upload >> build_ug_sops >> build_uganda_ratings_report >> build_ug_rejections >> build_plano_report >>  build_uganda_opening_time >> build_uganda_insurance_conversion
 
     with TaskGroup('smtp') as smtp:
         with TaskGroup('send') as sends:
@@ -114,7 +121,8 @@ with DAG(
             clean_uganda_folder = PythonOperator(
                 task_id='clean_uganda_folder',
                 python_callable=clean_uganda_folder,
-                provide_context=True
+                provide_context=True,
+                trigger_rule = 'all_done'
             )
 
             trigger_uganda_smtp >> trigger_uganda_branches_smtp >> clean_uganda_folder

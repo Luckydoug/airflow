@@ -402,3 +402,63 @@ def create_monthly_rejections(
     return final_monthly_rejections
 
 
+
+
+def create_no_views_report(
+    no_views: pd.DataFrame,
+    index: list,
+    append: list
+) -> pd.DataFrame:
+    summayr_pivot = pd.pivot_table(
+        no_views,
+        index = index,
+        values = [
+            "Code", 
+            "RX",
+            "High RX Conversion", 
+            "Low RX Conversion", 
+            "No Views NoN", 
+            "High_Non", 
+            "Low_Non"
+        ],
+        aggfunc={
+            "Code": ["count"],
+            "No Views NoN": "sum",
+            "High_Non": "sum",
+            "Low_Non": "sum",
+            "RX": [lambda x: (x == "High Rx").sum(), lambda x: (x == "Low Rx").sum()],
+            "High RX Conversion": "sum",
+            "Low RX Conversion": "sum"
+            }
+    ).reset_index()
+
+    summayr_pivot.columns = append + [
+        "ETs", 
+        "High RX Conv", 
+        "High RX Non Views", 
+        "Low RX Conv", 
+        "Low RX Non Views", 
+        "No Views NoN", 
+        "High RX Count", 
+        "Low RX Count"
+    ]
+
+    no_views = summayr_pivot[summayr_pivot["No Views NoN"] > 0].copy()
+    no_views["% High RX Non Views"] = ((no_views["High RX Non Views"] / no_views["No Views NoN"]) * 100).round(0)
+    no_views["% Low RX Non Views"] = ((no_views["Low RX Non Views"] / no_views["No Views NoN"]) * 100).round(0)
+
+    common_cols = [ 
+        "ETs", 
+        "No Views NoN", 
+        "High RX Non Views", 
+        "% High RX Non Views",
+        "Low RX Non Views", 
+        "% Low RX Non Views"
+    ]
+
+    all_columns = append + common_cols
+
+    return no_views[all_columns].sort_values(by = "No Views NoN", ascending=False)
+
+
+

@@ -29,7 +29,19 @@ def fetch_kenya_branch_data():
        "Zone": "zone"
     }, inplace=True)
 
-    sh = sh.set_index(['branch_code'])
+    sh = sh[[
+        "branch_code",
+        "branch_name",
+        "email",
+        "rm",
+        "rm_email",
+        "rm_group",
+        "srm",
+        "srm_email",
+        "branch_manager",
+        "front_desk",
+        "zone"
+    ]].set_index(['branch_code'])
 
     upsert(engine=engine,
            df=sh,

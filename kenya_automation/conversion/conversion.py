@@ -6,9 +6,9 @@ from reports.conversion.data.fetch_data import (
 )
 
 from sub_tasks.libraries.utils import (createe_engine, path, fetch_gsheet_data)
-from reports.draft_to_upload.utils.utils import (get_report_frequency)
 from reports.conversion.reports.viewrx import (create_views_conversion)
 from reports.conversion.utils.utils import (return_conversion_daterange)
+from reports.conversion.utils.utils import (get_conversion_frequency)
 from reports.conversion.reports.eyetests import (create_eyetests_conversion)
 from reports.conversion.reports.registrations import (create_registrations_conversion)
 from reports.conversion.smtp.smtp import (
@@ -19,45 +19,56 @@ from reports.conversion.smtp.smtp import (
     clean_views
 )
 
-
 database = "mabawa_mviews"
 engine = createe_engine()
-selection = "Weekly"
+selection = get_conversion_frequency(
+    report="Conversion"
+)
 start_date, end_date = return_conversion_daterange(selection=selection)
 
-views_conv = fetch_views_conversion(
-    database=database,
-    engine=engine,
-    start_date=start_date,
-    end_date=end_date,
-    users="mabawa_dw",
-    users_table="dim_users",
-    view = "view_rx_conv"
-)
+def views_conv():
+    views_conv = fetch_views_conversion(
+        database=database,
+        engine=engine,
+        start_date=start_date,
+        end_date=end_date,
+        users="mabawa_dw",
+        users_table="dim_users",
+        view = "view_rx_conv"
+    )
 
-eyetests_conv = fetch_eyetests_conversion(
-    database=database,
-    engine=engine,
-    start_date=start_date,
-    end_date=end_date,
-    users="mabawa_dw",
-    users_table="dim_users"
-)
+    return views_conv
 
-registrations_conv = fetch_registrations_conversion(
-    database=database,
-    engine=engine,
-    start_date=start_date,
-    end_date=end_date,
-    users="mabawa_dw",
-    users_table="dim_users",
-    view="reg_conv"
-)
+
+def eyetests_conv():
+    eyetests_conv = fetch_eyetests_conversion(
+        engine=engine,
+        start_date=start_date,
+        end_date=end_date,
+        users="mabawa_dw",
+        users_table="dim_users"
+    )
+
+    return eyetests_conv
+
+
+def registrations_conv():
+    registrations_conv = fetch_registrations_conversion(
+        database=database,
+        engine=engine,
+        start_date=start_date,
+        end_date=end_date,
+        users="mabawa_dw",
+        users_table="dim_users",
+        view="reg_conv"
+    )
+
+    return registrations_conv
 
 
 def build_kenya_et_conversion():
     create_eyetests_conversion(
-        eyetests_conv,
+        eyetests_conv(),
         country="Kenya",
         selection=selection,
         path=f"{path}"
@@ -66,7 +77,7 @@ def build_kenya_et_conversion():
 
 def build_kenya_reg_conversion():
     create_registrations_conversion(
-        registrations_conv,
+        registrations_conv(),
         country="Kenya",
         path = f"{path}",
         selection=selection
@@ -75,7 +86,7 @@ def build_kenya_reg_conversion():
 
 def build_kenya_viewrx_conversion():
     create_views_conversion(
-        views_conv,
+        views_conv(),
         country="Kenya",
         selection=selection,
         path=f"{path}"

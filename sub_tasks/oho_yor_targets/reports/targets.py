@@ -1,9 +1,10 @@
 import pandas as pd
 import numpy as np
+import pygsheets
 from airflow.models import Variable
 from calendar import monthrange
 from sub_tasks.libraries.utils import (
-    fetch_gsheet_data,
+    service_file,
     format_payroll_number,
     return_incentives_daterange,
     path
@@ -12,48 +13,10 @@ from sub_tasks.libraries.utils import (
 start_date, end_date = return_incentives_daterange()
 
 
-def create_incentive(all_payments, all_journals, orders, cash_payments, targets):
-    staff = fetch_gsheet_data()["staff"]
-    insurance_payments = all_payments[
-        (all_payments["Mode of Pay"] == "Insurance")
-    ]
-    insurance_freq = pd.DataFrame(
-        insurance_payments["Order Number"].value_counts()).reset_index()
-
-    daterange_journals = all_journals[
-        (all_journals["Posting Date"] >= start_date) &
-        (all_journals["Posting Date"] <= end_date) &
-        (all_journals["JE_Type"] == "Insurance")
-    ]
-
-    raw_journals2 = daterange_journals.copy()
-
-    raw_journals2["Order Number"] = raw_journals2["Order Number"].astype(int)
-    journal_orders = pd.merge(
-        raw_journals2[["Posting Date", "Order Number", "JE_Type"]],
-        orders[["DocNum", "Creator", "Order Creator", "Outlet"]],
-        left_on="Order Number",
-        right_on="DocNum",
-        how="left")
-    journal_orders = journal_orders.dropna(subset=["Order Number"])
-    insurance_freq["Order Number"] = insurance_freq["Order Number"].astype(int)
-    insurance_freq.rename(columns={"Order Number": "count"}, inplace=True)
-    insurance_freq.rename(columns={"index": "Order Number"}, inplace=True)
-
-    insurance_counts = pd.merge(
-        journal_orders,
-        insurance_freq,
-        on="Order Number",
-        how="left"
-    )
-    insurance_counts2 = insurance_counts[
-        (insurance_counts["Order Number"].isna()) |
-        (insurance_counts["count"] < 2)
-    ]
-    journal_orders2 = insurance_counts2[insurance_counts2["JE_Type"] == "Insurance"]
-    journal_orders3 = journal_orders2.drop_duplicates(subset=["Order Number"])
-    insurance_payments = journal_orders3.copy()
-
+def create_incentive(insurance_payments, cash_payments, targets):
+    service_key = pygsheets.authorize(service_file=service_file)
+    sheet = service_key.open_by_key('1jTTvbk8g--Q3FWKMLZaLquDiJJ5a03hsJEtZcUTTFr8')
+    staff = pd.DataFrame(sheet.worksheet_by_title("Emails").get_all_records())
     branch_insurance_pivot = pd.pivot_table(
         insurance_payments,
         index=["Outlet", "Creator", "Order Creator"],
@@ -190,6 +153,7 @@ def create_incentive(all_payments, all_journals, orders, cash_payments, targets)
         (sales_and_targets["Email"] != 0) &
         (sales_and_targets["Outlet"].isin(scheduled_branches))
     ]
+
     desired_columns_order = [
         "Name",
         "Payroll Number",
@@ -201,6 +165,7 @@ def create_incentive(all_payments, all_journals, orders, cash_payments, targets)
         "MTD Achieved Cash(%)",
         "Email"
     ]
+    
     for branch in scheduled_branches:
         branch_sales = sales_persons_report[sales_persons_report["Outlet"] == branch]
         with pd.ExcelWriter(f"{path}{branch}.xlsx".format(branch=branch), engine='xlsxwriter') as writer:

@@ -40,7 +40,8 @@ def fetch_et_non_conversions():
             patient_to_ophth, "RX", sales_employees, handed_over_to, view_doc_entry, view_date, view_creator, 
             last_viewed_by, branch_viewed, order_converted, a.ods_insurance_order, order_converted_mode, date_converted, on_after,  on_after_status,
             case when "RX" = 'High Rx' then 1 else 0 end as high_rx,
-            case when (a.days >= %(Days)s or on_after is null or (on_after_status in ('Draft Order Created','Pre-Auth Initiated For Optica Insurance','Customer to Revert','Cancel Order') and order_converted is null)) then 1 else 0 end as non_conversion
+            case when (a.days >= %(Days)s or on_after is null or (on_after_status in ('Draft Order Created','Pre-Auth Initiated For Optica Insurance','Customer to Revert','Cancel Order') and order_converted is null)) then 1 else 0 end as non_conversion,
+            conversion_remarks,conversion_reason
     from
     (select row_number() over(partition by cust_code, create_date order by days, rx_type, code desc) as r, *
     from voler_mviews.et_conv

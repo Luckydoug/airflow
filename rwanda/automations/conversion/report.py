@@ -6,7 +6,7 @@ from reports.conversion.data.fetch_data import (
 )
 
 from sub_tasks.libraries.utils import (create_rwanda_engine, rwanda_path, fetch_gsheet_data)
-from reports.draft_to_upload.utils.utils import (get_report_frequency)
+from reports.conversion.utils.utils import (get_conversion_frequency)
 from reports.conversion.reports.viewrx import (create_views_conversion)
 from reports.conversion.utils.utils import (return_conversion_daterange)
 from reports.conversion.reports.eyetests import (create_eyetests_conversion)
@@ -28,7 +28,9 @@ from reports.conversion.smtp.smtp import (
 #Automatic selection is not yet implemented,
 database = "voler_mviews"
 engine = create_rwanda_engine()
-selection = "Weekly"
+selection = get_conversion_frequency(
+    report="Conversion"
+)
 start_date, end_date = return_conversion_daterange(selection=selection)
 
 views_conv = fetch_views_conversion(
@@ -45,7 +47,6 @@ views_conv = fetch_views_conversion(
 )
 
 eyetests_conv = fetch_eyetests_conversion(
-    database=database,
     engine=engine,
     start_date=start_date,
     end_date=end_date,

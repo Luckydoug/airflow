@@ -18,7 +18,8 @@ from sub_tasks.libraries.utils import (
     get_comparison_months,
     create_initial_file,
     record_sent_branch,
-    return_sent_emails
+    return_sent_emails,
+    assert_date_modified
 )
 from reports.draft_to_upload.smtp.emails import (
     test,
@@ -129,6 +130,22 @@ def send_draft_upload_report(
     dectractors_path = f"{path}draft_upload/detractors_report.xlsx"
     opening_path = f"{path}draft_upload/opening_time.xlsx"
     non_views_path = f"{path}draft_upload/non_view.xlsx"
+    mtd_insurance_path = f"{path}draft_upload/mtd_insurance_conversion.xlsx"
+
+    files = [
+        draft_path,
+        rejections_path,
+        sops_path,
+        planos_path,
+        dectractors_path,
+        opening_path,
+        non_views_path
+    ]
+
+    # if not assert_date_modified(files):
+    #     return
+
+
     if country == "Kenya" and not os.path.exists(draft_path) and not os.path.exists(rejections_path):
         return
     
@@ -148,6 +165,7 @@ def send_draft_upload_report(
     opening_html = ""
     no_view_html = ""
     no_view_attachment = ""
+    mtd_insurance_attachment = ""
 
     if selection == "Daily":
         todate = get_yesterday_date(truth=True)
@@ -199,6 +217,10 @@ def send_draft_upload_report(
         
         else:
             no_view_html = "All non-converted eye tests were viewed."
+
+        if os.path.exists(mtd_insurance_path):
+            no_view_html = "Please find attached a mtd insurance conversion report"
+            mtd_insurance_attachment = mtd_insurance_path
 
         if os.path.exists(dectractors_path):
             detractors = pd.ExcelFile(dectractors_path)
@@ -331,6 +353,10 @@ def send_draft_upload_report(
         else:
             no_view_html = "All non-converted eye tests were viewed."
 
+        if os.path.exists(mtd_insurance_path):
+            no_view_html = "Please find attached a mtd insurance conversion report"
+            mtd_insurance_attachment = mtd_insurance_path
+
         if os.path.exists(opening_path):
             opening_report = pd.read_excel(opening_path, index_col=False)
             opening_style = opening_report.style.hide_index().set_table_styles(
@@ -437,6 +463,10 @@ def send_draft_upload_report(
         else:
             no_view_html = "All non-converted eye tests were viewed."
 
+        if os.path.exists(mtd_insurance_path):
+            no_view_html = "Please find attached a mtd insurance conversion report"
+            mtd_insurance_attachment = mtd_insurance_path
+
         if os.path.exists(opening_path):
             opening_report = pd.read_excel(opening_path, index_col=False)
             opening_style = opening_report.style.hide_index().set_table_styles(
@@ -520,6 +550,13 @@ def send_draft_upload_report(
             "Non_Converted_Non_Views.xlsx"
         )
 
+    if os.path.exists(mtd_insurance_attachment):
+        attach_file(
+            email_message,
+            mtd_insurance_attachment,
+            "MTD_Insurance_Conversion.xlsx"
+        )
+
     context = ssl.create_default_context()
     with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
         server.login(sender_email, password)
@@ -565,6 +602,16 @@ def send_to_branches(branch_data, selection, path, filename, country):
     planos_path = f"{path}draft_upload/planorx_not_submitted.xlsx"
     feedback = f"{path}draft_upload/insurance_daily.xlsx"
     no_feedbacks = f"{path}draft_upload/no_feedbacks.xlsx"
+
+    # files = [
+    #     rejections_path, 
+    #     planos_path, 
+    #     feedback, 
+    #     no_feedbacks
+    # ]
+
+    # if not assert_date_modified(files):
+    #     return
 
     if os.path.exists(rejections_path) or os.path.exists(planos_path) or os.path.exists(feedback) or os.path.exists(no_feedbacks):
         rejection_branches = []
@@ -625,6 +672,7 @@ def send_to_branches(branch_data, selection, path, filename, country):
             branch_email = branch_data.loc[branch, "Email"]
             branch_manager = branch_data.loc[branch, "Branch Manager"].split(" ")[0]
             rm_email = branch_data.loc[branch, "RM Group"]
+            srm_email = branch_data.loc[branch, "SRM Email"]
 
             if branch not in rejection_branches and branch not in planos_branches and branch not in feedback_branches:
                 continue
@@ -1119,7 +1167,7 @@ def send_to_branches(branch_data, selection, path, filename, country):
                     "wazeem@optica.africa",
                     "yuri@optica.africa",
                     "andrew@optica.africa",
-                    "christopher@optica.africa",
+                    srm_email,
                     rm_email,
                     branch_email,
                     "wairimu@optica.africa"
@@ -1127,8 +1175,8 @@ def send_to_branches(branch_data, selection, path, filename, country):
 
             elif branch == "YOR":
                 receiver_email = [
+                    srm_email,
                     rm_email,
-                    "christopher@optica.africa",
                     "insurance@optica.africa",
                     "yh.manager@optica.africa",
                     branch_email
@@ -1136,13 +1184,14 @@ def send_to_branches(branch_data, selection, path, filename, country):
 
             elif branch == "OHO":
                 receiver_email = [
+                    srm_email,
                     rm_email,
-                    "christopher@optica.africa",
                     "duncan.muchai@optica.africa",
                     "susan@optica.africa",
                     "insuranceoh@optica.africa",
                     branch_email
                 ]
+
             
            
             elif country == "Uganda":
@@ -1165,7 +1214,7 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 ]
 
             else:
-                receiver_email = [rm_email, branch_email, "christopher@optica.africa"]
+                receiver_email = [srm_email, rm_email, branch_email]
 
             
             if country == "Test":

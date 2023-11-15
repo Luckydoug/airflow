@@ -199,7 +199,6 @@ def send_to_salespersons():
                     else:
                         receiver_email = [sales_person_email]
 
-
                     email_message = MIMEMultipart("alternative")
                     email_message["From"] = your_email
                     email_message["Body"] = '<body bgcolor="#fff">text</body>'
@@ -278,6 +277,7 @@ def send_branch_version():
                 branch_name = "York House"
             else:
                 continue
+
 
         html = """
         <!DOCTYPE html>

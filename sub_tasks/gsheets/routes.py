@@ -40,5 +40,5 @@ def fetch_routesdata():
      
      print('rider_routes pulled')
 
-# fetch_routesdata()   
+fetch_routesdata()   
        

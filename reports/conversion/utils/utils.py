@@ -11,6 +11,16 @@ from sub_tasks.libraries.utils import (
 first_month, second_month = get_comparison_months()
 
 
+def get_conversion_frequency(report) -> str:
+    today = datetime.date.today()
+    if today.day == 1 and report == "Insurance Conversion":  
+        return "Monthly"
+    if today.day == 8 and report == "Conversion":
+        return "Monthly"
+    else:
+        return "Weekly"
+
+
 def return_conversion_daterange(selection):
     today = datetime.date.today()
     if selection == "Weekly":

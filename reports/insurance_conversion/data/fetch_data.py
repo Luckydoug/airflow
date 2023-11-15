@@ -1,6 +1,5 @@
 from airflow.models import variable
 import pandas as pd
-import numpy as np
 import datetime
 today = datetime.datetime.now().strftime("%Y-%m-%d")
 
@@ -17,7 +16,6 @@ class FetchData:
                 return data
             except Exception as e:
                 raise e
-
 
     def fetch_orderscreen(self, start_date) -> pd.DataFrame:
         orderscreen_query = f"""
@@ -105,7 +103,7 @@ class FetchData:
         return self.fetch_data(query)
     
 
-    def fetch_branch_data(self, database):
+    def fetch_branch_data(self, database) -> pd.DataFrame:
         query = f"""
         select branch_code as "Outlet",
         branch_name as "Branch",
@@ -123,7 +121,7 @@ class FetchData:
 
         return self.fetch_data(query)
 
-    def fetch_no_feedbacks(self, database, start_date):
+    def fetch_no_feedbacks(self, database, start_date) -> pd.DataFrame:
         query = f"""
         select order_number as "Order Number",
         create_date as "CreateDate",
@@ -138,12 +136,13 @@ class FetchData:
         feedback as "Feedback"
         from {database}.requests_feedbacks
         where request_date::date between '{start_date}' and '{today}'
+        and insurance_company not in ('NHIF- COMPREHENSIVE MEDICAL INSURANCE')
         """
 
         return self.fetch_data(query)
 
 
-    def fetch_working_hours(self):
+    def fetch_working_hours(self) -> pd.DataFrame:
         query = f"""
         select warehouse_code as "Warehouse Code",
         warehouse_name as "Warehouse Name",

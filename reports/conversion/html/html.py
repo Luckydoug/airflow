@@ -89,7 +89,7 @@ conversion_html = """
                         </li>
 
                         <li>
-                            <h3>View RX Conversions</h3>
+                            <h3>View High RX Conversions</h3>
                             <ol>
                                 <li><b>{weekly_monthly} Overall Comparison</b>
                                 <br> <br>

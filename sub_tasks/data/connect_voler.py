@@ -16,11 +16,11 @@ engine = create_engine('postgresql://postgres:@Akb@rp@$$w0rtf31n@10.40.16.19:543
 username = "optica-admin"
 password = "@MWenendo../"
 
-connection = database.connect(
-    user=username,
-    password=password,
-    host="10.40.16.17",
-    database="mwangaza")
+# connection = database.connect(
+#     user=username,
+#     password=password,
+#     host="10.40.16.17",
+#     database="mwangaza")
 
 """
     Slow Changing dimention ETL to be used for any dimention table

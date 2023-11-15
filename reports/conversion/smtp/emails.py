@@ -1,22 +1,20 @@
 test = [
-    "tstbranch@gmail.com"
+    "wairimu@optica.africa"
 ]
 
 kenya = [
     'kush@optica.africa',
     'wazeem@optica.africa',
     'yuri@optica.africa',
-    'shehan@optica.africa',
-    'naveed@optica.africa',
-    'bravon@optica.africa',
     'maxwell@optica.africa',
-    'naveed@optica.africa',
     'cavin@optica.africa',
+    'john.gitonga@optica.africa',
     'joseph.oluoch@optica.africa',
     'kimstone@optica.africa',
     'john@optica.africa',
     'wairimu@optica.africa',
-    'ian.gathumbi@optica.africa'
+    'ian.gathumbi@optica.africa',
+    'faithtesy.leo@optica.africa'
 ]
 
 uganda = [

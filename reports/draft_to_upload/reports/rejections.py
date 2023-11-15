@@ -350,7 +350,7 @@ def create_rejection_report(
             sorted_columns,
             axis=1,
             level=0).reindex(
-            ["Total Orders", "Rejected", "%Rejected", "%Conversion"],
+            ["Total Orders", "Rejected", "%Rejected"],
             axis=1,
             level=1
         )

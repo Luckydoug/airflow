@@ -9,7 +9,7 @@ their email from this list.
 
 
 test = [
-    "wairimu@optica.africa"
+    "tstbranch@gmail.com"
 ]
 
 kenya_daily = [
@@ -21,7 +21,8 @@ kenya_daily = [
     'kimstone@optica.africa',
     'larry.larsen@optica.africa',
     'doris.kinoti@optica.africa',
-    'wairimu@optica.africa'
+    'wairimu@optica.africa',
+    'faithtesy.leo@optica.africa'
 ]
     
 kenya_weekly = [
@@ -36,7 +37,8 @@ kenya_weekly = [
     'larry.larsen@optica.africa',
     'doris.kinoti@optica.africa',
     'john@optica.africa',
-    'wairimu@optica.africa'
+    'wairimu@optica.africa',
+    'faithtesy.leo@optica.africa'
 ]
     
 kenya_monthly = [
@@ -51,7 +53,8 @@ kenya_monthly = [
     'larry.larsen@optica.africa',
     'doris.kinoti@optica.africa',
     'john@optica.africa',
-    'wairimu@optica.africa'
+    'wairimu@optica.africa',
+    'faithtesy.leo@optica.africa'
 ]
     
 

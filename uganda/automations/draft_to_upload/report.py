@@ -24,6 +24,7 @@ from reports.draft_to_upload.reports.opening_time import (
 from reports.draft_to_upload.utils.utils import get_report_frequency, return_report_daterange, get_start_end_dates
 from reports.draft_to_upload.data.push_data import push_insurance_efficiency_data
 from reports.draft_to_upload.reports.rejections import create_rejection_report
+from reports.draft_to_upload.reports.ratings import create_ratings_report
 from reports.draft_to_upload.reports.plano import (
     create_plano_report
 )
@@ -50,7 +51,8 @@ from reports.draft_to_upload.data.fetch_data import (
     fetch_daywise_rejections,
     fetch_mtd_rejections,
     fetch_branch_data,
-    fetch_working_hours
+    fetch_working_hours,
+    fetch_detractors
 )
 
 database = "mawingu_staging"
@@ -190,7 +192,7 @@ if selection == "Daily":
 if selection == "Weekly":
     date = fourth_week_start
 if selection == "Monthly":
-    date = '2023-09-01'
+    date = '2023-10-01'
 
 
 def opening_data() -> pd.DataFrame:
@@ -342,6 +344,24 @@ def build_ug_sops() -> None:
     )
 
 
+def surveys():
+    surveys = fetch_detractors(
+        database=database,
+        engine=engine
+    )
+
+    return surveys
+
+
+def build_uganda_ratings_report():
+    create_ratings_report(
+        selection=selection,
+        surveys=surveys(),
+        branch_data=branch_data(),
+        path=uganda_path
+    )
+
+
 def build_plano_report() -> None:
     create_plano_report(
         branch_data=branch_data(),
@@ -431,5 +451,3 @@ def trigger_uganda_branches_smtp() -> pd.DataFrame:
 
 def clean_uganda_folder() -> pd.DataFrame:
     clean_folders(path=uganda_path)
-
-build_plano_report()

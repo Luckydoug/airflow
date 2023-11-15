@@ -499,15 +499,15 @@ def order_efficiency_smtp():
 
         if department == "BRS":
             # receiver_email = ['tstbranch@gmail.com']
-            receiver_email = [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','shyam@optica.africa','stock@optica.africa','wanjiru.kinyara@optica.africa']
-            # [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','shyam@optica.africa','stock@optica.africa','wanjiru.kinyara@optica.africa']
+            receiver_email = [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','shyam@optica.africa','stock@optica.africa','wanjiru.kinyara@optica.africa','nicholas.muthui@optica.africa ']
+
         else:    
             if pd.to_numeric((table1['Total'].iloc[-1]).replace("%","")) < 95:
-                receiver_email = [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','shyam@optica.africa','yuri@optica.africa','wanjiru.kinyara@optica.africa']
-                # receiver_email = [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','wanjiru.kinyara@optica.africa']
+                receiver_email = [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','shyam@optica.africa','yuri@optica.africa','wanjiru.kinyara@optica.africa','nicholas.muthui@optica.africa ']
+
             else:
-                receiver_email = [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','shyam@optica.africa','wanjiru.kinyara@optica.africa']
-                # receiver_email = [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','wanjiru.kinyara@optica.africa']
+                receiver_email = [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','shyam@optica.africa','wanjiru.kinyara@optica.africa','nicholas.muthui@optica.africa ']
+
 
         # Create a MIMEMultipart class, and set up the From, To, Subject fields
         email_message = MIMEMultipart()

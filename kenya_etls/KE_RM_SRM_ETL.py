@@ -45,7 +45,8 @@ with DAG(
                 build_kenya_ratings_report,
                 build_kenya_opening_time,
                 build_kenya_insurance_conversion,
-                build_kenya_non_view_non_conversions
+                build_kenya_non_view_non_conversions,
+                build_mtd_insurance_conversion
             )
 
             push_kenya_efficiency_data = PythonOperator(
@@ -97,6 +98,12 @@ with DAG(
                 provide_context=True
             )
 
+            build_mtd_insurance_conversion = PythonOperator(
+                task_id='build_mtd_insurance_conversion',
+                python_callable=build_mtd_insurance_conversion,
+                provide_context=True
+            )
+
             build_kenya_non_view_non_conversions = PythonOperator(
                 task_id='build_kenya_non_view_non_conversions',
                 python_callable= build_kenya_non_view_non_conversions,
@@ -104,7 +111,7 @@ with DAG(
             )
 
             
-            push_kenya_efficiency_data >> build_kenya_draft_upload >> build_kenya_sops >> build_kenya_rejections >> build_kenya_plano_report >> build_kenya_ratings_report >> build_kenya_opening_time >> build_kenya_insurance_conversion >>  build_kenya_non_view_non_conversions
+            push_kenya_efficiency_data >> build_kenya_draft_upload >> build_kenya_sops >> build_kenya_rejections >> build_kenya_plano_report >> build_kenya_ratings_report >> build_kenya_opening_time >> build_kenya_insurance_conversion >> build_mtd_insurance_conversion >> build_kenya_non_view_non_conversions
             
 
     with TaskGroup('smtp') as smtp:
@@ -124,7 +131,8 @@ with DAG(
             clean_kenya_folder = PythonOperator(
                 task_id='clean_kenya_folder',
                 python_callable=clean_kenya_folder,
-                provide_context=True
+                provide_context=True,
+                trigger_rule = 'all_done'
             )
 
             trigger_kenya_branches_smtp = PythonOperator(

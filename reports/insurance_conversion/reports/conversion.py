@@ -15,7 +15,6 @@ from sub_tasks.libraries.time_diff import calculate_time_difference
 from sub_tasks.libraries.utils import (
     fourth_week_start,
     fourth_week_end,
-    first_week_start,
     check_date_range,
     fetch_gsheet_data,
     get_comparison_months
@@ -129,7 +128,6 @@ def create_insurance_conversion(
         on = "Order Number", 
         how = "left" 
     )
-
     
 
     select = ''
@@ -225,7 +223,7 @@ def create_insurance_conversion(
         ]
 
 
-        feedback_non[["Full Request Date", "Feedback Time"]] = feedback_non[["Full Request Date", "Feedback Time"]].astype(str)
+        feedback_non[["Full Request Date", "Feedback Time"]] = feedback_non[["Full Request Date", "Feedback Time"]]
         with pd.ExcelWriter(f"{path}draft_upload/insurance_daily.xlsx", engine='xlsxwriter') as writer:
             creator_summary.to_excel(writer, sheet_name="daily_summary", index=False)
             feedback_non[cols].to_excel(writer, sheet_name = "daily_data", index = False)
@@ -515,6 +513,9 @@ def create_insurance_conversion(
                         "Feedback"
                     ]].to_excel(writer,sheet_name=name, index=False)          
         writer.save()  
+
+        with pd.ExcelWriter(f"{path}insurance_conversion/mng_noncoverted.xlsx", engine='xlsxwriter') as writer: 
+            mtd_pivot.to_excel(writer, sheet_name = "MTD Summary") 
 
         with pd.ExcelWriter(f"{path}insurance_conversion/mng_noncoverted.xlsx", engine='xlsxwriter') as writer: 
             mtd_pivot.to_excel(writer, sheet_name = "MTD Summary") 

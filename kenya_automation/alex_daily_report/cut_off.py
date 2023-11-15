@@ -100,18 +100,19 @@ def cutoff():
     
     """ DEPARTMENTS CUT OFF:
     Filtering Through the master dataset """
-    main1=Replacements[Replacements["Created User"]=="main1"]
+    mainstoreusers = ('main1','main2','main3')
+    main1=Replacements[Replacements["Created User"].isin(mainstoreusers)]
     main2=Replacements[Replacements["Created User"]=="main2"]
 
-    lens1=Replacements[Replacements["Created User"]=="lens1"]
-    print(lens1)
+    lensstoreusers = ('lens1','lens2','lens3')
+    lens1=Replacements[Replacements["Created User"].isin(lensstoreusers)]
     lens2=Replacements[Replacements["Created User"]=="lens2"]
-    print(lens2)
 
     designer1=Replacements[Replacements["Created User"]=="designer1"]
     designer2=Replacements[Replacements["Created User"]=="designer2"]
 
-    control1=Replacements[Replacements["Created User"]=="control1"]
+    controlusers = ('control1','control2','control3','control4')
+    control1=Replacements[Replacements["Created User"].isin(controlusers)]
     control2=Replacements[Replacements["Created User"]=="control2"]
     control3=Replacements[Replacements["Created User"]=="control3"]
 

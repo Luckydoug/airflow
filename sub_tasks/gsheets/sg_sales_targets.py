@@ -29,7 +29,7 @@ def fetch_sg_targets():
     drop_table = """truncate table mabawa_dw.sunglasses_targets;"""
     drop_table = pg_execute(drop_table)
 
-    sh[sh['country']=='KE'][['branch','target']].to_sql('sunglasses_targets', con = engine, schema='mabawa_dw', if_exists = 'append', index=False)
+    sh[sh['country']=='KE'][['branch','target','target_before_nov_2023']].to_sql('sunglasses_targets', con = engine, schema='mabawa_dw', if_exists = 'append', index=False)
 
     print('sg sales targets pulled')
 

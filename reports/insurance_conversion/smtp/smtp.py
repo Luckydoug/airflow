@@ -184,16 +184,20 @@ def send_to_branches(
     branch_data: pd.DataFrame,
     country:str,
     filename: str
-) -> None:  # This function explicitly returns Nothing, or in other words, it returns None.
-    # This function will send the Insurance Conversion Report to the branches
-    # To prevent the report being sent to a branch that it has already sent,
-    # We utilize the save_email and return_sent_emails function so that it checks
-    # if the report for that day has already been sent. If it has already been sent,
-    # then the loop jumps to the next iteration. This is necessary because the pipeline
-    # has some retries, let say we have 3 retries. In the event where there internet issues
-    # and the pipeline fails after sending the first branch, the pipeline will be triggered again
-    # and this will cause the email to be sent to a branch that has already been sent. So we use this
-    # function here to prevent the occurence of this.
+) -> None: 
+     
+    """
+    This function explicitly returns Nothing, or in other words, it returns None.
+    This function will send the Insurance Conversion Report to the branches.
+    To prevent the report being sent to a branch that it has already sent,
+    We utilize the save_email and return_sent_emails function so that it checks
+    if the report for that day has already been sent. If it has already been sent,
+    then the loop jumps to the next iteration. This is necessary because the pipeline
+    has some retries, let say we have 3 retries. In the event where there internet issues
+    and the pipeline fails after sending the first branch, the pipeline will be triggered again
+    and this will cause the email to be sent to a branch that has already been sent. So we use this
+    function here to prevent the occurence of this.
+    """
     create_initial_file(filename)
     individual = f"{path}/insurance_conversion/individual.xlsx"
     staff_conversion = pd.ExcelFile(individual)
@@ -253,6 +257,7 @@ def send_to_branches(
                 receiver_email = [
                     rm_email,
                     "wairimu@optica.africa",
+                    "faithtesy.leo@optica.africa",
                     branch_email
                 ]
 
@@ -262,6 +267,7 @@ def send_to_branches(
                     "duncan.muchai@optica.africa",
                     "susan@optica.africa",
                     "insuranceoh@optica.africa",
+                    "faithtesy.leo@optica.africa",
                     branch_email
                 ]
             
@@ -270,6 +276,7 @@ def send_to_branches(
                     rm_email,
                     "yh.manager@optica.africa",
                     "insurance@optica.africa",
+                    "faithtesy.leo@optica.africa",
                     branch_email
                 ]
             
@@ -285,6 +292,7 @@ def send_to_branches(
             else:
                 receiver_email = [
                   rm_email,
+                  "faithtesy.leo@optica.africa",
                   branch_email
                 ]
 

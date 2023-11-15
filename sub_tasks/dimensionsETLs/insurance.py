@@ -21,13 +21,12 @@ from sub_tasks.api_login.api_login import(login)
 # get session id
 SessionId = login()
 
-# FromDate = '2023/01/11'
-# FromDate = pastdate.strftime('%Y/%m/%d')
-# ToDate = '2023/02/05'
+FromDate = '2023/10/01'
+# ToDate = '2023/05/04'
 
 today = date.today()
-pastdate = today - timedelta(days=1)
-FromDate = pastdate.strftime('%Y/%m/%d')
+# pastdate = today - timedelta(days=1)
+# FromDate = pastdate.strftime('%Y/%m/%d')
 ToDate = date.today().strftime('%Y/%m/%d')
 
 # api details
@@ -168,6 +167,6 @@ def fetch_sap_insurance():
 
         # insurance_itemdetails_df.to_sql('source_insurance_plan', con = engine, schema='mabawa_staging', if_exists = 'append', index=False)
 
-
+fetch_sap_insurance()
 
 

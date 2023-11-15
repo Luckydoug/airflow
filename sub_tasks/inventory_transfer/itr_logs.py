@@ -34,6 +34,8 @@ today = date.today()
 pastdate = today - timedelta(days=2)
 FromDate = pastdate.strftime('%Y/%m/%d')
 ToDate = date.today().strftime('%Y/%m/%d')
+print(FromDate)
+print(ToDate)
 
 # api details
 pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetITRLOGDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"

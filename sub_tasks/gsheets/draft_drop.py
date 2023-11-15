@@ -33,4 +33,4 @@ def fetch_draft_drop():
            if_row_exists='update',
            create_table=False)
 
-
+# fetch_draft_drop()

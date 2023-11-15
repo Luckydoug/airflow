@@ -8,24 +8,28 @@ from airflow.operators.bash_operator import BashOperator
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.example_dags.subdags.subdag import subdag
 from airflow.utils.task_group import TaskGroup
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 # from tmp.python_test
 DAG_ID = 'Operation_Efficiency'
 
 default_args = {
-    'owner': 'Iconia ETLs',
+    'owner': 'Data Team',
     # 'depends_on_past': False,
-    'start_date': datetime(2021, 12, 13)
-    
+    'retries': 3,
+    'retry_delay': timedelta(seconds=15),
+    'start_date': datetime(2021, 12, 13),
+    'email': ['ian.gathumbi@optica.africa','wairimu@optica.africa','douglas.kathurima@optica.africa'],
+    'email_on_failure': True,
+    'email_on_retry': False,
 }
 
 with DAG(
     DAG_ID, 
     default_args=default_args,
     tags=['Live'], 
-    schedule_interval='30 2 * * *',
+    schedule_interval='30 2 * * 0,2,3,4,5,6',
     catchup=False
     ) as dag:
     

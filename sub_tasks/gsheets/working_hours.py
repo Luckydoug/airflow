@@ -54,7 +54,15 @@ def fetch_uganda_working_hours():
        "Auto Time": "auto_time",
     }, inplace=True)
 
-    working_hours = working_hours.set_index(['warehouse_code', 'days'])
+    working_hours = working_hours[[
+        "warehouse_code",
+        "warehouse_name",
+        "docnum",
+        "days",
+        "start_time",
+        "end_time",
+        "auto_time"
+    ]].set_index(['warehouse_code', 'days'])
 
     upsert(engine=uganda_engine,
            df=working_hours,

@@ -109,7 +109,8 @@ with DAG(
             clean_rwanda_folder = PythonOperator(
                 task_id='clean_rwanda_folder',
                 python_callable=clean_rwanda_folder,
-                provide_context=True
+                provide_context=True,
+                trigger_rule = 'all_done'
             )
 
             trigger_rwanda_smtp >> trigger_rwanda_branches_smtp >> clean_rwanda_folder

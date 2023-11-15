@@ -49,8 +49,10 @@ def create_receivingdata():
 
 def receiving():
     fromdate = '2023/10/01'
+    # yesterday = '2023-10-26'
     today = datetime.date.today()
     yesterday = today - datetime.timedelta(days=1)
+    print(yesterday)
 
     receiving = pd.read_sql("""
     SELECT "DocEntry", "Order No.", odsc_date::date, odsc_time, "Customer Code", "Normal(Or)Repair Order", "Status", odsc_status,"Order Criteria Status",odsc_createdby, "Order Total Amount", "Outlet"
@@ -125,7 +127,6 @@ def receiving():
     # Fill the nulls with the closing time for OHO 
     thika['thika_time_back_at_hq2'] = thika['thika_time_back_at_hq2'].fillna('19:00:00')
 
-    # thika['odsc_time']= pd.to_datetime(thika['odsc_time']).dt.time
     thika['thika_time_back_at_hq']= pd.to_datetime(thika['thika_time_back_at_hq']).dt.time
     print(thika[['thika_time_back_at_hq']])
     thika['thika_time_back_at_hq2']= pd.to_datetime(thika['thika_time_back_at_hq2']).dt.time

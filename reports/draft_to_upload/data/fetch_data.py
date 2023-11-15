@@ -557,7 +557,7 @@ def fetch_no_views_data(database, engine, start_date):
     case when days is not null then 1 else 0 end as "Conversion",
     case when days is not null and "RX" = 'High Rx' then 1 else 0 end as "High RX Conversion",
     case when days is not null and "RX" = 'Low Rx' then 1 else 0 end as "Low RX Conversion",
-    case when last_viewed_by is null and days is null then 1 else 0 end as "No View NoN",
+    case when last_viewed_by is null and days is null then 1 else 0 end as "No Views NoN",
     case when last_viewed_by is null and days is null and "RX" = 'High Rx' then 1 else 0 end as "High_Non",
     case when last_viewed_by is null and days is null and "RX" = 'Low Rx' then 1 else 0 end as "Low_Non"
     from {database}.et_conv ec 

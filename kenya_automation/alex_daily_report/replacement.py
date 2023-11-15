@@ -60,7 +60,6 @@ def replacements():
                 """.format(yesterday=yesterday)
     
     BRS = pd.read_sql_query(Repdata,con=conn) 
-    print(BRS)
 
     """3rd floor  all user Replacement"""
     Replacements = """select created_user as "Created User",post_date as "Date",post_time,
@@ -70,7 +69,6 @@ def replacements():
                     """.format(yesterday=yesterday)
     
     Replacements = pd.read_sql_query(Replacements,con=conn)
-    print(Replacements)
 
     """ REPLACEMENT EFFICIENCY""" 
     Replacements['Date']=pd.to_datetime(Replacements['Date'],dayfirst=True ).dt.date
@@ -78,19 +76,19 @@ def replacements():
     Replacements['Day_End'] = Replacements["Date_Time"].dt.day_name()
     Replacements=Replacements[['Created User', 'Status', 'Item Code', 'ITR No','Day_End','Date_Time']]
 
-
-    main1=Replacements[Replacements["Created User"]=="main1"]
+    mainstoreusers = ('main1','main2','main3')
+    main1=Replacements[Replacements["Created User"].isin(mainstoreusers)]
     main2=Replacements[Replacements["Created User"]=="main2"]
 
-    lens1=Replacements[Replacements["Created User"]=="lens1"]
+    lensstoreusers = ('lens1','lens2','lens3')
+    lens1=Replacements[Replacements["Created User"].isin(lensstoreusers)]
     lens2=Replacements[Replacements["Created User"]=="lens2"]
-    print(lens1)
-    print(lens2)
-
+            
     designer1=Replacements[Replacements["Created User"]=="designer1"]
     designer2=Replacements[Replacements["Created User"]=="designer2"]
 
-    control1=Replacements[Replacements["Created User"]=="control1"]
+    controlusers = ('control1','control2','control3','control4')
+    control1=Replacements[Replacements["Created User"].isin(controlusers)]
     control2=Replacements[Replacements["Created User"]=="control2"]
     control3=Replacements[Replacements["Created User"]=="control3"]
 
@@ -159,7 +157,8 @@ def replacements():
     Master_Data=pd.merge(MasterData,SenttoBranch,on="ITR No",how="outer")
     Master_Data=Master_Data.rename(columns={'Status':"STB_Status",'Day_End':"STB_Day",'Date_Time':"STB_DateTime","Created User":"STB_User"})
     MasterData=Master_Data[['ITR Number', 'ITR No', 'No. of Items','PLP_Day', 'StoresCreatedUser','STC_Status', 'STC_Day', 'STP_User', 'STP_Status','STP_Day',  'STB_User', 'STB_Status', 'Item Code','STB_Day', 'BRSCreatedDate','PLP_DateTime','STC_DateTime','STP_DateTime','STB_DateTime']]
-
+    print(MasterData['StoresCreatedUser'].unique())
+    print('Master_Data Printed')
 
 
     """ Calculating Duration Taken Between the Statuses """
@@ -290,6 +289,7 @@ def replacements():
     BRSLens_pivot=BRSLens_pivot.rename(columns={"BRSCreated_To_PLP Time":"AVG BRSCreated_To_PLP Time","ITR No":"Counts of ITRs"})
     BRSLens_pivot=BRSLens_pivot.transpose()
     BRSLens_pivot
+
     ############################################################################
     MasterData["Hour"]=MasterData['STC_DateTime'].dt.hour
     Main=MasterData[MasterData.StoresCreatedUser=="main"]
@@ -299,7 +299,8 @@ def replacements():
                             margins=True)
     main_pivot=main_pivot.rename(columns={'PLP_To_STC Time':'AVG PLP_To_STC Time',"ITR No":"Counts of ITRs"})
     main_pivot=main_pivot.transpose()
-    main_pivot
+    print('main_pivot')
+
     ###########
     Designer=MasterData[MasterData.StoresCreatedUser=="designer"]
     Designer_pivot=pd.pivot_table(Designer,index="Hour",values=["ITR No","No. of Items",'PLP_To_STC Time'],aggfunc={"ITR No":np.count_nonzero,
@@ -308,8 +309,10 @@ def replacements():
                             margins=True)
     Designer_pivot=Designer_pivot.rename(columns={'PLP_To_STC Time':'AVG PLP_To_STC Time',"ITR No":"Counts of ITRs"})
     Designer_pivot=Designer_pivot.transpose()
-    Designer_pivot
+    print('Designer_pivot')
+
     ###########
+    print(MasterData['StoresCreatedUser'].unique())
     Lens=MasterData[MasterData.StoresCreatedUser=="lens"]
     print('print lens store')
     print(Lens)
@@ -319,7 +322,6 @@ def replacements():
                             margins=True)
     Lens_pivot=Lens_pivot.rename(columns={'PLP_To_STC Time':'AVG PLP_To_STC Time',"ITR No":"Counts of ITRs"})
     Lens_pivot=Lens_pivot.transpose()
-    Lens_pivot
 
     ############################################################################
     MasterData["Hour"]=MasterData["STP_DateTime"].dt.hour
@@ -340,11 +342,12 @@ def replacements():
     Packaging_pivot=Packaging_pivot.rename(columns={"STP_To_STB Time":"AVG STP_To_STB Time","ITR No":"Counts of ITRs"})
     Packaging_pivot=Packaging_pivot.transpose()
     
-
+    print(BRSMain_pivot)
     MainItems = BRSMain_pivot.iloc[2,-1]
     MainCount = BRSMain_pivot.iloc[1,-1]
     Mainavg = BRSMain_pivot.iloc[0,-1] + main_pivot.iloc[2,-1]
 
+ 
     DesignerItems = BRSDesigner_pivot.iloc[2,-1]
     DesignerCount = BRSDesigner_pivot.iloc[1,-1]
     Designeravg = BRSDesigner_pivot.iloc[0,-1] + Designer_pivot.iloc[2,-1]

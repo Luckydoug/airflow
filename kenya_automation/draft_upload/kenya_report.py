@@ -39,6 +39,7 @@ from reports.draft_to_upload.reports.sops import create_ug_sops_report
 from reports.draft_to_upload.reports.ratings import create_ratings_report
 from reports.draft_to_upload.data.push_data import push_insurance_efficiency_data
 from reports.draft_to_upload.reports.no_view_no_conv import create_non_conversions_non_view
+from reports.draft_to_upload.reports.mtd_insurance import create_mtd_insurance_conversion
 from reports.draft_to_upload.data.fetch_data import (
     fetch_views,
     fetch_orders,
@@ -243,7 +244,7 @@ if selection == "Daily":
 if selection == "Weekly":
     date = fourth_week_start
 if selection == "Monthly":
-    date = '2023-09-01'
+    date = '2023-10-01'
 
 pstart_date, pend_date = get_start_end_dates(
     selection=selection
@@ -471,6 +472,8 @@ def no_feedbacks():
 
 
 def build_kenya_insurance_conversion() -> None:
+    if selection == "Monthly":
+        return
     create_insurance_conversion(
         path=path,
         all_orders=orders(),
@@ -483,6 +486,32 @@ def build_kenya_insurance_conversion() -> None:
         working_hours=working_hours(),
         country="Kenya",
         no_feedbacks=no_feedbacks()
+    )
+
+"""
+FETCH ORDERSCREEN LOGS
+"""
+def mtd_orderscreen():
+    orderscreen = data_fetcher.fetch_orderscreen(
+        start_date=str(pstart_date)
+    )
+
+    return orderscreen
+
+
+"""
+CREATE INSURANCE CONVERSION REPORT 
+"""
+def build_mtd_insurance_conversion() -> None:
+    create_mtd_insurance_conversion(
+        path=path,
+        all_orders=orders(),
+        orderscreen=mtd_orderscreen(),
+        branch_data=branch_data(),
+        sales_orders=sales_orders(),
+        insurance_companies=insurance_companies(),
+        date = pstart_date,
+        selection="Monthly"
     )
 
 
@@ -540,3 +569,4 @@ IT SHOULD BE UNIQUE THOUGH
 SIGNED BY
 DOUGLAS KATHURIMA
 """
+

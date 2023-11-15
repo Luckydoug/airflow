@@ -1,23 +1,17 @@
 from airflow.models import Variable
 import pandas as pd
 
-def fetch_eyetests_conversion(engine, database, start_date, end_date, users, users_table):
+def fetch_eyetests_conversion(engine, start_date, end_date, users, users_table):
     et_q = f""" 
-        SELECT
-        code, create_date, trim(to_char(create_date::date, 'Month')) as "Month", 
-        create_time, optom, optom_name, rx_type, branch_code, cust_code, status, 
-        patient_to_ophth, "RX",plano_rx, sales_employees, handed_over_to, view_date, view_creator, 
-        last_viewed_by, branch_viewed, order_converted,  date_converted,
-        days, on_after, on_after_createdon, on_after_cancelled, on_after_status,
-        on_before_prescription_order, on_before_mode, reg_cust_type, mode_of_pay, conversion_remarks,
+        select *,
+        trim(to_char(create_date::date, 'Month')) as "Month",
         case when "RX" = 'High Rx' then 1 else 0 end as high_rx,
         case when "RX" = 'Low Rx' then 1 else 0 end as low_rx,
-        case when days::int <=7 then 1 else 0 end as conversion,
         case when days::int <=7 and "RX" = 'High Rx' then 1 else 0 end as high_rx_conversion,
         case when days::int <=7 and "RX" = 'Low Rx' then 1 else 0 end as low_rx_conversion
         from
         (select row_number() over(partition by cust_code, create_date, code order by days, rx_type, code desc) as r, *
-        from {database}.et_conv
+        from report_views.ewc_conversion
         where status not in ('Cancel','Unstable', 'CanceledEyeTest', 'Hold')
         and (patient_to_ophth not in ('Yes') or patient_to_ophth is null)) as a 
         left join {users}.{users_table} b on a.optom::text = b.se_optom::text
@@ -92,12 +86,15 @@ def fetch_views_conversion(engine, database, start_date, end_date, users, users_
     from {database}.{view}) as viewrx
     left join {users}.{users_table} as users 
     on viewrx.creator::text = users.user_code::text
+    left join {database}.et_conv as ets on 
+    viewrx.visit_id::text = ets.code::text
     where
     viewrx.r = 1
     and viewrx.view_date::date >=  %(From)s
     and viewrx.view_date::date <= %(To)s
     and viewrx.branch not in ('0MA','null', 'MUR', 'HOM')
     and viewrx.cust_loyalty_code <> 'U10000002'
+    and ets."RX" = 'High Rx'
     """
 
     data = pd.read_sql_query(
@@ -108,5 +105,34 @@ def fetch_views_conversion(engine, database, start_date, end_date, users, users_
             'To': end_date
         })
     data["ViewDate"] = pd.to_datetime(data["ViewDate"], format="%Y-%m-%d")
+    return data
+
+
+def fetch_branch_data(engine, database):
+    query = f"""
+    select branch_code as "Outlet",
+    branch_name as "Branch",
+    email as "Email",
+    rm as "RM",
+    rm_email as "RM Email",
+    rm_group as "RM Group",
+    srm as "SRM",
+    srm_email as "SRM Email",
+    branch_manager as "Branch Manager",
+    front_desk as "Front Desk",
+    zone as "Zone"
+    from {database}.branch_data bd 
+    """
+
+    branch_data = pd.read_sql_query(query, con = engine)
+    return branch_data
+
+
+def fetch_ewc_conversion(engine):
+    query = """
+    select * from report_views.ewc_conversion
+    """
+
+    data = pd.read_sql_query(query, con=engine)
     return data
 

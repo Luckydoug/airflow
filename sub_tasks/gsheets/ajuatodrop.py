@@ -50,7 +50,7 @@ def fetch_npsreviews_with_issues():
      truncate_table = """truncate mabawa_staging.source_npsreviews_with_issues;"""
      truncate_table = pg_execute(truncate_table)
 
-     wk1.to_sql('source_npsreviews_with_issues', con = engine, schema='mabawa_staging', if_exists = 'append', index=False)   
+     wk1[['user_id','date','name','order_no','branch','rating','comment_why_not_to_drop','rating_after_cscall','dropped:yes/no','source']].to_sql('source_npsreviews_with_issues', con = engine, schema='mabawa_staging', if_exists = 'append', index=False)   
      
      print('orders with issues pulled')
 
@@ -98,5 +98,5 @@ def npsreviews_with_issues_live():
 
         return 'something'
 
-# fetch_npsreviews_with_issues()
+fetch_npsreviews_with_issues()
 # npsreviews_with_issues_live()

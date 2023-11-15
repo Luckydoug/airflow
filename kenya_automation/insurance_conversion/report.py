@@ -10,10 +10,12 @@ from sub_tasks.libraries.utils import (
     createe_engine,
     path
 )
-from reports.draft_to_upload.utils.utils import return_report_daterange, get_report_frequency
-
+from reports.draft_to_upload.utils.utils import return_report_daterange
+from reports.conversion.utils.utils import (get_conversion_frequency)
 engine = createe_engine()
-selection = "Weekly"
+selection = get_conversion_frequency(
+    report="Insurance Conversion"
+)
 start_date = return_report_daterange(selection=selection)
 
 """

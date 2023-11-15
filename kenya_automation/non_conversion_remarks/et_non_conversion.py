@@ -55,7 +55,7 @@ def fetch_et_non_conversions():
     and "RX" = 'High Rx'
     and (a.days >= %(Days)s or on_after is null or (on_after_status in ('Draft Order Created','Pre-Auth Initiated For Optica Insurance','Customer to Revert','Cancel Order') and order_converted is null))
     """
-    conv = pd.read_sql_query(et_q,con=engine,params={'From':datefrom,'To':today,'Days':14})
+    conv = pd.read_sql_query(et_q,con=engine,params={'From':datefrom,'To':today,'Days':7})
     return conv
 
 
@@ -127,8 +127,10 @@ def smtp():
     if not assert_date_modified([et_non_q_file]):
         return
     else:
-        selectedBranches = ["DIA","KII","NAR","OHO","COR","YOR","JUN"]
-        targetbranches = branch_data[branch_data['Outlet'].isin(selectedBranches)]
+        # selectedBranches = ["DIA","KII","NAR","OHO","COR","YOR","JUN"]
+        # selectedBranches = 'THI'
+        targetbranches = branch_data[branch_data['Outlet']=='THI']
+        # targetbranches = branch_data[branch_data['Outlet'].isin(selectedBranches)]
         for index, row in targetbranches.iterrows():
             branchcode = row['Outlet']
             branchname = row['Branch']
@@ -161,8 +163,9 @@ def smtp():
                         )
             # receiver_email = ["tstbranch@gmail.com"]
             # receiver_email = ["cavin@optica.africa","kimstone@optica.africa","shehan@optica.africa"]
-
-            receiver_email = [branchemail,srmemail,'kush@optica.africa','wazeem@optica.africa']
+            receiver_email = [branchemail,srmemail,'cavin@optica.africa ']
+            # receiver_email = [branchemail,srmemail,'kush@optica.africa','wazeem@optica.africa']
+            
             if branchcode == "OHO":
                 receiver_email = [branchemail,srmemail,'kush@optica.africa','wazeem@optica.africa',"susan@optica.africa","wairimu@optica.africa"]
             if branchcode == "YOR":
