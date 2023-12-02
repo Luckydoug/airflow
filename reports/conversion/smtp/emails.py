@@ -1,5 +1,5 @@
 test = [
-    "wairimu@optica.africa"
+    'tstbranch@gmail.com'
 ]
 
 kenya = [
@@ -22,6 +22,7 @@ uganda = [
     'raghav@optica.africa',
     'yuri@optica.africa',
     'john@optica.africa',
+    'larry.larsen@optica.africa',
     'wairimu@optica.africa',
     'ian.gathumbi@optica.africa'
 ]

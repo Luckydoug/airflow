@@ -41,6 +41,8 @@ def create_queue_summary(
         "ETs Count"
     ]
 
+    print(summary)
+
     summary.columns = cols
     cols_order = index + ["ETs Count", "Avg Queue Time", "Avg ET Time"]
     return summary[cols_order]

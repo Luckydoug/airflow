@@ -115,6 +115,15 @@ def create_eyetests_conversion(data, country, path, selection):
             cols=["%Conversion", "conversion", "code", "ETs"]
         )
 
+        
+        overall_cash = create_country_conversion(
+            conversions=cash_high_rx_data,
+            week_range="week range",
+            values=["code", "conversion"],
+            country=country,
+            cols=["%Conversion", "conversion", "code", "ETs"]
+        )
+
 
         """
         INSURANCE HIGH RX CONVERSION
@@ -140,8 +149,7 @@ def create_eyetests_conversion(data, country, path, selection):
 
         last_date_range = summary_weekly_conv.columns.get_level_values(0)[-1]
         non_conversions = conversions[
-            (conversions["conversion"] == 0) &
-            (conversions["week range"] == last_date_range)
+            conversions["conversion"] == 0
         ]
 
         non_conversions_data = non_conversions.rename(columns={
@@ -234,6 +242,47 @@ def create_eyetests_conversion(data, country, path, selection):
             cols_order=["Outlet", "Optom", "ETs", "Converted", "%Conversion"]
         )
 
+
+        last_high_rx_data = weekly_data[weekly_data["RX"] == "High Rx"]
+
+        highrx_branch_conversion = create_branch_conversion(
+            weekly_data=last_high_rx_data,
+            index="branch_code",
+            values=["code", "conversion"],
+            rename={
+                "branch_code": "Outlet",
+                "code": "ETs",
+                "conversion": "Converted",
+            },
+            cols_order=["Outlet", "ETs", "Converted", "%Conversion"]
+        )
+
+        highrx_ewc_conversion = create_staff_conversion(
+            weekly_data=last_high_rx_data,
+            index=["branch_code", "handed_over_to"],
+            values=["code", "conversion"],
+            rename={
+                "branch_code": "Outlet",
+                "handed_over_to": "Staff",
+                "code": "ETs",
+                "conversion": "Converted"
+            },
+            cols_order=["Outlet", "Staff", "ETs", "Converted", "%Conversion"]
+        )
+
+        highrx_opthom_conversion = create_staff_conversion(
+            weekly_data=last_high_rx_data,
+            index=["branch_code", "optom_name"],
+            values=["code", "conversion"],
+            rename={
+                "branch_code": "Outlet",
+                "optom_name": "Optom",
+                "code": "ETs",
+                "conversion": "Converted"
+            },
+            cols_order=["Outlet", "Optom", "ETs", "Converted", "%Conversion"]
+        )
+
         with pd.ExcelWriter(f"{path}conversion/eyetests/overall.xlsx") as writer:
             ewc.reset_index().to_excel(writer, sheet_name="EWC Oveall Comparison")
             optom.reset_index().to_excel(writer, sheet_name="Optom Ovearall Comparison")
@@ -241,6 +290,7 @@ def create_eyetests_conversion(data, country, path, selection):
             weekly_et_conv.to_excel(writer, sheet_name="Branches_Conversion")
             weekly_highrx_conv.to_excel(writer, sheet_name="Highrx_Conversion")
             branch_high_rx.to_excel(writer, sheet_name="high_rx_branch")
+            overall_cash.to_excel(writer, sheet_name="Overall Cash Conversion")
             cash_high_rx_conversion.to_excel(writer, sheet_name="High RX Cash Conversion")
             insurance_high_rx_conversion.to_excel(writer, sheet_name="High RX Insurance Conversion")
             ewc_conversion.to_excel(writer, sheet_name="EWC", index=False)
@@ -265,6 +315,22 @@ def create_eyetests_conversion(data, country, path, selection):
 
         with pd.ExcelWriter(f"{path}conversion/eyetests/branches.xlsx") as writer:
             for group, dataframe in branch_conversion.groupby("Outlet"):
+                name = f'{group}'
+                dataframe.to_excel(writer, sheet_name=name, index=False)
+
+
+        with pd.ExcelWriter(f"{path}conversion/eyetests/highrx_sales_persons.xlsx") as writer:
+            for group, dataframe in highrx_ewc_conversion.groupby("Outlet"):
+                name = f'{group}'
+                dataframe.to_excel(writer, sheet_name=name, index=False)
+
+        with pd.ExcelWriter(f"{path}conversion/eyetests/highrx_opthoms.xlsx") as writer:
+            for group, dataframe in highrx_opthom_conversion.groupby("Outlet"):
+                name = f'{group}'
+                dataframe.to_excel(writer, sheet_name=name, index=False)
+
+        with pd.ExcelWriter(f"{path}conversion/eyetests/highrx_branches.xlsx") as writer:
+            for group, dataframe in highrx_branch_conversion.groupby("Outlet"):
                 name = f'{group}'
                 dataframe.to_excel(writer, sheet_name=name, index=False)
 

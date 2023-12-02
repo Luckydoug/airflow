@@ -683,9 +683,9 @@ def send_to_branches(branch_data, selection, path, filename, country):
 
             elif branch in planos_branches and branch in rejection_branches and branch in feedback_branches and branch in no_feedback_branches:
                 if selection == "Daily":
-                    subject = f"{branch} Non Converted Approved Insurance Orders, Insurance Errors, Insurance Orders with no Feedback, and Plano NoN Submissions for {todate}"
+                    subject = f"{branch} Non-Converted Approved Insurance Orders, Insurance Errors, Insurance Orders with No Feedback, and Plano Non-Submissions for {todate}"
                 elif selection == "Weekly":
-                    subject = f"{branch} Non Converted Approved Insurance Orders, Insurance Errors, Insurance Orders with no Feedback, and Plano NoN Submissions from {fourth_week_start} to {fourth_week_end}"
+                    subject = f"{branch} Non-Converted Approved Insurance Orders, Insurance Errors, Insurance Orders with No Feedback, and Plano Non-Submissions from {fourth_week_start} to {fourth_week_end}"
                 else:
                     return
                 
@@ -728,9 +728,9 @@ def send_to_branches(branch_data, selection, path, filename, country):
 
             elif branch in rejection_branches and branch in planos_branches and branch in feedback_branches and branch not in no_feedback_branches:
                 if selection == "Daily":
-                    subject = f"{branch} Non Converted Approved Insurance Orders, Insurance Errors and Plano NoN Submissions for {todate}"
+                    subject = f"{branch} Non-Converted Approved Insurance Orders, Insurance Errors and Plano Non-Submissions for {todate}"
                 elif selection == "Weekly":
-                    subject = f"{branch} Non Converted Approved Insurance Orders, Insurance Errors and Plano NoN Submissions from {fourth_week_start} to {fourth_week_end}"
+                    subject = f"{branch} Non-Converted Approved Insurance Orders, Insurance Errors and Plano Non-Submissions from {fourth_week_start} to {fourth_week_end}"
                 else:
                     return
                 
@@ -767,9 +767,9 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 """
             elif branch in rejection_branches and branch in planos_branches and branch not in feedback_branches and branch not in no_feedback_branches:
                 if selection == "Daily":
-                    subject = f"{branch} Insurance Errors and Plano NoN Submissions for {todate}"
+                    subject = f"{branch} Insurance Errors and Plano Non-Submissions for {todate}"
                 elif selection == "Weekly":
-                    subject = f"{branch} Insurance Errors and Plano NoN Submissions from {fourth_week_start} to {fourth_week_end}"
+                    subject = f"{branch} Insurance Errors and Plano Non-Submissions from {fourth_week_start} to {fourth_week_end}"
                 else:
                     return
 
@@ -800,9 +800,9 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 """
             elif branch in feedback_branches and branch not in rejection_branches and branch not in planos_branches and branch not in no_feedback_branches:
                 if selection == "Daily":
-                    subject = f"{branch} Non Converted Approved Insurance Orders for {todate}"
+                    subject = f"{branch} Non-Converted Approved Insurance Orders for {todate}"
                 elif selection == "Weekly":
-                    subject = f"{branch} Non Converted Approved Insurance Orders from {fourth_week_start} to {fourth_week_end}"
+                    subject = f"{branch} Non-Converted Approved Insurance Orders from {fourth_week_start} to {fourth_week_end}"
                 else:
                     return
                 
@@ -824,9 +824,9 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 """
             elif branch in no_feedback_branches and branch not in rejection_branches and branch not in planos_branches and branch not in feedback_branches:
                 if selection == "Daily":
-                    subject = f"{branch} Insurance Orders With No Feedback for {todate}"
+                    subject = f"{branch} Insurance Orders with No Feedback for {todate}"
                 elif selection == "Weekly":
-                    subject = f"{branch} Insurance Orders With No Feedback from {fourth_week_start} to {fourth_week_end}"
+                    subject = f"{branch} Insurance Orders with No Feedback from {fourth_week_start} to {fourth_week_end}"
                 else:
                     return
                 
@@ -871,9 +871,9 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 """
             elif branch in planos_branches and branch not in rejection_branches and branch not in feedback_branches and branch not in no_feedback_branches:
                 if selection == "Daily":
-                    subject = f"{branch} Plano No Submissions for {todate}"
+                    subject = f"{branch} Plano Non-Submissions for {todate}"
                 elif selection == "Weekly":
-                    subject = f"{branch} Plano No Submissions from {fourth_week_start} to {fourth_week_end}"
+                    subject = f"{branch} Plano Non-Submissions from {fourth_week_start} to {fourth_week_end}"
                 else:
                     return
 
@@ -895,9 +895,9 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 """
             elif branch in feedback_branches and branch in rejection_branches and branch not in planos_branches and branch not in no_feedback_branches:
                 if selection == "Daily":
-                    subject = f"{branch} Non Converted Approved Insurance Orders and Insurance Errors for {todate}"
+                    subject = f"{branch} Non-Converted Approved Insurance Orders and Insurance Errors for {todate}"
                 elif selection == "Weekly":
-                    subject = f"{branch} Non Converted Approved Insurance Orders and Insurance Errors from {fourth_week_start} to {fourth_week_end}"
+                    subject = f"{branch} Non-Converted Approved Insurance Orders and Insurance Errors from {fourth_week_start} to {fourth_week_end}"
                 else:
                     return
 
@@ -927,9 +927,9 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 """
             elif branch in feedback_branches and  branch in planos_branches and branch not in rejection_branches and branch not in no_feedback_branches:
                 if selection == "Daily":
-                    subject = f"{branch} Non Converted Approved Insurance Orders and Plano No Submissions for {todate}"
+                    subject = f"{branch} Non-Converted Approved Insurance Orders and Plano Non-Submissions for {todate}"
                 elif selection == "Weekly":
-                    subject = f"{branch} Non Converted Approved Insurance Orders and Plano No Submissions from {fourth_week_start} to {fourth_week_end}"
+                    subject = f"{branch} Non-Converted Approved Insurance Orders and Plano Non-Submissions from {fourth_week_start} to {fourth_week_end}"
                 else:
                     return
                 
@@ -960,9 +960,9 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 """
             elif branch in planos_branches and branch in no_feedback_branches and branch not in rejection_branches and branch not in feedback_branches:
                 if selection == "Daily":
-                    subject = f"{branch} Insurance Orders with no Feedback and Plano NON Submission for {todate}"
+                    subject = f"{branch} Insurance Orders with No Feedback and Plano Non-Submission for {todate}"
                 elif selection == "Weekly":
-                    subject = f"{branch} Insurance Orders with no Feedback and Plano NON Submission from {fourth_week_start} to {fourth_week_end}"
+                    subject = f"{branch} Insurance Orders with No Feedback and Plano Non-Submission from {fourth_week_start} to {fourth_week_end}"
                 else:
                     return
                 
@@ -1024,9 +1024,9 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 """
             elif branch in feedback_branches and branch in no_feedback_branches and branch not in planos_branches and branch not in rejection_branches:
                 if selection == "Daily":
-                    subject = f"{branch} NON Converted Approved Insurance Orders and Orders with no Feedback for {todate}"
+                    subject = f"{branch} Non-Converted Approved Insurance Orders and Orders with No Feedback for {todate}"
                 elif selection == "Weekly":
-                    subject = f"{branch} NON Converted Approved Insurance Orders and Orders with no Feedback from {fourth_week_start} to {fourth_week_end}"
+                    subject = f"{branch} Non-Converted Approved Insurance Orders and Orders with No Feedback from {fourth_week_start} to {fourth_week_end}"
                 else:
                     return
                 
@@ -1054,9 +1054,9 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 """
             elif branch in planos_branches and branch in rejection_branches and branch in no_feedback_branches and branch not in feedback_branches:
                 if selection == "Daily":
-                    subject = f"{branch} Insurance Errors, Insurance Orders with no Feedback, and Plano NON Submission for {todate}"
+                    subject = f"{branch} Insurance Errors, Insurance Orders with No Feedback, and Plano Non-Submission for {todate}"
                 elif selection == "Weekly":
-                    subject = f"{branch}  Insurance Errors, Insurance Orders with no Feedback, and Plano NON Submission from {fourth_week_start} to {fourth_week_end}"
+                    subject = f"{branch}  Insurance Errors, Insurance Orders with No Feedback, and Plano Non-Submission from {fourth_week_start} to {fourth_week_end}"
                 else:
                     return
                 
@@ -1093,9 +1093,9 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 """
             elif branch in planos_branches and branch in feedback_branches and branch in no_feedback_branches and branch not in rejection_branches:
                 if selection == "Daily":
-                    subject = f"{branch} Approved NON Converted Insurance Orders, Insurance Orders with no Feedback, and Plano NON Submission for {todate}"
+                    subject = f"{branch} Approved Non-Converted Insurance Orders, Insurance Orders with No Feedback, and Plano Non-Submission for {todate}"
                 elif selection == "Weekly":
-                    subject = f"{branch}  Approved NON Converted Insurance Orders, Insurance Orders with no Feedback, and Plano NON Submission from {fourth_week_start} to {fourth_week_end}"
+                    subject = f"{branch}  Approved Non-Converted Insurance Orders, Insurance Orders with No Feedback, and Plano Non-Submission from {fourth_week_start} to {fourth_week_end}"
                 else:
                     return
 
@@ -1129,9 +1129,9 @@ def send_to_branches(branch_data, selection, path, filename, country):
             
             elif branch in rejection_branches and branch in feedback_branches and branch in no_feedback_branches and branch not in planos_branches:
                 if selection == "Daily":
-                    subject = f"{branch} Approved NON Converted Insurance Orders, Insurance Errors, and Insurance Orders with no Feedback for {todate}"
+                    subject = f"{branch} Approved Non-Converted Insurance Orders, Insurance Errors, and Insurance Orders with No Feedback for {todate}"
                 elif selection == "Weekly":
-                    subject = f"{branch}  Approved NON Converted Insurance Orders, Insurance Errors, and Insurance Orders with no Feedback from {fourth_week_start} to {fourth_week_end}"
+                    subject = f"{branch}  Approved Non-Converted Insurance Orders, Insurance Errors, and Insurance Orders with No Feedback from {fourth_week_start} to {fourth_week_end}"
                 else:
                     return
 
@@ -1162,11 +1162,14 @@ def send_to_branches(branch_data, selection, path, filename, country):
                     rejection_message = rejection_message
                 )
 
+
             if branch == random_branch and country == "Kenya" and branch != "OHO":
                 receiver_email = [
                     "wazeem@optica.africa",
                     "yuri@optica.africa",
                     "andrew@optica.africa",
+                    "christopher@optica.africa",
+                    "faithtesy.leo@optica.africa",
                     srm_email,
                     rm_email,
                     branch_email,
@@ -1177,8 +1180,10 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 receiver_email = [
                     srm_email,
                     rm_email,
+                    "christopher@optica.africa",
                     "insurance@optica.africa",
                     "yh.manager@optica.africa",
+                    "faithtesy.leo@optica.africa",
                     branch_email
                 ]
 
@@ -1186,9 +1191,11 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 receiver_email = [
                     srm_email,
                     rm_email,
+                    "christopher@optica.africa",
                     "duncan.muchai@optica.africa",
                     "susan@optica.africa",
                     "insuranceoh@optica.africa",
+                    "faithtesy.leo@optica.africa",
                     branch_email
                 ]
 
@@ -1199,8 +1206,6 @@ def send_to_branches(branch_data, selection, path, filename, country):
                     "kush@optica.africa",
                     "raghav@optica.africa",
                     "larry.larsen@optica.africa",
-                    'fredrick@optica.africa',
-                    'tiffany@optica.africa',
                     "wairimu@optica.africa",
                     branch_email
                 ]
@@ -1214,7 +1219,13 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 ]
 
             else:
-                receiver_email = [srm_email, rm_email, branch_email]
+                receiver_email = [
+                    srm_email, 
+                    rm_email, 
+                    "christopher@optica.africa", 
+                    "faithtesy.leo@optica.africa",
+                    branch_email
+                ]
 
             
             if country == "Test":
@@ -1266,3 +1277,4 @@ Please DO NOT Remove the above lines at any point not matter what.
 Removing the above lines will cause the email to send endless times.
 
 """
+

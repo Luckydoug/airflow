@@ -192,7 +192,7 @@ if selection == "Daily":
 if selection == "Weekly":
     date = fourth_week_start
 if selection == "Monthly":
-    date = '2023-10-01'
+    date = '2023-11-01'
 
 
 def opening_data() -> pd.DataFrame:

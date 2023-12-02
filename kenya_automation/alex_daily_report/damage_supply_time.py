@@ -60,6 +60,7 @@ def damage_suppy_time():
     
     ##Define control room rejection status
     # controlrejectionstatus = ('Rejected Frame sent to Frame Store')
+
     """Designer Store Damage Supply time"""
     designerrejected = status[status['Status']=='Rejected Frame sent to Frame Store']      
     designerrejected1 = designerrejected[designerrejected['Created User']== 'control1']
@@ -282,11 +283,20 @@ def damage_suppy_time():
         mainstoredamage_reissuedsec = pd.DataFrame(columns=columns)    
 
     """Lens Store Damage Supply Time"""
-    lensrejected = status[status['Status']=='Rejected Lenses sent to Lens Store']    
-    lensrejected=lensrejected[status['Created User'].isin(control)]
-    lensrejected = lensrejected.sort_values(by = ['Datetime'],ascending =  False)
-
+    """ First Rejection DST """
+    lensrejected = status[status['Status']=='Rejected Lenses sent to Lens Store']   
+    lensrejected = lensrejected.sort_values(by = ['Datetime'],ascending =  True) 
+    lensrejected=lensrejected[lensrejected['Created User'].isin(control)]
+    lensrejected["Lens Store"] = lensrejected.groupby('DocNum').cumcount()
+    lensrejected['Lens Store'] += 1
+    lensrejected = lensrejected[lensrejected['Lens Store'] == 1]
+    lensrejected = lensrejected.sort_values(by = ['Datetime'],ascending =  True)
+    
     reissuedlens = status[status['Status']== 'ReIssued Lens for Order']
+    reissuedlens = reissuedlens.sort_values(by = ['Datetime'],ascending =  True)
+    reissuedlens["Lens Store"] = reissuedlens.groupby('DocNum').cumcount()
+    reissuedlens['Lens Store'] += 1
+    reissuedlens = reissuedlens[reissuedlens['Lens Store'] == 1]
     reissuedlens = reissuedlens[reissuedlens["Date"] == dateyesterday]
     reissuedlens.rename(columns={'Datetime':'Datetimeout'}, inplace=True)
     reissuedlens= pd.merge(lensrejected,reissuedlens[['DocNum','Datetimeout']], on='DocNum', how='right')
@@ -342,6 +352,72 @@ def damage_suppy_time():
         reissuedlens = pd.DataFrame(columns=columns) 
         print('Lens Store Printed')
 
+
+    """ Second Lens Store Damage Supply Time"""
+    lensrejectedsec = status[status['Status']=='Rejected Lenses sent to Lens Store']    
+    lensrejectedsec=lensrejectedsec[lensrejectedsec['Created User'].isin(control)]
+    lensrejectedsec = lensrejectedsec.sort_values(by = ['Datetime'],ascending =  True)
+    lensrejectedsec["Lens Store"] = lensrejectedsec.groupby('DocNum').cumcount()
+    lensrejectedsec['Lens Store'] += 1
+    lensrejectedsec = lensrejectedsec[lensrejectedsec['Lens Store'] == 2]
+
+    reissuedlenssec = status[status['Status']== 'ReIssued Lens for Order']
+    reissuedlenssec = reissuedlenssec.sort_values(by = ['Datetime'],ascending =  True)
+    reissuedlenssec["Lens Store"] = reissuedlenssec.groupby('DocNum').cumcount()
+    reissuedlenssec['Lens Store'] += 1
+    reissuedlenssec = reissuedlenssec[reissuedlenssec['Lens Store'] == 2]
+    reissuedlenssec = reissuedlenssec[reissuedlenssec["Date"] == dateyesterday]
+    reissuedlenssec.rename(columns={'Datetime':'Datetimeout'}, inplace=True)
+    reissuedlenssec= pd.merge(lensrejectedsec,reissuedlenssec[['DocNum','Datetimeout']], on='DocNum', how='right')
+     
+    """ Calculation of Time"""
+    ####Days of the week
+    workday = businesstimedelta.WorkDayRule(
+        start_time=datetime.time(9),
+        end_time=datetime.time(19),
+        working_days=[0,1, 2, 3, 4])
+
+    cal = Kenya()
+    hl = cal.holidays()
+    vic_holidays = pyholidays.KE() 
+    holidays = businesstimedelta.HolidayRule(vic_holidays)
+    businesshrs = businesstimedelta.Rules([workday, holidays], hl)
+
+    def BusHrs(start, end):
+        if end>=start:
+            return businesshrs.difference(start,end).hours+float(businesshrs.difference(start,end).seconds)/float(3600)
+        else:
+            ""
+        
+    RejectedSentWk_hrs=reissuedlenssec.apply(lambda row: BusHrs(row['Datetime'], row['Datetimeout']), axis=1)
+
+    # Define a working weekend day(Saturday)
+    Saturday = businesstimedelta.WorkDayRule(start_time=datetime.time(9),end_time=datetime.time(17),working_days=[5])
+
+    vic_holidays = pyholidays.KE()
+    holidays = businesstimedelta.HolidayRule(vic_holidays)
+    businesshrs = businesstimedelta.Rules([Saturday, holidays])
+
+    def SatHrs(start, end):
+        if end>=start:
+            return businesshrs.difference(start,end).hours+float(businesshrs.difference(start,end).seconds)/float(3600)
+        else:
+            ""
+
+    RejectedSentSat_hrs=reissuedlenssec.apply(lambda row: BusHrs(row['Datetime'], row['Datetimeout']), axis=1)
+
+    if not reissuedlenssec.empty:
+        reissuedlenssec["delay"]=(RejectedSentWk_hrs+RejectedSentSat_hrs)*60
+        lenstoredamage_reissuedsec=reissuedlenssec.copy()
+        lenstoredamage_reissuedsec= lenstoredamage_reissuedsec.rename(columns={'delay':'Time taken'})
+        lenstoredamage_reissuedsec= lenstoredamage_reissuedsec.sort_values(by='Time taken',ascending=False)
+        lenstoredamage_reissuedsec = lenstoredamage_reissuedsec[['Created User', 'Date', 'Time', 'Status','DocNum','OrderCriteria Status','Datetime','Datetimeout','Time taken']]
+    else:
+        columns = ['Created User', 'Date', 'Time', 'Status','DocNum','OrderCriteria Status','Datetime','Datetimeout','Time taken']
+        lenstoredamage_reissuedsec = pd.DataFrame(columns=columns) 
+        print('Lens Store Printed')
+
+
     """"Control Room Damage Supply Time"""
     print('Control Room Damage Supply Time')
     data = status
@@ -350,14 +426,25 @@ def damage_suppy_time():
     data['Date time'] = pd.to_datetime(data['Date time'], format='%Y/%m/%d %H:%M:%S',errors='coerce')
 
     lens_data = data   
-    lens_data=lens_data.drop_duplicates(subset=['DocEntry','Status'], keep="first")
-    lens_in = lens_data[(lens_data['Status']=='Rejected Order Sent To Control Room')| (lens_data['Status']=='Surfacing Damage/Reject Sent to Control Room')| (lens_data['Status']=='Rejected Order Sent To Control Room')]
+    # lens_data=lens_data.drop_duplicates(subset=['DocEntry','Status'], keep="first")
+    lens_in = lens_data[(lens_data['Status']=='Rejected Order Sent To Control Room')| (lens_data['Status']=='Surfacing Damage/Reject Sent to Control Room')| (lens_data['Status']=='Rejected Order Sent To Control Room')| (lens_data['Status']=='Branch Rejected Order Sent To Control Room')]
+    lens_in["Date"] = pd.to_datetime(lens_in["Date"])   
     lens_in = lens_in.rename(columns={'Date time':'Timein'})
-    lens_in = lens_in.sort_values(by = ['Timein'],ascending =  False)
+    lens_in = lens_in.sort_values(by = ['Timein'],ascending =  True)
+    lens_in["Control Room"] = lens_in.groupby('DocNum').cumcount()
+    lens_in['Control Room'] += 1
+    lens_in = lens_in[lens_in['Control Room'] == 1]  
+    lens_in = lens_in.rename(columns={'Date time':'Timein'})
 
-   
-    lens_out = lens_data[(lens_data['Status']=='Rejected Lenses sent to Lens Store')| (lens_data['Status']=='Rejected Frame sent to Frame Store')]
+
+    lens_out = lens_data[(lens_data['Status']=='Rejected Lenses sent to Lens Store') | (lens_data['Status']=='Rejected Frame sent to Frame Store') | (lens_data['Status']=='Sent to Workshop for Damage/Reject Analysis') | (lens_data['Status']=='Overseas Rejected at Later Stage')]
+    lens_out["Date"] = pd.to_datetime(lens_out["Date"])
     lens_out = lens_out[lens_out["Date"] == dateyesterday]    
+    lens_out = lens_out.rename(columns={'Date time':'Timeout'})
+    lens_out = lens_out.sort_values(by = ['Datetime'],ascending =  True)
+    lens_out["Control Room"] = lens_out.groupby('DocNum').cumcount()
+    lens_out['Control Room'] += 1
+    lens_out = lens_out[lens_out['Control Room'] == 1]    
     lens_out = lens_out.rename(columns={'Date time':'Timeout'})
 
     lens_duration = pd.merge(lens_in,lens_out[['DocEntry','Timeout']], on='DocEntry',how='left')
@@ -405,22 +492,22 @@ def damage_suppy_time():
     
     control_data = data
     control_data=control_data.drop_duplicates(subset=['DocEntry','Status'], keep="last")
-    control_data = control_data[control_data["Date"] == dateyesterday]
     control_in = control_data[(control_data['Status']=='ReIssued Lens for Order')| (control_data['Status']=='ReIssued Frame for Order')]
+    control_in = control_in.sort_values(by = ['Date time'],ascending =  True)
     control_in = control_in.rename(columns={'Date time':'Timein'})
+    control_in["Control Room"] = control_in.groupby('DocNum').cumcount()
+    control_in['Control Room'] += 1
+    control_in = control_in[control_in['Control Room'] == 1]  
 
     control_data2 = data
     # control_data2 = control_data2[control_data2["Date"] == dateyesterday]
-    control_data2=control_data2.drop_duplicates(subset=['DocEntry','Status'], keep="last")
-    control_out1 = control_data2[control_data2['Status']=='Sent to Surfacing']
-    control_out2 = control_data2[control_data2['Status']=='Sent to Pre Quality']
-
-    control_out = pd.concat([control_out1,control_out2])
-    control_out = control_out.sort_values(by = 'Date',ascending = False)
-    # control_out = control_out.drop_duplicates(subset='DocEntry')
+    control_out = control_data2[(control_data2['Status']=='Sent to Surfacing') & (control_data2['Status']=='Blanks Sent to Control Room')]
+    control_out = control_out.sort_values(by = ['Date time'],ascending =  True)
+    control_out["Control Room"] = control_out.groupby('DocNum').cumcount()
+    control_out['Control Room'] += 1
+    control_out = control_out[control_out['Control Room'] == 2]   
     control_out = control_out.rename(columns={'Date time':'Timeout'})
-
-    control_duration = pd.merge(control_in,control_out[['DocEntry','Timeout']], on='DocEntry',how='left')
+    control_duration = pd.merge(control_in,control_out[['DocEntry','Timeout']], on='DocEntry',how='right')
     control_duration = control_duration.dropna(subset=['Timeout'])
 
     ##Define a working day
@@ -470,8 +557,79 @@ def damage_suppy_time():
     else:
         columns = ['Status', 'DocEntry', 'DocNum', 'OrderCriteria Status','Timein','Timeout','Time taken']
         control_duration = pd.DataFrame(columns=columns) 
-        # lens_duration = lens_duration[['Status','DocEntry','DocNum','OrderCriteria Status','Timein','Timeout','Time Taken']]
-        # control_duration=control_duration[['Status','DocEntry','DocNum','OrderCriteria Status','Timein','Timeout','Time Taken']]
+   
+    """ Store to Control: Excluding Surfacing """
+    control_datapre = data
+    control_datapre=control_datapre.drop_duplicates(subset=['DocEntry','Status'], keep="last")
+    control_in_pre = control_datapre[(control_datapre['Status']=='ReIssued Lens for Order')| (control_datapre['Status']=='ReIssued Frame for Order')]
+    control_in_pre = control_in_pre.sort_values(by = ['Date time'],ascending =  True)
+    control_in_pre = control_in_pre.rename(columns={'Date time':'Timein'})
+    control_in_pre["Control Room"] = control_in_pre.groupby('DocNum').cumcount()
+    control_in_pre['Control Room'] += 1
+    control_in_pre = control_in_pre[control_in_pre['Control Room'] == 1]  
+
+    control_data2_pre = data
+    # control_data2_pre = control_data2_pre[(control_data2_pre["Date"] >= lastmonday) & (control_data2_pre["Date"] <= dateyesterday)]
+    control_out_pre = control_data2_pre[control_data2_pre['Status']=='Sent to Pre Quality']
+    surfacing = ('Surfacing Lens from KE with PF to Follow Glazed Other Country','Surfacing Lens with HQ Frame','Surfacing Lens with PF','Surfacing Lens with Branch Frame',
+    'Surfacing Lens with PF Glazed at Branch','Surfacing Lens with Branch Frame Glazed at Branch','PF and Surfacing Lens from KE Glazed Other Country',
+    'HQ Frame and Surfacing Lens from KE Glazed Other Country')
+    control_out_pre = control_out_pre[~control_out_pre['OrderCriteria Status'].isin(surfacing)]
+    control_out_pre = control_out_pre.sort_values(by = ['Date time'],ascending =  True)
+    control_out_pre["Control Room"] = control_out_pre.groupby('DocNum').cumcount()
+    control_out_pre['Control Room'] += 1
+    control_out_pre = control_out_pre[control_out_pre['Control Room'] == 2]   
+    control_out_pre = control_out_pre.rename(columns={'Date time':'Timeout'})
+    control_duration_pre = pd.merge(control_in_pre,control_out_pre[['DocEntry','Timeout']], on='DocEntry',how='right')
+
+    """ Calculation of Time"""
+    ####Days of the week
+    workday = businesstimedelta.WorkDayRule(
+        start_time=datetime.time(9),
+        end_time=datetime.time(19),
+        working_days=[0,1, 2, 3, 4])
+
+    cal = Kenya()
+    hl = cal.holidays()
+    vic_holidays = pyholidays.KE() 
+    holidays = businesstimedelta.HolidayRule(vic_holidays)
+    businesshrs = businesstimedelta.Rules([workday, holidays], hl)
+
+    def BusHrs(start, end):
+        if end>=start:
+            return businesshrs.difference(start,end).hours+float(businesshrs.difference(start,end).seconds)/float(3600)
+        else:
+            ""
+
+    RejectedSentWk_hrs=control_duration_pre.apply(lambda row: BusHrs(row['Timein'], row['Timeout']), axis=1)
+
+    # Define a working weekend day(Saturday)
+
+    Saturday = businesstimedelta.WorkDayRule(start_time=datetime.time(9),end_time=datetime.time(17),working_days=[5])
+
+    vic_holidays = pyholidays.KE()
+    holidays = businesstimedelta.HolidayRule(vic_holidays)
+    businesshrs = businesstimedelta.Rules([Saturday, holidays])
+
+    def SatHrs(start, end):
+        if end>=start:
+            return businesshrs.difference(start,end).hours+float(businesshrs.difference(start,end).seconds)/float(3600)
+        else:
+            ""
+    RejectedSentSat_hrs=control_duration_pre.apply(lambda row: BusHrs(row['Timein'], row['Timeout']), axis=1)
+
+    if not control_duration_pre.empty:
+        control_duration_pre["Time Taken"]=(RejectedSentWk_hrs+RejectedSentSat_hrs)*60
+        control_duration_pre =control_duration_pre.replace("", np.nan)
+        control_duration_pre = control_duration_pre.sort_values(by='Time Taken',ascending=False)
+        control_duration_pre=control_duration_pre.copy()
+        control_duration_pre = control_duration_pre[['Status', 'DocEntry', 'DocNum', 'OrderCriteria Status','Timein','Timeout','Time Taken']]
+        print('Control Room Printed')
+    else:
+        columns = ['Status', 'DocEntry', 'DocNum', 'OrderCriteria Status','Timein','Timeout','Time taken']
+        control_duration_pre = pd.DataFrame(columns=columns) 
+
+    control_duration = pd.concat([control_duration,control_duration_pre])
 
     """"Copy the data to an excel sheet """
     with pd.ExcelWriter(r"/home/opticabi/Documents/optica_reports/order_efficiency\newdamagesupplytime.xlsx", engine='xlsxwriter') as writer:
@@ -479,6 +637,7 @@ def damage_suppy_time():
         mainstoredamage_reissued.to_excel(writer, sheet_name='mainstore',index=False)
         mainstoredamage_reissuedsec.to_excel(writer, sheet_name='mainstoresec',index=False)
         lenstoredamage_reissued.to_excel(writer, sheet_name='lensstore',index=False)
+        lenstoredamage_reissuedsec.to_excel(writer, sheet_name='lensstoresec',index=False)
         lens_duration.to_excel(writer,sheet_name='control to store', index=False)        
         control_duration.to_excel(writer,sheet_name='store to control', index=False)
     writer.save()

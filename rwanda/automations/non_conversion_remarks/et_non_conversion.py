@@ -46,7 +46,8 @@ def fetch_et_non_conversions():
     (select row_number() over(partition by cust_code, create_date order by days, rx_type, code desc) as r, *
     from voler_mviews.et_conv
     where status not in ('Cancel','Unstable')
-    and (patient_to_ophth not in ('Yes') or patient_to_ophth is null)) as a 
+    and (patient_to_ophth not in ('Yes') or patient_to_ophth is null)
+    and optom not in ('data2','dennisnjo','ss','data6','yuri','data7','rm','data5','manager')) as a 
     left join voler_staging.source_users b on a.optom::text = b.se_optom::text
     where a.r = 1
     and a.create_date::date >=  %(From)s

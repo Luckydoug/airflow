@@ -34,31 +34,19 @@ def fetch_et_non_conversions():
     # yesterday = today - datetime.timedelta(days=1)
     monthstart = datetime.date(today.year, today.month, 1)
     datefrom = (monthstart - dateutil.relativedelta.relativedelta(months=3))
+    days = 7
 
-    et_q = """           
-    select 
-            code, create_date, create_time, optom, optom_name, rx_type, branch_code, a.cust_code, status,
-            patient_to_ophth, "RX", sales_employees, handed_over_to, view_doc_entry, view_date, view_creator, 
-            last_viewed_by, branch_viewed, order_converted, a.ods_insurance_order, order_converted_mode, date_converted, on_after,  on_after_status,conversion_reason,conversion_remarks,
-            case when "RX" = 'High Rx' then 1 else 0 end as high_rx,
-            case when (a.days >= %(Days)s or on_after is null or (on_after_status in ('Draft Order Created','Pre-Auth Initiated For Optica Insurance','Customer to Revert','Cancel Order') and order_converted is null)) then 1 else 0 end as non_conversion
-    from
-    (select row_number() over(partition by cust_code, create_date order by days, rx_type, code desc) as r, *
-    from mabawa_mviews.et_conv
-    where status not in ('Cancel','Unstable')
-    and (patient_to_ophth not in ('Yes') or patient_to_ophth is null)) as a 
-    left join mabawa_dw.dim_users b on a.optom::text = b.se_optom::text
-    where a.r = 1
-    and a.create_date::date >=  %(From)s
-    and a.create_date::date <= %(To)s
-    and a.branch_code not in ('0MA','HOM','null')
-    and "RX" = 'High Rx'
-    and (a.days >= %(Days)s or on_after is null or (on_after_status in ('Draft Order Created','Pre-Auth Initiated For Optica Insurance','Customer to Revert','Cancel Order') and order_converted is null))
-    """
-    conv = pd.read_sql_query(et_q,con=engine,params={'From':datefrom,'To':today,'Days':7})
+    et_q = f"""           
+        SELECT code, create_date, create_time, optom, optom_name, rx_type, branch_code, cust_code, status, patient_to_ophth, "RX", 
+        sales_employees, handed_over_to, view_doc_entry, view_date, view_creator, last_viewed_by, branch_viewed, order_converted,
+        ods_insurance_order, order_converted_mode, date_converted, on_after, on_after_status, conversion_reason, conversion_remarks,
+        high_rx, non_conversion, draft_orderno1, creation_date, item_desc1, item_brand_name, "OTC", gross_price_after_disc, r           
+        FROM report_views.non_conversions_otcorders
+        where create_date::date between '{datefrom}' and '{today}'
+        """
+    conv = pd.read_sql_query(et_q,con=engine)
     return conv
-
-
+fetch_et_non_conversions()
 def manipulate_et_non_conversions():
     conv = fetch_et_non_conversions()
     #create daterange
@@ -87,10 +75,12 @@ def manipulate_et_non_conversions():
         'last_viewed_by':'EWC Name',
         'view_date':'View Date',
         'conversion_reason':'Conversion Reason',
-        'conversion_remarks':'Conversion Remarks'
+        'conversion_remarks':'Conversion Remarks',
+        'draft_orderno1' : 'Order Number',
+        'item_desc1' : 'Item Description'
     },axis=1,inplace=True)
 
-    non_q_cols = ['ET Date','ET Time','Branch','Customer Code','Optom','EWC Name','Conversion Reason','Conversion Remarks']
+    non_q_cols = ['ET Date','ET Time','Branch','Customer Code','Optom','EWC Name','Conversion Reason','Conversion Remarks','Order Number','Item Description']
     non_q  = non_q[non_q_cols]
     non_q["Remarks"] = ""
     non_q["EWC Sign"] = ""
@@ -103,7 +93,7 @@ def manipulate_et_non_conversions():
                 dataframe.to_excel(writer,sheet_name=name, index=False)
 
 
-# manipulate_et_non_conversions()
+manipulate_et_non_conversions()
 def smtp():
     branch_data = fetch_gsheet_data()["branch_data"]
     log_file=f"{path}et_non_conversions/branch_log.txt"
@@ -162,9 +152,9 @@ def smtp():
                         report_date = report_date
                         )
             # receiver_email = ["tstbranch@gmail.com"]
-            # receiver_email = ["cavin@optica.africa","kimstone@optica.africa","shehan@optica.africa"]
+            # receiver_email = ["cavin@optica.africa","wairimu@optica.africa"]
             receiver_email = [branchemail,srmemail,'cavin@optica.africa ']
-            # receiver_email = [branchemail,srmemail,'kush@optica.africa','wazeem@optica.africa']
+
             
             if branchcode == "OHO":
                 receiver_email = [branchemail,srmemail,'kush@optica.africa','wazeem@optica.africa',"susan@optica.africa","wairimu@optica.africa"]

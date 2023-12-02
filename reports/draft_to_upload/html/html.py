@@ -188,7 +188,6 @@ html_planos = """
 
 
 branch_efficiency_html = """
-
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -263,6 +262,9 @@ branch_efficiency_html = """
     <b>2) Sales Persons Efficiency</b>
     <table style = "empty-cells: hide !important;">{sales_person_report_html}</table>
     <br>
+    <div>{msg}</div>
+    <table>{et_order_html}</table>
+    <br>
     <p style = "color: {color};">{message}</p>
     <br>
     <b><i>Best Regards</i></b><br>
@@ -311,7 +313,6 @@ html_feedback = """
 """
 
 all_reports_html = """
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -979,4 +980,70 @@ These are the insurance orders that got approved throught out the week but haven
 
 no_feedback_daily_message = """
 The orders shown in the table below have not received feedback. Have we followed up with the insurance company?
+"""
+
+
+
+
+pending_insurance = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+        <style>
+            table {{border-collapse: collapse;font-family:Trebuchet MS; font-size:9;}}
+            th {{text-align: left;font-family:Trebuchet MS; font-size:9; padding: 4px;}}
+            body, p, h3, div, span, var {{font-family:Trebuchet MS; font-size:13}}
+            td {{text-align: left;font-family:Trebuchet MS; font-size:9; padding: 8px;}}
+            h4 {{font-size: 12px; font-family: Trebuchet MS;}}
+
+            .equation {{
+                padding: 5px;
+                background-color: white;
+                display: inline-block;
+                color: gray;
+                font-weight: bold;
+            }}
+
+            .fraction {{
+                display: inline-block;
+                vertical-align: middle;
+                margin: 0 0.2em 0.4ex;
+                text-align: center;
+                position: relative;
+            }}
+
+            .numerator, .denominator {{
+                display: block;
+                padding: 0;
+            }}
+
+            .denominator {{
+                border-top: solid gray 1px;
+            }}
+
+            .multiply {{
+                display: inline-block;
+                vertical-align: middle;
+                margin-left: 0.2em;
+                font-weight: bold;
+            }}
+
+        </style>
+    </head>
+    <body>
+    <p><b>Hi {branch_name},</b></p> </br>
+    <p>I Hope this email finds you well.</p> </br>
+    Please help us understand why we have not submitted a request to the insurance company for the below eyetetest(s).<br>
+    <b>1) Data</b>
+    <table style = "width: 70%;">{branch_report_html}</table> 
+    <br>
+    <b><i>Best Regards</i></b><br>
+    <b><i>Douglas</i></b>
+    </body>
+    </html>
 """

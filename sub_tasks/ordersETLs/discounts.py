@@ -31,7 +31,7 @@ SessionId = login()
 # ToDate = '2023/04/30'
 
 today = date.today()
-pastdate = today - timedelta(days=30)
+pastdate = today - timedelta(days=2)
 FromDate = pastdate.strftime('%Y/%m/%d')
 ToDate = date.today().strftime('%Y/%m/%d')
 

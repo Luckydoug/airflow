@@ -226,7 +226,7 @@ def update_calculated_field():
         mainstoredelay = pd.pivot_table(mainstore_delay, index=['Hour', 'Doc No'], values='Time Min', aggfunc='mean', fill_value=0)
     else:
         columns = ['Hour', 'Doc No', 'Time Min']
-        mainstore_delay = pd.DataFrame(columns=columns) 
+        mainstoredelay = pd.DataFrame(columns=columns) 
 
     """Cut Off"""
     mainstore['Time Taken'] = mainstore.apply 

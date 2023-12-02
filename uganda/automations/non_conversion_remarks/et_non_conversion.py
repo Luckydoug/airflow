@@ -45,7 +45,8 @@ def fetch_et_non_conversions():
     (select row_number() over(partition by cust_code, create_date order by days, rx_type, code desc) as r, *
     from mawingu_mviews.et_conv
     where status not in ('Cancel','Unstable')
-    and (patient_to_ophth not in ('Yes') or patient_to_ophth is null)) as a 
+    and (patient_to_ophth not in ('Yes') or patient_to_ophth is null)
+    and optom not in ('data2','dennisnjo','ss','data6','yuri','data7','rm','data5','manager')) as a 
     left join mawingu_staging.source_users b on a.optom::text = b.se_optom::text
     where a.r = 1
     and a.create_date::date >=  %(From)s
@@ -54,7 +55,7 @@ def fetch_et_non_conversions():
     and "RX" = 'High Rx'
     and (a.days >= %(Days)s or on_after is null or (on_after_status in ('Draft Order Created','Pre-Auth Initiated For Optica Insurance','Customer to Revert','Cancel Order') and order_converted is null))
     """
-    conv = pd.read_sql_query(et_q,con=engine,params={'From':datefrom,'To':today,'Days':14})
+    conv = pd.read_sql_query(et_q,con=engine,params={'From':datefrom,'To':today,'Days':7})
     return conv
 
 # fetch_et_non_conversions()
@@ -112,7 +113,6 @@ def smtp():
     create_initial_file(log_file)
     et_non_q_file = f"{uganda_path}et_non_conversions/et_non_conversions.xlsx"
 
-    # et_non_q = pd.ExcelFile(et_non_q_file)
 
     today = datetime.date.today()
     report_date = today
@@ -155,7 +155,7 @@ def smtp():
 
             # receiver_email = ["tstbranch@gmail.com"]
             # receiver_email = ["wairimu@optica.africa"]
-            receiver_email = [branchemail,RMemail,"raghav@optica.africa","wairimu@optica.africa","fredrick@optica.africa","tiffany@optica.africa","felicity@optica.africa","lenah@optica.africa","john@optica.africa","larry.larsen@optica.africa"]
+            receiver_email = [branchemail,RMemail,"raghav@optica.africa","wairimu@optica.africa","felicity@optica.africa","lenah@optica.africa","john@optica.africa","larry.larsen@optica.africa"]
            
         # Create a MIMEMultipart class, and set up the From, To, Subject fields
             email_message = MIMEMultipart()
@@ -182,25 +182,25 @@ def smtp():
 
             attach_file(email_message,NonConversionsfilename, f"{branchcode} Non Conversions Remarks - {report_date}.xlsx")
 
-            # # Convert it as a string
-            # email_string = email_message.as_string()
+            # Convert it as a string
+            email_string = email_message.as_string()
 
-            # if branchemail not in return_sent_emails(log_file):
-            #     context = ssl.create_default_context()
-            #     with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
-            #         server.login(your_email, password)
-            #         server.sendmail(
-            #             your_email, 
-            #             receiver_email, 
-            #             email_string
-            #         )
-            #         record_sent_branch(
-            #             branchemail, 
-            #             log_file
-            #         )
+            if branchemail not in return_sent_emails(log_file):
+                context = ssl.create_default_context()
+                with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
+                    server.login(your_email, password)
+                    server.sendmail(
+                        your_email, 
+                        receiver_email, 
+                        email_string
+                    )
+                    record_sent_branch(
+                        branchemail, 
+                        log_file
+                    )
 
-            # else:
-            #     continue
+            else:
+                continue
 
 def clean_folder(dir_name=f"{uganda_path}et_non_conversions/branches/"):
     files = os.listdir(dir_name)

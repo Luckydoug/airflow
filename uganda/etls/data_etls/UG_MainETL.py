@@ -7,6 +7,7 @@ from uganda_sub_tasks.ordersETLs.ordersscreendetails import (
       update_to_source_orderscreen
 )
 from uganda_sub_tasks.ordersETLs.ajua_info import fetch_ajua_info
+from uganda_sub_tasks.inventory_transfer.itr_logs import fetch_sap_itr_logs
 from uganda_sub_tasks.inventory_transfer.transfer_request import fetch_sap_invt_transfer_request
 from uganda_sub_tasks.inventory_transfer.transfer_details import fetch_sap_inventory_transfer
 from uganda_sub_tasks.ordersETLs.purchaseorder import fetch_purchase_orders
@@ -238,6 +239,14 @@ with DAG(
             provide_context=True
         )
 
+    with TaskGroup('itrlog') as itrlog:
+
+        fetch_sap_itr_logs = PythonOperator(
+            task_id='fetch_sap_itr_logs',
+            python_callable=fetch_sap_itr_logs,
+            provide_context=True
+        )
+
     with TaskGroup('inventorytransferdetails') as inventorytransferdetails:
 
         fetch_sap_inventory_transfer = PythonOperator(
@@ -261,4 +270,4 @@ with DAG(
             python_callable=fetch_ajua_info,
             provide_context=True
         )
-    start >> orders >> orderlog >> payments >> customers >> prescriptions >> view >> salesorders >> discounts >> users >> items >> insurance >> targets >> purchaseorders >> nps_survey >> inventorytransferdetails >> itrdetails >> finish
+    start >> orders >> orderlog >> payments >> customers >> prescriptions >> view >> salesorders >> discounts >> users >> items >> insurance >> targets >> purchaseorders >> nps_survey >> itrlog >> inventorytransferdetails >> itrdetails >> finish

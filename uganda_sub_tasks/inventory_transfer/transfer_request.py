@@ -24,13 +24,13 @@ from sub_tasks.data.connect_mawingu import (pg_execute, pg_fetch_all, engine, pg
 from sub_tasks.api_login.api_login import(login_uganda)
 SessionId = login_uganda()
 
-FromDate = '2023/01/01'
-#ToDate = '2021/12/31'
+# FromDate = '2023/01/01'
+# ToDate = '2023/12/31'
 
 today = date.today()
-# pastdate = today - timedelta(days=2)
-# pastdate = today
-# FromDate = pastdate.strftime('%Y/%m/%d')
+pastdate = today - timedelta(days = 10)
+pastdate = today
+FromDate = pastdate.strftime('%Y/%m/%d')
 ToDate = date.today().strftime('%Y/%m/%d')
 
 # api details

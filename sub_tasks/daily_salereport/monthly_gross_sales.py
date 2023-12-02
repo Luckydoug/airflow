@@ -326,7 +326,7 @@ def shops_ytd_net_sales():
     ytd_netcash = ytd_netcash.reindex(level=0,columns = month) 
 
     ##GET SHOPS YTD INSURANCE COMPARISON FROM THE PREVIOUS YEAR
-    net_ytdinsurance = net_ytd[net_ytd['new_mode_of_payment'] == 'Cash']
+    net_ytdinsurance = net_ytd[net_ytd['new_mode_of_payment'] == 'Insurance']
     ytd_netinsurance = net_ytdinsurance.pivot_table(index = ['Branch name'],columns = ['month','year'],aggfunc = {'net amount':np.sum})
     ytd_netinsurance = ytd_netinsurance.droplevel([0],axis = 1).reset_index().fillna(0)
     currentyear = datetime.datetime.now().year

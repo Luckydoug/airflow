@@ -26,12 +26,12 @@ from sub_tasks.api_login.api_login import(login_rwanda)
 
 SessionId = login_rwanda()
 
-FromDate = '2022/01/01'
-# ToDate = '2022/04/30'
+# FromDate = '2022/01/01'
+# # ToDate = '2022/04/30'
 
 today = date.today()
-pastdate = today - timedelta(days=1)
-# FromDate = pastdate.strftime('%Y/%m/%d')
+pastdate = today - timedelta(days=5)
+FromDate = pastdate.strftime('%Y/%m/%d')
 ToDate = date.today().strftime('%Y/%m/%d')
 
 

@@ -21,17 +21,17 @@ import holidays as pyholidays
 from workalendar.africa import Kenya
 import pygsheets
 
-from sub_tasks.data.connect import (pg_execute, pg_fetch_all, engine) 
+from sub_tasks.data.connect_mawingu import (pg_execute, pg_fetch_all, engine) 
 from sub_tasks.api_login.api_login import(login)
 
 def fetch_npsreviews_with_issues():
 
      gc = pygsheets.authorize(service_file='/home/opticabi/airflow/dags/sub_tasks/gsheets/keys2.json')
      sh = gc.open_by_key('1Wn7O54ohdn9z1YineGomEqIGCVw3GrzUSafOpYuIv_k')
-     wk1 = sh[0]
+     wk1 = sh[1]
      wk1 = pd.DataFrame(wk1.get_all_records())
 
-     print('g-sheet data')
+    #  print(wk1)
 
      wk1.rename (columns = {'User ID':'user_id', 
                         'Date':'date',
@@ -47,10 +47,10 @@ def fetch_npsreviews_with_issues():
 
      print('renamed successfully')
 
-     truncate_table = """truncate mabawa_staging.source_npsreviews_with_issues;"""
+     truncate_table = """truncate mawingu_staging.source_npsreviews_with_issues;"""
      truncate_table = pg_execute(truncate_table)
 
-     wk1[['user_id','date','name','order_no','branch','rating','comment_why_not_to_drop','rating_after_cscall','dropped:yes/no','source']].to_sql('source_npsreviews_with_issues', con = engine, schema='mabawa_staging', if_exists = 'append', index=False)   
+     wk1[['user_id','date','name','order_no','branch','rating','comment_why_not_to_drop','rating_after_cscall','dropped:yes/no','source']].to_sql('source_npsreviews_with_issues', con = engine, schema='mawingu_staging', if_exists = 'append', index=False)   
      
      print('orders with issues pulled')
 
@@ -60,13 +60,13 @@ def npsreviews_with_issues_live():
         SELECT 
         line_id,doc_entry,type,sap_internal_number,branch,survey_id,ajua_triggered,ajua_response,nps_rating,nps_rating_2,
         feedback,feedback2,triggered_time,trigger_date,long_feedback
-        FROM mabawa_staging.source_ajua_info  
+        FROM mawingu_staging.source_ajua_info  
         """, con=engine)
 
         ordertodrop = pd.read_sql("""
         SELECT 
         order_no 
-        FROM mabawa_staging.source_npsreviews_with_issues 
+        FROM mawingu_staging.source_npsreviews_with_issues 
         """,con=engine)
 
         todroplist = ordertodrop["order_no"].to_list() 
@@ -88,15 +88,15 @@ def npsreviews_with_issues_live():
         # print('dropped ajua_info_rating_rmsrm')       
 
 
-        truncate_live = """truncate table mabawa_dw.dim_ajua_info;"""
+        truncate_live = """truncate table mawingu_dw.dim_ajua_info;"""
         truncate_live = pg_execute(truncate_live)
 
 
-        neworders.to_sql('dim_ajua_info', con = engine, schema='mabawa_dw', if_exists = 'append', index=False)
+        neworders.to_sql('dim_ajua_info', con = engine, schema='mawingu_dw', if_exists = 'append', index=False)
     
         print('finished')
 
         return 'something'
 
-# fetch_npsreviews_with_issues()
+fetch_npsreviews_with_issues()
 # npsreviews_with_issues_live()

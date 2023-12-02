@@ -120,6 +120,7 @@ def send_branches_queue_time(path, branch_data, log_file, selection, country):
     branches_report = report.parse("Branch Summary", index_col=False)
     queues_data = report.parse(f"{selection} Data")
     optoms_report = report.parse("Optom Summary", index_col=False)
+    branch_export = pd.DataFrame([])
 
     if selection == "Daily":
         queue_html = branch_queue_time_html
@@ -137,15 +138,12 @@ def send_branches_queue_time(path, branch_data, log_file, selection, country):
         random_branch = random.choice(branch_list)
 
         for branch in branch_list:
-            if count > 0:
-                return
-            branch_name = data.loc[branch, "Branch"]
-            branch_email = data.loc[branch, "Email"]
-            rm_email = data.loc[branch, "RM Email"]
-
+            
             if selection == "Daily":
                 if branch in queues_data["Branch"].to_list():
-                  
+                    branch_name = data.loc[branch, "Branch"]
+                    branch_email = data.loc[branch, "Email"]
+                    rm_email = data.loc[branch, "RM Email"]
 
                     optom_report = optoms_report[optoms_report["Branch"] == branch]
                     branch_report = branches_report[branches_report["Branch"] == branch]
@@ -179,6 +177,10 @@ def send_branches_queue_time(path, branch_data, log_file, selection, country):
                 )
 
                 if branch in branches_report.index.to_list():
+                    branch_name = data.loc[branch, "Branch"]
+                    branch_email = data.loc[branch, "Email"]
+                    rm_email = data.loc[branch, "RM Email"]
+
                     branch_report = branches_report[branches_report.index == branch]
                     branch_report = branch_report.rename(columns = {"Branch": ""}, level = 0)
                     branch_report = branch_report.rename(columns = {"": "Branch"}, level = 1)

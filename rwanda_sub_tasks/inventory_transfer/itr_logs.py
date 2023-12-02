@@ -20,25 +20,24 @@ from pangres import upsert, DocsExampleTable
 from sqlalchemy import create_engine, text, VARCHAR
 from pandas.io.json._normalize import nested_to_record 
 
+from sub_tasks.data.connect_voler import (pg_execute, pg_fetch_all, engine)  
+from sub_tasks.api_login.api_login import(login_rwanda)
 
-from sub_tasks.data.connect_mawingu import (pg_execute, pg_fetch_all, engine, pg_bulk_insert) 
-from sub_tasks.api_login.api_login import(login_uganda)
+SessionId = login_rwanda()
 
-SessionId = login_uganda()
-
-# FromDate = '2023/11/01'
+# FromDate = '2023/05/01'
 # ToDate = '2023/11/30'
 
 
 today = date.today()
-pastdate = today - timedelta(days=2)
+pastdate = today - timedelta(days=5)
 FromDate = pastdate.strftime('%Y/%m/%d')
 ToDate = date.today().strftime('%Y/%m/%d')
 print(FromDate)
 print(ToDate)
 
 # api details
-pagecount_url = f"https://10.40.16.9:4300/UGANDA_BI/XSJS/BI_API.xsjs?pageType=GetITRLOGDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+pagecount_url = f"https://10.40.16.9:4300/RWANDA_BI/XSJS/BI_API.xsjs?pageType=GetITRLOGDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
 pagecount_payload={}
 pagecount_headers = {}
 
@@ -56,7 +55,7 @@ def fetch_sap_itr_logs ():
     itr_log = pd.DataFrame()
     for i in range(1, pages+1):
         page = i
-        url = f"https://10.40.16.9:4300/UGANDA_BI/XSJS/BI_API.xsjs?pageType=GetITRLOGDetails&pageNo={page}&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+        url = f"https://10.40.16.9:4300/RWANDA_BI/XSJS/BI_API.xsjs?pageType=GetITRLOGDetails&pageNo={page}&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
         response = requests.request("GET", url, headers=headers, data=payload, verify=False)
         response = response.json()
         try:
@@ -91,7 +90,7 @@ def fetch_sap_itr_logs ():
     print("Initiating Upsert")
     upsert(engine=engine,
         df=itr_log,
-        schema='mawingu_staging',
+        schema='voler_staging',
         table_name='source_itr_log',
         if_row_exists='update',
         create_table=False)

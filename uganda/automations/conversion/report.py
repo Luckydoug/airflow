@@ -36,6 +36,7 @@ engine = create_unganda_engine()
 selection = (
     get_conversion_frequency(report="Conversion")
 )
+
 start_date, end_date = return_conversion_daterange(selection=selection)
 
 """
@@ -53,7 +54,7 @@ Fetch branch data
 def branch_data() -> pd.DataFrame:
     branch_data = fetch_branch_data(
         engine=engine,
-        database="report_tables"
+        database="reports_tables"
     )
 
     return branch_data

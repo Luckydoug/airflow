@@ -351,6 +351,14 @@ def send_branches_report(path, branch_data, selection):
         eyetest_salespersons = pd.ExcelFile(eyetest_salesperson_path)
         eyetest_optom = pd.ExcelFile(eyetest_optom_path)
 
+        #High RX
+        highrx_branch_path = f"{path}conversion/eyetests/highrx_branches.xlsx"
+        highrx_optom_path = f"{path}conversion/eyetests/highrx_opthoms.xlsx"
+        highrx_saleper_path = f"{path}conversion/eyetests/highrx_sales_persons.xlsx"
+        highrx_branch = pd.ExcelFile(highrx_branch_path)
+        highrx_optom = pd.ExcelFile(highrx_optom_path)
+        highrx_salesper = pd.ExcelFile(highrx_saleper_path)
+
         #Views
         views_branch_path = f"{path}conversion/viewrx/branches.xlsx"
         views_salespersons_path = f"{path}conversion/viewrx/sales_persons.xlsx"
@@ -376,6 +384,16 @@ def send_branches_report(path, branch_data, selection):
                 salesperson_eyetest_html = style_dataframe(salespersons_eyetests_report, ug_styles, properties)
                 optom_eyetest_html = style_dataframe(optom_eyetests_report, ug_styles, properties)
 
+                highrx_branch_report = highrx_branch.parse(str(branch), index_col=False)
+                highrx_optom_report = highrx_optom.parse(str(branch), index_col=False)
+                highrx_salesper_report = highrx_salesper.parse(str(branch), index_col=False).sort_values(by="%Conversion", ascending=False)
+
+
+                highrx_branch_html = style_dataframe(highrx_branch_report, ug_styles, properties)
+                highrx_optom_html = style_dataframe(highrx_optom_report, ug_styles, properties)
+                highrx_salesper_html = style_dataframe(highrx_salesper_report, ug_styles, properties)
+
+
                 views_branch_report = views_branch.parse(str(branch), index_col=False)
                 salespersons_views_report = views_salespersons.parse(str(branch), index_col=False)
                 views_branch_html = style_dataframe(views_branch_report, ug_styles, properties)
@@ -387,7 +405,6 @@ def send_branches_report(path, branch_data, selection):
                 views_non_conversions = pd.ExcelFile(f"{path}conversion/viewrx/non_conversions.xlsx")
 
                 html = branches_html.format(
-
                     branch_name = branch_name,
                     branch_reg_html = branch_reg_html,
                     salespersons_reg_html =  salespersons_reg_html,
@@ -395,8 +412,14 @@ def send_branches_report(path, branch_data, selection):
                     salesperson_eyetest_html = salesperson_eyetest_html,
                     optom_eyetest_html = optom_eyetest_html,
                     views_branch_html = views_branch_html,
-                    salespersons_views_html = salespersons_views_html
+                    salespersons_views_html = salespersons_views_html,
+                    branch_highrx_html = highrx_branch_html,
+                    optom_highrx_html = highrx_optom_html,
+                    salesperson_highrx_html = highrx_salesper_html
                 )
+
+                if branch not in ("COR"):
+                    continue
 
                 if branch == "OHO":
                     receiver_email = [

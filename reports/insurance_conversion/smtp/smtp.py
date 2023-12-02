@@ -253,8 +253,9 @@ def send_to_branches(
                 individual_feedback_html=individual_feedback_html
             )
 
-            if branch == random_branch:
+            if branch == random_branch and country == "Kenya":
                 receiver_email = [
+                    "wazeem@optica.africa",
                     rm_email,
                     "wairimu@optica.africa",
                     "faithtesy.leo@optica.africa",

@@ -24,8 +24,6 @@ uganda = [
     'raghav@optica.africa',
     'yuri@optica.africa',
     'larry.larsen@optica.africa',
-    'fredrick@optica.africa',
-    'tiffany@optica.africa',
     'wairimu@optica.africa',
     'ian.gathumbi@optica.africa'
 ]

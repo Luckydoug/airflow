@@ -10,6 +10,7 @@ from reports.draft_to_upload.data.push_data import push_insurance_efficiency_dat
 from reports.draft_to_upload.utils.utils import return_report_daterange, get_report_frequency, get_start_end_dates
 from reports.draft_to_upload.smtp.branches import send_branches_efficiency
 from reports.draft_to_upload.smtp.smtp import clean_folders
+from reports.draft_to_upload.reports.et_to_order import eyetest_order_time
 from reports.draft_to_upload.data.fetch_data import (
     fetch_orders,
     fetch_orderscreen,
@@ -19,7 +20,8 @@ from reports.draft_to_upload.data.fetch_data import (
     fetch_daywise_efficiency,
     fetch_mtd_efficiency,
     fetch_branch_data,
-    fetch_working_hours
+    fetch_working_hours,
+    fetch_eyetest_order
 )
 
 
@@ -143,6 +145,16 @@ def mtd_efficiency():
     return mtd_efficiency
 
 
+
+def eyetest_order():
+    eyetest_order = fetch_eyetest_order(
+        engine=engine,
+        start_date=start_date
+    )
+
+    return eyetest_order
+
+
 def build_branches_efficiency():
     create_draft_upload_report(
         data_orders=data_orders(),
@@ -155,6 +167,14 @@ def build_branches_efficiency():
         path=path,
         drop="KENYA PIPELINE COMPANY"
     )
+
+def build_eyetest_order() -> None:
+    eyetest_order_time(
+        data=eyetest_order(),
+        path=path,
+        selection=selection
+    )
+
 
 
 def trigger_efficiency_smtp():
@@ -170,3 +190,7 @@ def trigger_efficiency_smtp():
 
 def clean_kenya_folder():
     clean_folders(path=path)
+
+
+
+

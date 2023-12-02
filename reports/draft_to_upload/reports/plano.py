@@ -76,6 +76,7 @@ def create_plano_report(branch_data, path, registrations, payments, all_planos, 
 
     plano_data["Final Customer Type"] = plano_data.apply(lambda row: get_customer_type(row), axis=1)
     plano_data = plano_data.drop_duplicates(subset=["Code"])
+    plano_data = plano_data[plano_data["Code"] != '4134']
 
     filtered_plano_data = plano_data[required_columns].rename(columns={"Final Customer Type": "Customer Type"})
     insurance_planos = filtered_plano_data[filtered_plano_data["Customer Type"] == "Insurance"].copy()

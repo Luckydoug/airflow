@@ -1,10 +1,12 @@
 from airflow.models import variable
 import pandas as pd
 import numpy as np
-from reports.queue_time.utils.utils import create_queue_summary, create_queue_monthly
-from sub_tasks.libraries.utils import save_dataframes_to_excel, get_comparison_months
+from reports.queue_time.utils.utils import create_queue_summary
 from reports.queue_time.utils.utils import check_date_range
 from reports.queue_time.utils.utils import create_queue_weekly
+from reports.queue_time.utils.utils import create_queue_monthly
+from sub_tasks.libraries.utils import save_dataframes_to_excel
+from sub_tasks.libraries.utils import get_comparison_months
 
 def create_queue_time_report(
     selection: str,
@@ -13,6 +15,9 @@ def create_queue_time_report(
     path: str,
     country: str
 ) -> None:
+    if not len(queue_data):
+        return
+
     if selection == "Daily":
         daily_data = queue_data[
             queue_data["CreateDate"] == pd.to_datetime(start_date, format="%Y-%m-%d").date()
@@ -87,7 +92,6 @@ def create_queue_time_report(
         export_data = monthly_data[
             monthly_data["Month"].isin([first_month, second_month])
         ]
-
 
         with pd.ExcelWriter(f"{path}queue_time/queue_report.xlsx") as writer:
             country_summary.to_excel(writer, sheet_name="Country Summary")

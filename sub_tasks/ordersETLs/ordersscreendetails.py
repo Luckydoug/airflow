@@ -23,7 +23,7 @@ SessionId = login()
 # ToDate = '2023/05/13'
 
 today = date.today()
-pastdate = today - timedelta(days=7)
+pastdate = today - timedelta(days=2)
 FromDate = pastdate.strftime('%Y/%m/%d')
 ToDate = date.today().strftime('%Y/%m/%d')
 
@@ -52,7 +52,6 @@ def fetch_sap_orderscreendetails():
         response = requests.request("GET", url, headers=headers, data=payload, verify=False)
         response = response.json()
         response = nested_to_record(response, sep='_')
-        print(response)
         response= response['result_body_recs_Results']
         response = pd.DataFrame.from_dict(response)
         response = pd.json_normalize(response['details'])
@@ -319,7 +318,7 @@ def update_to_source_orderscreen():
     
     print('update_to_source_orderscreen')
 
-# update_to_source_orderscreen()
+update_to_source_orderscreen()
 
 def create_source_orderscreen_staging():
 

@@ -412,8 +412,8 @@ def create_net_sales():
     
     to_date = get_todate()
     sender_email = os.getenv("wairimu_email") 
-    receiver_email = ['yuri@optica.africa','kush@optica.africa','wazeem@optica.africa','giri@optica.africa']
-    # receiver_email = ['wairimu@optica.africa']
+    # receiver_email = ['yuri@optica.africa','kush@optica.africa','wazeem@optica.africa','giri@optica.africa']
+    receiver_email = ['wairimu@optica.africa','kush@optica.africa']
     email_message = MIMEMultipart()
     email_message["From"] = sender_email
     email_message["To"] = r','.join(receiver_email)

@@ -24,13 +24,13 @@ from sub_tasks.data.connect_voler import (pg_execute, pg_fetch_all, engine, pg_b
 from sub_tasks.api_login.api_login import(login_rwanda)
 SessionId = login_rwanda()
 
-FromDate = '2023/01/01'
-#ToDate = '2021/12/31'
+# FromDate = '2023/01/01'
+# #ToDate = '2021/12/31'
 
 today = date.today()
-# pastdate = today - timedelta(days=2)
-# pastdate = today
-# FromDate = pastdate.strftime('%Y/%m/%d')
+pastdate = today - timedelta(days=5)
+pastdate = today
+FromDate = pastdate.strftime('%Y/%m/%d')
 ToDate = date.today().strftime('%Y/%m/%d')
 
 # api details

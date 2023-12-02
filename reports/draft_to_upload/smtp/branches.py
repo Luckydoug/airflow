@@ -40,11 +40,18 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection, cou
     branches = f"{path}draft_upload/draft_to_upload_branch_efficiency.xlsx"
     branches_data = f"{path}/draft_upload/efficiency_raw_data.xlsx"
     branches_mtd = f"{path}draft_upload/draft_to_upload.xlsx"
+    eyetests_complete = f"{path}draft_upload/et_to_order.xlsx"
 
     sales_persons_report = pd.ExcelFile(sales_persons)
     branches_report = pd.ExcelFile(branches)
     export_data = pd.ExcelFile(branches_data)
     mtd_report = pd.ExcelFile(branches_mtd)
+
+    if os.path.exists(eyetests_complete):
+        eyetest_order = pd.ExcelFile(eyetests_complete)
+        et_order_data = eyetest_order.parse("Data", index_col=False)
+    
+
 
     if not assert_date_modified([sales_persons, branches, branches_data]):
         return
@@ -52,14 +59,15 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection, cou
     else:
         data = branch_data.set_index("Outlet")
         branch_list = branch_data['Outlet'].tolist()
-        random_branch = random.choice(branch_list)
+        random_list = export_data.sheet_names
+        random_branch = random.choice(random_list)
 
         for branch in branch_list:
+            et_order_branch = []
             if branch in export_data.sheet_names:
                 branch_name = data.loc[branch, "Branch"]
                 branch_email = data.loc[branch, "Email"]
                 rm_email = data.loc[branch, "RM Email"]
-
                 sales_report = pd.DataFrame(sales_persons_report.parse(branch, index_col=False))
                 branch_report = pd.DataFrame(branches_report.parse(branch, index_col=False))
                 all_mtd = mtd_report.parse("mtd-update", index_col=False)
@@ -78,6 +86,26 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection, cou
                 branch_export = export_data.parse(branch, index_col=False)
                 branch_export = branch_export[branch_export["Draft to Upload"] > 8]
                 
+                if os.path.exists(eyetests_complete) and branch in et_order_data["order_branch"].to_list():
+                    et_order_branch = et_order_data[et_order_data["order_branch"] == branch]
+                    et_order_branch = et_order_branch[[
+                        "visit_id",
+                        "order_number",
+                        "creator",
+                        "order_creator",
+                        "customer_code",
+                        "et_completed_time",
+                        "order_date",
+                        "order_type",
+                        "criteria",
+                        "time_taken"
+                    ]]
+                    et_order_style = et_order_branch.style.hide_index().set_properties(**properties).set_table_styles(ug_styles)
+                    et_order_html = et_order_style.to_html(doctype_html = True)
+                else:
+                    order_et_html = ""
+
+
                 if not len(branch_export):
                     color = "green"
                     message = "You have no late orders for the above period. Thanks for maintaining 100% efficiency."
@@ -89,15 +117,29 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection, cou
                     2) Late Orders - This sheet contains all orders that took more than 8 minutes from Draft Order Created to Upload Attachment.
                     """
 
-
+                if not len(branch_export) and selection == "Daily":
+                    continue
                 # LaTeX formula
-        
+
+                if len(et_order_branch):
+                    order_et_html = et_order_html
+                    msg = """
+                     <b> 3) Time from Eye Test Completion to Draft Order Created </b>
+                        <p>Please help us understand why the below client(s) <br>
+                        had to wait more that one hour after an eye test for you to draft the order</p>
+                    """
+                else:
+                    order_et_html = ""
+                    msg = ""
+
                 html = branch_efficiency_html.format(
                     branch_name = branch_name,
                     branch_report_html = branch_html,
                     sales_person_report_html = sales_report_html,
                     color = color,
-                    message = message
+                    message = message,
+                    et_order_html = order_et_html,
+                    msg = msg
                 )
 
                 if branch == "KAM" or branch == "OAS":
@@ -105,6 +147,7 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection, cou
 
                 if branch == random_branch:
                     receiver_email = [
+                        "wazeem@optica.africa",
                         rm_email, 
                         "wairimu@optica.africa", 
                         branch_email
@@ -136,8 +179,7 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection, cou
                     ]
                 
                 else:
-                    receiver_email = [rm_email, branch_email]  
-                
+                    receiver_email = [rm_email, branch_email]
 
                 if selection == "Daily":
                     subject = f"{branch_name} Draft to Upload Efficiency Report for {todate}"

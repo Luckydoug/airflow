@@ -226,6 +226,7 @@ def fetch_planorderscreen(database, engine, start_date='2023-01-01'):
     SELECT 
         orderscreen.doc_entry AS "DocEntry", 
         orders.doc_no::int AS "Order Number", 
+        orders.ods_status1 as "Current Status",
         orderscreen.odsc_date::date AS "Date",
         CASE 
             WHEN LENGTH(odsc_time::text) IN (1,2) THEN NULL
@@ -568,4 +569,83 @@ def fetch_no_views_data(database, engine, start_date):
     """
 
     data = pd.read_sql_query(query, con = engine)
+    return data
+
+
+def fetch_eyetest_order(engine, start_date):
+    query = f"""
+    SELECT a.*, 
+    (date_part('epoch'::text, a.order_date - a.et_completed_time)::integer / 60) as time_taken
+    FROM (
+        SELECT
+            ROW_NUMBER() OVER (
+                PARTITION BY so.doc_entry, so.ods_createdon::DATE + LPAD(so.ods_createdat::TEXT, 4, '0')::TIME
+                ORDER BY so.ods_createdon::DATE + LPAD(so.ods_createdat::TEXT, 4, '0')::TIME ASC
+            ) AS r,
+            qt.visit_id,
+            qt.customer_code,
+            qt.completed_time as et_completed_time,
+            qt.branch as et_branch,
+            so.ods_outlet as order_branch,
+            so.doc_no as order_number,
+            so.ods_createdon::DATE + LPAD(so.ods_createdat::TEXT, 4, '0')::TIME as order_date,
+            so.ods_creator as creator,
+            case when so.ods_insurance_order  = 'Yes' then 'Insurance' else 'Cash' end as order_type,
+            so.ods_ordercriteriastatus as criteria,
+            su.user_name as order_creator
+        FROM
+            report_views.queue_time AS qt
+            LEFT JOIN mabawa_staging.source_orderscreen AS so ON qt.visit_id::TEXT = so.presctiption_no::text
+            left join mabawa_staging.source_users su 
+            on so.ods_creator::text = su.user_code::text
+    ) AS a
+    WHERE a.r = 1
+    and a.et_completed_time::date = a.order_date::date
+    and a.et_completed_time::date between '{start_date}' and '{today}'
+    and a.order_branch = et_branch;
+    """
+
+    data = pd.read_sql_query(query, con=engine)
+    return data
+
+
+def fetch_pending_insurance(engine, start_date):
+    query = f"""
+        select 
+        ec.code::int as "Code",
+        ec.cust_code as "Customer Code",
+        sic.insurance_name as "Insurance Company",
+        ec.create_date::date as "ET Date",
+        ec.branch_code as "Branch",
+        ec.optom_name as "Optom Name",
+        ec.handed_over_to as "Handed Over To",
+        ec.last_viewed_by as "Last Viewed By",
+        ec."RX",
+        ec.mode_of_pay as "Customer Type"
+        from mabawa_mviews.et_conv ec 
+        left join mabawa_staging.source_customers sc
+        on ec.cust_code = sc.cust_code
+        left join mabawa_staging.source_insurance_company sic 
+        on sc.cust_insurance_company = sic.insurance_code
+        where ec.days is null 
+        and ec.mode_of_pay = 'Insurance'
+        and ec.create_date::date between '{start_date}' and '{today}'
+        and ec.plano_rx = 'N'
+        and ec.status not in ('Cancel', 'CanceledEyeTest', 'Hold', 'Unstable')
+        and (ec.patient_to_ophth not in ('Yes') or ec.patient_to_ophth is null)
+        and sic.insurance_name is not null;
+    """
+
+    pending_insurances = pd.read_sql_query(query, con = engine)
+    return pending_insurances
+
+def fetch_submitted_insurance(engine, start_date):
+    query = f"""
+    select presctiption_no as "Code",
+    odsc_status as "Request"
+    from report_views.pending_insurance 
+    where odsc_date between '{start_date}' and '{today}'
+    """
+
+    data = pd.read_sql_query(query, con=engine)
     return data

@@ -38,7 +38,8 @@ with DAG(
         with TaskGroup('build') as build:
             from kenya_automation.draft_upload.kenya_branch_report import (
                push_kenya_efficiency_data,
-               build_branches_efficiency
+               build_branches_efficiency,
+               build_eyetest_order
             )
 
             push_kenya_efficiency_data = PythonOperator(
@@ -53,7 +54,13 @@ with DAG(
                 provide_context=True
             )
 
-            push_kenya_efficiency_data >> build_branches_efficiency
+            build_eyetest_order = PythonOperator(
+                task_id='build_eyetest_order',
+                python_callable=build_eyetest_order,
+                provide_context=True
+            )
+
+            push_kenya_efficiency_data >> build_branches_efficiency >> build_eyetest_order
 
 
     with TaskGroup('smtp') as smtp:

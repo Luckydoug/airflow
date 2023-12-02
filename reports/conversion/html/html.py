@@ -200,7 +200,22 @@ branches_html =  """
                                 <table>{salesperson_eyetest_html}</table>
                             </li>
                         </ol>
+                    </li>
 
+                    <li><h3>High RX Conversion</h3>
+                        <ol>
+                            <li class = "inner">Branch Conversion
+                                <table>{branch_highrx_html}</table>
+                            </li>
+
+                            <li class = "inner"> Conversion by Optom <br><br>
+                                <table>{optom_highrx_html}</table>
+                            </li>
+
+                            <li class = "inner">Conversion by EWC Handover<br><br>
+                                <table>{salesperson_highrx_html}</table>
+                            </li>
+                        </ol>
                     </li>
 
                     <li><h3>View RX Conversion</h3>

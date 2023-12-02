@@ -244,7 +244,7 @@ if selection == "Daily":
 if selection == "Weekly":
     date = fourth_week_start
 if selection == "Monthly":
-    date = '2023-10-01'
+    date = '2023-11-01'
 
 pstart_date, pend_date = get_start_end_dates(
     selection=selection

@@ -13,7 +13,6 @@ from airflow.utils.task_group import TaskGroup
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python_operator import PythonOperator
 
-
 # from tmp.python_test
 DAG_ID = 'Conversions_ETL_Pipeline'
 

@@ -8,7 +8,7 @@ from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python_operator import PythonOperator
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-DAG_ID = 'KE_Queue_Time'
+DAG_ID = 'PENDING_INSURANCE_ETL'
 
 default_args = {
     'owner': 'Data Team',
@@ -35,40 +35,33 @@ with DAG(
 
     with TaskGroup('report') as report:
         with TaskGroup('build') as build:
-            from kenya_automation.queue_time.report import (
-               build_kenya_queue_time
+            from kenya_automation.pending_insurance.insurance import (
+               build_pending_insurances
             )
 
-            build_kenya_queue_time = PythonOperator(
-                task_id='build_kenya_queue_time',
-                python_callable=build_kenya_queue_time,
+            build_pending_insurances = PythonOperator(
+                task_id='build_pending_insurances',
+                python_callable=build_pending_insurances,
                 provide_context=True
             )
 
-            build_kenya_queue_time
+            build_pending_insurances
 
 
     with TaskGroup('smtp') as smtp:
         with TaskGroup('send') as sends:
-            from kenya_automation.queue_time.report import (
-                trigger_branches_queue_smtp,
-                trigger_management_smtp
+            from kenya_automation.pending_insurance.insurance import (
+                send_to_branches
+              
             )
 
-            trigger_branches_queue_smtp = PythonOperator(
-                task_id='trigger_branches_queue_smtp',
-                python_callable=trigger_branches_queue_smtp,
+            send_to_branches = PythonOperator(
+                task_id='end_to_branches',
+                python_callable=send_to_branches,
                 provide_context=True
             )
 
-            trigger_management_smtp = PythonOperator(
-                task_id='trigger_management_smtp',
-                python_callable= trigger_management_smtp,
-                provide_context=True
-            )
-
-
-            trigger_management_smtp >> trigger_branches_queue_smtp
+            send_to_branches
 
         build >> sends
 

@@ -62,9 +62,7 @@ uganda_daily = [
     'kush@optica.africa',
     'raghav@optica.africa',
     'wairimu@optica.africa',
-    'fredrick@optica.africa',
     'larry.larsen@optica.africa',
-    'tiffany@optica.africa'
 ]
     
 uganda_weekly = [
@@ -72,9 +70,7 @@ uganda_weekly = [
     'raghav@optica.africa',
     'yuri@optica.africa',
     'wairimu@optica.africa',
-    'fredrick@optica.africa',
     'larry.larsen@optica.africa',
-    'tiffany@optica.africa'
 ]
     
 uganda_monthly = [
@@ -82,9 +78,7 @@ uganda_monthly = [
     'raghav@optica.africa',
     'yuri@optica.africa',
     'wairimu@optica.africa',
-    'fredrick@optica.africa',
     'larry.larsen@optica.africa',
-    'tiffany@optica.africa' 
 ]
 
 rwanda_daily = [

@@ -104,6 +104,7 @@ def refresh_sop():
 
 def refresh_nps_summary():
     query = """
+    refresh materialized view mawingu_mviews.nps_surveys; 
     refresh materialized view mawingu_mviews.nps_summary; 
     """
 

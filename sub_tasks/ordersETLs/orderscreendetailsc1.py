@@ -556,7 +556,7 @@ def create_fact_orderscreenc1_new():
 
     saturday = businesstimedelta.WorkDayRule(
         start_time=datetime.time(9),
-        end_time=datetime.time(17),
+        end_time=datetime.time(16),
         working_days=[5])
     
     vic_holidays = pyholidays.KE()

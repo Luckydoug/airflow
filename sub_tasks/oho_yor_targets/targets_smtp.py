@@ -165,8 +165,7 @@ def send_to_salespersons():
                                     </div>
                                     <div>
                                         <p> I hope this finds you well</p>
-                                        <p>I hope this message finds you well.
-                                        Please find below your sales figures for the month to date. <br> Kindly review and compare them against your sales target.</p>
+                                        <p>Please find below your sales figures for the month to date. <br> Kindly review and compare them against your sales target.</p>
                                         <table>{sales_person_report_html}</table>
                                         <br>
                                         <p>Also See the overall branch performance</p>

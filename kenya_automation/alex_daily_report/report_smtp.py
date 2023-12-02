@@ -68,7 +68,7 @@ def order_efficiency_smtp():
 
     #damage supply efficiency
     damage_supply_efficiency = r"/home/opticabi/Documents/optica_reports/order_efficiency\newdamagesupplytime.xlsx"
-    damage_supply_sheet_names =  ["mainstore","designer","lensstore","mainstoresec"]
+    damage_supply_sheet_names =  ["mainstore","designer","lensstore","mainstoresec","lensstoresec"]
     damage_supply_dfs = []
     for sheet_name in damage_supply_sheet_names:
         print(sheet_name)
@@ -163,6 +163,8 @@ def order_efficiency_smtp():
         table8html = "" 
         table9heading = ""
         table9html = ""
+        table10heading = ""
+        table10html = ""
 
         if department == "BRS":
             table1heading = "Cut Off Summary"
@@ -339,7 +341,13 @@ def order_efficiency_smtp():
             if not table9.empty:
                 table9heading = """<p style="color:blue">Damage Supply Time</p>
                                 <p style="font_weight:italic">Rejected frame sent to LensStore to reissued Lens for order</p>"""
-                table9html = table9.to_html(index=False) 
+                table9html = table9.to_html(index=False)
+            table10 = damage_supply_dfs[3]
+            if not table10.empty:  
+                table10heading = """<p style="color:blue">Second Damage Supply Time</p>
+                            <p style="font_weight:italic">Rejected frame sent to frame to reissued frame for order</p>"""
+                table10html = table10.to_html(index=False) 
+
         elif department == "Designer":
             table1heading = "Order Efficiency"
             table1 = order_efficiency_dfs[3].iloc[:4, :].rename(columns = {'Unnamed: 0':''})
@@ -441,6 +449,8 @@ def order_efficiency_smtp():
                 <body>
                     <p>Dear {departmemt},</p>
                         <p>View your performance report for the stated date.</p>
+                        <br>
+                        <p>Kindly comment on your performance. </p>
                         <p><u><b>{table1heading}</b></u></p>
                         <table>{table1html}</table>
                         <br>
@@ -468,13 +478,17 @@ def order_efficiency_smtp():
                         <p><u><b>{table9heading}</b></u></p>
                         <table>{table9html}</table>
                         <br>
+                        <p><u><b>{table10heading}</b></u></p>
+                        <table>{table10html}</table>
+                        <br>
                 </body>
             </html>
             '''.format(departmemt=department,table1html=table1html,table1heading = table1heading,
                 table2html=table2html,table2heading = table2heading,table3html=table3html,table3heading = table3heading,
                 table4html=table4html,table4heading = table4heading,table5html=table5html,table5heading = table5heading,
                 table6html=table6html,table6heading = table6heading,table7html=table7html,table7heading = table7heading,
-                table8html=table8html,table8heading = table8heading,table9html=table9html,table9heading = table9heading)
+                table8html=table8html,table8heading = table8heading,table9html=table9html,table9heading = table9heading,
+                table10html = table10html,table10heading = table10heading)
 
             # Define a function to attach files as MIMEApplication to the email
             ##############################################################
@@ -497,8 +511,9 @@ def order_efficiency_smtp():
         email_from = sender_email
         password = yourpassword
 
+        # receiver_email = ['tstbranch@gmail.com']
         if department == "BRS":
-            # receiver_email = ['tstbranch@gmail.com']
+            receiver_email = ['tstbranch@gmail.com']
             receiver_email = [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','shyam@optica.africa','stock@optica.africa','wanjiru.kinyara@optica.africa','nicholas.muthui@optica.africa ']
 
         else:    
