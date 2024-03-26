@@ -7,7 +7,8 @@ from reports.insurance_conversion.smtp.smtp import send_to_management, mop_folde
 from sub_tasks.libraries.utils import (
     create_rwanda_engine,
     fetch_gsheet_data,
-    rwanda_path
+    rwanda_path,
+    assert_integrity
 )
 
 
@@ -86,6 +87,10 @@ def build_rwanda_insurance_conversion() -> None:
 
 
 def send_to_rwanda_management() -> None:
+    # if not assert_integrity(engine=engine,database="voler_staging"):
+    #     print("We run into an error. Ensure all the tables are updated in data warehouse and try again.")
+    #     return
+    
     send_to_management(
         selection=selection,
         country="Rwanda",
@@ -94,6 +99,10 @@ def send_to_rwanda_management() -> None:
 
 
 def send_to_rwanda_branches() -> None:
+    if not assert_integrity(engine=engine,database="voler_staging"):
+        print("We run into an error. Ensure all the tables are updated in data warehouse and try again.")
+        return
+    
     send_to_branches(
         path=rwanda_path,
         branch_data=branch_data(),

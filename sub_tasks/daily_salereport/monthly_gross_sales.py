@@ -1,46 +1,15 @@
 import sys
 import numpy as np
 sys.path.append(".")
-
-# Import Libraries
-import json
 import psycopg2
-import requests
 import pandas as pd
-from pandas.io.json._normalize import nested_to_record 
-from sqlalchemy import create_engine
 from airflow.models import Variable
-from airflow.exceptions import AirflowException
-from pandas.io.json._normalize import nested_to_record 
-from pangres import upsert, DocsExampleTable
-from sqlalchemy import create_engine, text, VARCHAR
 from datetime import date
 import datetime
-import pytz
-import businesstimedelta
 import pandas as pd
-import holidays as pyholidays
-from workalendar.africa import Kenya
-import pygsheets
-import mysql.connector as database
-import urllib.parse
-
-##Others
-import os
-from email.mime.multipart import MIMEMultipart
-from email.mime.image import MIMEImage
-from email.mime.text import MIMEText
-from sub_tasks.libraries.styles import styles, properties
-# from sub_tasks.libraries.utils import format_dataframe,get_todate,send_report,assert_date_modified, create_initial_file, return_sent_emails, record_sent_branch
-import smtplib
-from email.mime.application import MIMEApplication
-
-# PG Execute(Query)
-from sub_tasks.data.connect import (pg_execute, engine) 
+from sub_tasks.data.connect import pg_execute 
 from sub_tasks.api_login.api_login import(login)
 conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", password="@Akb@rp@$$w0rtf31n")
-
-SessionId = login()
 
 def create_gross_payments():
     
@@ -54,7 +23,6 @@ def create_gross_payments():
 
 
 def summary_gross_payments():
-    #####################Get the gross payments for the current year only
     grosspayments = """
     SELECT branch_code as "Branch", warehouse_name as "Branch name" ,month_year,case when month like '%March%' then replace(month,'March','Mar')
         when month like '%Sept%' then replace(month,'Sept','Sep') else month end as month,year,

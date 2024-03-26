@@ -84,10 +84,7 @@ def daily_netsales_email():
     total = total[["Branch","MTD Cash","MTD Insurance","MTD Net Sales","Day Cash","Day Insurance","Day Net Sales"]]
     total[["MTD Cash","MTD Insurance","MTD Net Sales","Day Cash","Day Insurance","Day Net Sales"]] = total[["MTD Cash","MTD Insurance","MTD Net Sales","Day Cash","Day Insurance","Day Net Sales"]].astype(int)
     ##################################################################################################   
-    # group1_styles = [{'selector': f'th.col{i}', 'props': [('background-color', 'red')]} for i in range(1, 6)] 
     ###Styling
-    print(netsales.columns)
-    print(total.columns)
     netsales = netsales.style.hide_index().set_properties(**properties).set_table_styles(styles).format({"MTD Cash": "{:,d}",
                                                                                            "MTD Insurance":"{:,d}",
                                                                                            "MTD Net Sales":"{:,d}",
@@ -177,7 +174,7 @@ def daily_netsales_email():
         )
 
     to_date = get_todate()
-    # to_date = '2023-10-31'
+    # to_date = '2023-12-31'
 
     sender_email = os.getenv("wairimu_email")
     # receiver_email = 'wairimu@optica.africa'

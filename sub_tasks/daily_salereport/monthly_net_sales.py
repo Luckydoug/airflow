@@ -1,47 +1,21 @@
 import sys
 import numpy as np
 sys.path.append(".")
-
-# Import Libraries
-import json
 import psycopg2
-import requests
 import pandas as pd
-from pandas.io.json._normalize import nested_to_record 
-from sqlalchemy import create_engine
 from airflow.models import Variable
-from airflow.exceptions import AirflowException
-from pandas.io.json._normalize import nested_to_record 
-from pangres import upsert, DocsExampleTable
-from sqlalchemy import create_engine, text, VARCHAR
-from datetime import date
 import datetime
-import pytz
-import businesstimedelta
 import pandas as pd
-import holidays as pyholidays
-from workalendar.africa import Kenya
-import pygsheets
-import mysql.connector as database
-import urllib.parse
 import calendar
-
-##Others
 import os
 from email.mime.multipart import MIMEMultipart
-from email.mime.image import MIMEImage
 from email.mime.text import MIMEText
 from sub_tasks.libraries.styles import styles, properties
-from sub_tasks.libraries.utils import get_todate,send_report,assert_date_modified, return_sent_emails, record_sent_branch
+from sub_tasks.libraries.utils import get_todate
 import smtplib
 from email.mime.application import MIMEApplication
 
-# PG Execute(Query)
-from sub_tasks.data.connect import (pg_execute, engine) 
-from sub_tasks.api_login.api_login import(login)
 conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", password="@Akb@rp@$$w0rtf31n")
-
-SessionId = login()
 
 
 def create_net_sales():
@@ -58,16 +32,14 @@ def create_net_sales():
     net = pd.read_sql_query(net,con = conn)
     net['net amount'] = net['amount']*(100/116)
 
-    # get the current year and month
     current_year = datetime.datetime.now().year
     lastyear = current_year-1
     current_month = datetime.datetime.now().month-1
     previous_month_name = calendar.month_name[current_month].title()
     
-    # create a list of month names for the current year and months up to and including the current month
     month_names = [datetime.date(lastyear, month_num, 1).strftime('%b') for month_num in range(1, current_month+1)]
     print(month_names)
-    ##Get Last month
+
     today = datetime.date.today()
     last_month1 = datetime.date(today.year, today.month - 1, 1)
     last_month = last_month1.strftime('%b')

@@ -25,13 +25,10 @@ from sub_tasks.data.connect_mawingu import (pg_execute, pg_fetch_all, engine)
 from sub_tasks.api_login.api_login import(login)
 
 def fetch_npsreviews_with_issues():
-
      gc = pygsheets.authorize(service_file='/home/opticabi/airflow/dags/sub_tasks/gsheets/keys2.json')
      sh = gc.open_by_key('1Wn7O54ohdn9z1YineGomEqIGCVw3GrzUSafOpYuIv_k')
      wk1 = sh[1]
      wk1 = pd.DataFrame(wk1.get_all_records())
-
-    #  print(wk1)
 
      wk1.rename (columns = {'User ID':'user_id', 
                         'Date':'date',
@@ -98,5 +95,5 @@ def npsreviews_with_issues_live():
 
         return 'something'
 
-fetch_npsreviews_with_issues()
+# fetch_npsreviews_with_issues()
 # npsreviews_with_issues_live()

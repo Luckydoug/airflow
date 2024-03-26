@@ -18,6 +18,16 @@ th_props2 = [
     ('font-size', '13px')
 ]
 
+th_props3 = [
+    ('background-color', '#A7C7E7'),
+    ('border', 'solid 1px black'),
+    ('font-weight', 'bold'),
+    ('text-align', 'center'),
+    ('color', 'black'),
+    ('padding', '.7em'),
+    ('font-size', '13px')
+]
+
 tr_props = [
     ('border', 'solid black 1px'),
     ('padding', '.3em')
@@ -52,6 +62,12 @@ properties = {
 
 ug_styles = [
     dict(selector='th', props=th_props2),
+    dict(selector='tr', props=tr_props),
+    dict(selector='td', props=td_props)
+]
+
+styles_daily = [
+    dict(selector='th', props=th_props3),
     dict(selector='tr', props=tr_props),
     dict(selector='td', props=td_props)
 ]

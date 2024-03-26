@@ -1,52 +1,30 @@
 import sys
-
-from numpy import nan
 sys.path.append(".")
-
-#import libraries
-from io import StringIO
-import json
 import psycopg2
 import requests
 import pandas as pd
-from pandas.io.json._normalize import nested_to_record 
 from sqlalchemy import create_engine
 from airflow.models import Variable
-from pandas.io.json._normalize import nested_to_record 
-from pangres import upsert, DocsExampleTable
-from sqlalchemy import create_engine, text, VARCHAR
+from pangres import upsert
 from datetime import date, timedelta
-import datetime
-
-
 from sub_tasks.data.connect import (pg_execute, engine) 
-from sub_tasks.api_login.api_login import(login)
 conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", password="@Akb@rp@$$w0rtf31n")
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+from sub_tasks.libraries.utils import return_session_id
+from sub_tasks.libraries.utils import FromDate, ToDate
 
-SessionId = login()
-
-# FromDate = '2023/07/12'
-# ToDate = '2023/04/30'
-
-today = date.today()
-pastdate = today - timedelta(days=7)
-FromDate = pastdate.strftime('%Y/%m/%d')
-ToDate = date.today().strftime('%Y/%m/%d')
-
-print(FromDate)
-print(ToDate)
-
-# api details
-#orderscreen_url = 'https://41.72.211.10:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetOrderDetails&pageNo=1'
-pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetPaymentMeans&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
-pagecount_payload={}
-pagecount_headers = {}
 
     
 def fetch_sap_payments():
+    SessionId = return_session_id(country = "Kenya") 
+    print(FromDate)  
+    print(ToDate) 
     
+    pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetPaymentMeans&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+    pagecount_payload={}
+    pagecount_headers = {}
+
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     pagecount_response = pagecount_response.json()
     
@@ -60,7 +38,7 @@ def fetch_sap_payments():
 
     for i in range(1, pages+1):
         page = i
-        # print(page)
+        print(page)
         url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetPaymentMeans&pageNo={page}&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
         response = requests.request("GET", url, headers=headers, data=payload, verify=False)
         response = response.json()
@@ -108,12 +86,6 @@ def fetch_sap_payments():
                                 }
             ,inplace=True)
 
-
-    #query = """truncate mabawa_staging.landing_orderscreenc1;"""
-    #query = pg_execute(query)
-
-    # payments.to_sql('source_payment_means', con = engine, schema='mabawa_staging', if_exists = 'append', index=False)
-
     if paymentsdf.empty:
         print('INFO! Payments dataframe is empty!')
     else:
@@ -129,8 +101,6 @@ def fetch_sap_payments():
 
         print('Update successful')
         print('payments have been fetched successfully')
-
-
 
 # fetch_sap_payments()
 
@@ -158,4 +128,3 @@ def create_customers_mop_new():
     query = pg_execute(query)    
 
     print('done')
-

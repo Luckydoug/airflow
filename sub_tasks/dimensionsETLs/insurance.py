@@ -1,40 +1,22 @@
 import sys
 sys.path.append(".")
-
-#import libraries
-import json
-import psycopg2
 import requests
-import datetime
 import pandas as pd
-from datetime import date, timedelta
-from pangres import upsert, DocsExampleTable
-from sqlalchemy import create_engine
+from datetime import date
+from pangres import upsert
 from airflow.models import Variable
-from pandas.io.json._normalize import nested_to_record 
-
-
-from sub_tasks.data.connect import (pg_execute, pg_fetch_all, engine, pg_bulk_insert) 
+from sub_tasks.data.connect import engine
 from sub_tasks.api_login.api_login import(login)
-
-
-# get session id
-SessionId = login()
-
-FromDate = '2023/10/01'
-# ToDate = '2023/05/04'
-
-today = date.today()
-# pastdate = today - timedelta(days=1)
-# FromDate = pastdate.strftime('%Y/%m/%d')
-ToDate = date.today().strftime('%Y/%m/%d')
-
-# api details
-pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetInsuranceSchemeDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
-pagecount_payload={}
-pagecount_headers = {}
+from sub_tasks.libraries.utils import return_session_id
+from sub_tasks.libraries.utils import FromDate, ToDate
 
 def fetch_sap_insurance():
+    SessionId = return_session_id(country = "Kenya")
+    #SessionId = login()
+
+    pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetInsuranceSchemeDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+    pagecount_payload={}
+    pagecount_headers = {}
 
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     data = pagecount_response.json()
@@ -54,9 +36,6 @@ def fetch_sap_insurance():
         stripped_insurance_df = pd.DataFrame.from_dict(stripped_insurance)
         insurance_df = insurance_df.append(stripped_insurance_df, ignore_index=True) 
     
-
-    
-    # This will check if there was no fetched data to prevent error
 
     if insurance_df.empty:
         print('INFO! Items dataframe is empty!')
@@ -91,9 +70,6 @@ def fetch_sap_insurance():
         table_name='source_insurance_company',
         if_row_exists='update',
         create_table=False)
-    
-        #insurance_details.to_sql('source_test_company', con = engine, schema='mabawa_staging', if_exists = 'append', index=False)
-
 
         '''
         INSERT THE INSURANCE PLAN TABLE
@@ -165,8 +141,6 @@ def fetch_sap_insurance():
         create_table=False,
         add_new_columns=True)
 
-        # insurance_itemdetails_df.to_sql('source_insurance_plan', con = engine, schema='mabawa_staging', if_exists = 'append', index=False)
 
-fetch_sap_insurance()
 
 

@@ -1,15 +1,9 @@
 import os
 import sys
-
 sys.path.insert(0,os.path.abspath(os.path.dirname(__file__)))
-
 from datetime import datetime, timedelta
-
 from airflow import DAG
 from airflow.utils.task_group import TaskGroup
-# from airflow.example_dags.subdags.subdag import subdag
-# from airflow.operators.bash_operator import BashOperator
-# from airflow.contrib.sensors.file_sensor import FileSensor
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python_operator import PythonOperator
 
@@ -32,7 +26,7 @@ with DAG(
     DAG_ID, 
     default_args=default_args,
     tags=['Live'], 
-    schedule_interval='00 21 * * *',
+    schedule_interval='05 21 * * *',
     catchup=False
     ) as dag:
     

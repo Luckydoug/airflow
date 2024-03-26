@@ -8,8 +8,10 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import pandas as pd
 from colorama import Fore
-import random
 import calendar
+import random
+from sub_tasks.libraries.utils import dag_run
+import datetime
 
 from sub_tasks.libraries.utils import (
     get_month_first_day,
@@ -71,8 +73,13 @@ styles = [
 
 achievement = r"/home/opticabi/airflow/total_branches.xlsx"
 achievement = r"/home/opticabi/Documents/optica_reports/total_branches.xlsx"
+DAG = "Incentives_Pipeline"
 
 def send_to_salespersons():
+    if not dag_run(DAG):
+        print(f"We ran into an error. Ensure that {DAG} has run successfully. Do not mark it as success!")
+        return
+    
     create_initial_file(filename=log)
     for outlet in scheduled_branches:
         # sales_person = load_workbook(
@@ -197,6 +204,7 @@ def send_to_salespersons():
 
                     else:
                         receiver_email = [sales_person_email]
+                    
 
                     email_message = MIMEMultipart("alternative")
                     email_message["From"] = your_email
@@ -234,6 +242,10 @@ properties = {
 
 
 def send_branch_version():
+    if not dag_run(DAG):
+        print(f"We ran into an error. Ensure that {DAG} has run successfully. Do not mark it as success!")
+        return
+    
     for branch in scheduled_branches:
         branch_achievement = pd.read_excel(achievement, sheet_name=branch)
         branch_achievement = branch_achievement.style.hide_index().set_properties(
@@ -242,7 +254,6 @@ def send_branch_version():
             doctype_html=True
         )
 
-        # overall_performance = r"/home/opticabi/airflow/branches.xlsx"
         overall_performance = r"/home/opticabi/Documents/optica_reports/branches.xlsx"
         branch_performance = pd.read_excel(
             overall_performance, index_col=[0, 1], header=[0, 1], sheet_name=branch)
@@ -263,6 +274,7 @@ def send_branch_version():
         else:
             if branch == "OHO":
                 receiver_email = [
+                    "wazeem@optica.africa",
                     "opticahouse@optica.africa", 
                     "duncan.muchai@optica.africa", 
                     "susan@optica.africa"
@@ -320,6 +332,7 @@ def send_branch_version():
 
             </html>
         """.format(branch_achievement_html=branch_achievement_html, branch_name=branch_name, branch_performance_html=branch_performance_html)
+
         email_message = MIMEMultipart("alternative")
         email_message["From"] = your_email
         email_message["To"] = r','.join(receiver_email)
@@ -332,7 +345,6 @@ def send_branch_version():
         text = email_message.as_string()
         smtp_server.sendmail(your_email, receiver_email, text)
         smtp_server.quit()
-
 
 
 if __name__ == '__main__': 

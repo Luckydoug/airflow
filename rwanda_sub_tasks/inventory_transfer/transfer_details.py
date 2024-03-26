@@ -23,8 +23,7 @@ from pandas.io.json._normalize import nested_to_record
 
 from sub_tasks.data.connect_voler import (pg_execute, pg_fetch_all, engine, pg_bulk_insert) 
 from sub_tasks.api_login.api_login import(login_rwanda)
-
-SessionId = login_rwanda()
+from sub_tasks.libraries.utils import return_session_id
 
 # FromDate = '2022/01/01'
 # # ToDate = '2022/04/30'
@@ -35,12 +34,14 @@ FromDate = pastdate.strftime('%Y/%m/%d')
 ToDate = date.today().strftime('%Y/%m/%d')
 
 
-# api details
-pagecount_url = f"https://10.40.16.9:4300/RWANDA_BI/XSJS/BI_API.xsjs?pageType=GetInventoryTransferDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
-pagecount_payload={}
-pagecount_headers = {}
-
 def fetch_sap_inventory_transfer():
+    SessionId = return_session_id(country = "Rwanda")
+    #SessionId = login_rwanda()
+
+    # api details
+    pagecount_url = f"https://10.40.16.9:4300/RWANDA_BI/XSJS/BI_API.xsjs?pageType=GetInventoryTransferDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+    pagecount_payload={}
+    pagecount_headers = {}
 
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     data = pagecount_response.json()

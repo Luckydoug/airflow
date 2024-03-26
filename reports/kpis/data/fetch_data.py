@@ -48,7 +48,7 @@ class FetchData:
             conv.code as "Code",
             conv.days as "Days",
             case when conv.days is null then 0
-            when conv.days::int <= 14::int then 1
+            when conv.days::int <= 7::int then 1
             else 0 end as "Conversion"
             from {database}.reg_conv as conv
             left join {users}.{users_table} as users 

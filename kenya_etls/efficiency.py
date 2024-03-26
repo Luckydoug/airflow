@@ -28,7 +28,7 @@ with DAG(
     DAG_ID, 
     default_args=default_args,
     tags=['Live'], 
-    schedule_interval='00 18 * * *',
+    schedule_interval='05 20 * * *',
     catchup=False
     ) as dag:
     
@@ -392,4 +392,3 @@ with DAG(
     ) 
 
     start >> start_time >> gsheets_data >> orderscreen_etls >> dropped_etls >> finish
-    

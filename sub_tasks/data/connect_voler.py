@@ -1,26 +1,16 @@
 import psycopg2
 import pandas as pd
-from airflow.hooks.mssql_hook import MsSqlHook
 from airflow.exceptions import AirflowException
-#import pygrametl
-#from pygrametl.tables import SlowlyChangingDimension
 import io
 import datetime;
-import mysql.connector as database
 from sqlalchemy.engine import create_engine
 
 LOCAL_DIR = "/tmp/"
 engine = create_engine('postgresql://postgres:@Akb@rp@$$w0rtf31n@10.40.16.19:5432/voler')
-#engineString = 'mariadb+mariadbconnector://optica-admin:%s@10.40.16.17/mwangaza' % urlquote('@MWenendo../')
-#mariaengine = create_engine(engineString)
+
 username = "optica-admin"
 password = "@MWenendo../"
 
-# connection = database.connect(
-#     user=username,
-#     password=password,
-#     host="10.40.16.17",
-#     database="mwangaza")
 
 """
     Slow Changing dimention ETL to be used for any dimention table
@@ -79,7 +69,6 @@ def pg_fetch_all(query):
         fetched_data = pd.read_sql_query(query, connection)
 
 
-        # print(type(fetched_data))
         return fetched_data
 
     except (Exception, psycopg2.Error) as error :
@@ -87,7 +76,7 @@ def pg_fetch_all(query):
         raise AirflowException("pg_fetch_all Error")
 
     finally:
-        #closing database connection.
+    
         if(connection):
             connection.close()
             print("pg_fetch_all connection is closed")
@@ -106,8 +95,6 @@ def pg_fetch_all_write(query, file_name):
         fetched_data = pd.read_sql_query(query, connection)
 
 
-        # print(type(fetched_data))
-        # write file to csv
         fetched_data.to_csv(file_name, index=False)
         return fetched_data
 
@@ -116,7 +103,6 @@ def pg_fetch_all_write(query, file_name):
         raise AirflowException("pg_fetch_all Error")
 
     finally:
-        #closing database connection.
         if(connection):
             connection.close()
             print("pg_fetch_all connection is closed")
@@ -134,12 +120,9 @@ def pg_execute(query):
                                         port="5432",
                                         database="voler")
 
-        #fetched_data = pd.read_sql_query(query, connection)
-
         curr = connection.cursor()
         curr.execute(query)
         count = curr.rowcount
-        # print(type(fetched_data))
         connection.commit()
         connection.close()
         print(count, " executed queries")
@@ -149,7 +132,6 @@ def pg_execute(query):
         print ("Error while fetching data from PostgreSQL", error)
         raise AirflowException("mssql_fetch_all Error")
     finally:
-        #closing database connection.
         if(connection):
             connection.close()
             print("pg_truncate connection is closed")       
@@ -163,7 +145,6 @@ def pg_insert_dataframe(pd_result, table, schema_name):
     engine = create_engine( 'postgresql+psycopg2://postgres:@Akb@rp@$$w0rtf31n@10.40.16.19/voler')
 
 
-    #fetched_data = pd.read_sql_query(query, connection)
 
     pd_result.to_sql(table, con = engine, if_exists = 'append', chunksize = 1000, index=False, schema=schema_name)
 

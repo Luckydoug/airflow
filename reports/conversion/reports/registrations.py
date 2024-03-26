@@ -16,6 +16,7 @@ from sub_tasks.libraries.utils import (
 
 def create_registrations_conversion(data, country, path, selection):
     conversions = data.copy()
+    conversions = conversions.drop_duplicates(subset = "Customer Code")
     if selection == "Daily":
         return 
     
@@ -42,6 +43,8 @@ def create_registrations_conversion(data, country, path, selection):
         )
 
         last_date_range = summary_weekly_conv.columns.get_level_values(0)[-1]
+        previous_week = summary_weekly_conv.columns.get_level_values(0)[5]
+
         weekly_data = conversions[conversions["Week Range"] == last_date_range]
         non_conversions = weekly_data[
             (weekly_data["Conversion"] == 0) &
@@ -61,6 +64,31 @@ def create_registrations_conversion(data, country, path, selection):
 
         branch_conversion = create_branch_conversion(
             weekly_data=weekly_data,
+            index="Outlet",
+            values=["Customer Code", "Conversion"],
+            rename={
+                "Conversion": "Converted",
+                "Customer Code": "Customers"
+            },
+
+            cols_order=["Outlet", "Customers", "Converted", "%Conversion"]
+        )
+
+        previous_week_data = conversions[conversions["Week Range"] == previous_week]
+
+        sales_persons_conversion_prev = create_staff_conversion(
+            weekly_data=previous_week_data,
+            index=["Outlet", "Staff"],
+            values=["Customer Code", "Conversion"],
+            rename={
+                "Conversion": "Converted",
+                "Customer Code": "Customers"
+            },
+            cols_order=["Outlet", "Staff", "Customers", "Converted", "%Conversion"]
+        )
+
+        branch_conversion_prev = create_branch_conversion(
+            weekly_data=previous_week_data,
             index="Outlet",
             values=["Customer Code", "Conversion"],
             rename={
@@ -97,6 +125,16 @@ def create_registrations_conversion(data, country, path, selection):
                     index=False
                 )
 
+        with pd.ExcelWriter(f"{path}conversion/registrations/sales_persons_prev.xlsx") as writer:
+            for group, dataframe in sales_persons_conversion_prev.groupby("Outlet"):
+                name = f'{group}'
+                dataframe.to_excel(writer, sheet_name=name, index=False)
+
+        with pd.ExcelWriter(f"{path}conversion/registrations/branch_prev.xlsx") as writer:
+            for group, dataframe in branch_conversion_prev.groupby("Outlet"):
+                name = f'{group}'
+                dataframe.to_excel(writer, sheet_name=name, index=False)
+
 
     elif selection == "Monthly":
         first_month, second_month = get_comparison_months()
@@ -104,6 +142,8 @@ def create_registrations_conversion(data, country, path, selection):
             (conversions["Month"] == first_month) |
             (conversions["Month"] == second_month)
         ]
+
+        print(monthly_data["Customer Code"].duplicated().sum())
 
 
         country_conversion = create_monthly_summary(

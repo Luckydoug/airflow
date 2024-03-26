@@ -1,43 +1,21 @@
 import sys
-
-from numpy import nan
 sys.path.append(".")
-
-#import libraries
-import json
-import psycopg2
 import requests
-import datetime
 import pandas as pd
-from io import StringIO
 from airflow.models import Variable 
-from sqlalchemy import create_engine
 from datetime import date, timedelta
-from pangres import upsert, DocsExampleTable
-from sqlalchemy import create_engine, text, VARCHAR
-from pandas.io.json._normalize import nested_to_record 
+from pangres import upsert
+from sub_tasks.data.connect_voler import engine
+from sub_tasks.libraries.utils import return_session_id
+from sub_tasks.libraries.utils import FromDate, ToDate
 
-from sub_tasks.data.connect_voler import (pg_execute, engine) 
-from sub_tasks.api_login.api_login import(login)
-
-
-SessionId = login()
-
-FromDate = '2023/08/01'
-# ToDate = '2023/03/31'
-
-today = date.today()
-# pastdate = today - timedelta(days=1)
-# FromDate = pastdate.strftime('%Y/%m/%d')
-ToDate = date.today().strftime('%Y/%m/%d')
-
-# api details
-
-pagecount_url = f"https://10.40.16.9:4300/RWANDA_BI/XSJS/BI_API.xsjs?pageType=GetPurchaseOrders&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
-pagecount_payload={}
-pagecount_headers = {}
 
 def fetch_purchase_orders():
+    SessionId = return_session_id(country = "Rwanda")
+    
+    pagecount_url = f"https://10.40.16.9:4300/RWANDA_BI/XSJS/BI_API.xsjs?pageType=GetPurchaseOrders&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+    pagecount_payload={}
+    pagecount_headers = {}
 
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     data = pagecount_response.json()

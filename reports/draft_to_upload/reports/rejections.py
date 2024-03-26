@@ -411,6 +411,8 @@ def create_rejection_report(
             )
 
     if selection == "Monthly":
+        from reports.draft_to_upload.utils.utils import return_report_daterange
+        start_date = return_report_daterange("Monthly")
 
         staff_monthly_summary = create_monthly_rejections(
             insurance=unique_insurance_merge,
@@ -422,8 +424,12 @@ def create_rejection_report(
         )
 
         monthly_insurance_orders = unique_insurance_merge.copy()
-        monthly_insurance_orders["Month"] = monthly_insurance_orders["CreateDate"].dt.month_name(
-        )
+        monthly_insurance_orders["Month"] = monthly_insurance_orders["CreateDate"].dt.month_name()
+
+        monthly_insurance_orders = monthly_insurance_orders[
+            (monthly_insurance_orders["CreateDate"] >= pd.to_datetime(start_date))
+        ]
+
         monthly_insu_orders_data = monthly_insurance_orders[
             (monthly_insurance_orders["Month"] == first_month) |
             (monthly_insurance_orders["Month"] == second_month)
@@ -439,6 +445,11 @@ def create_rejection_report(
         monthly_rejections = rejections_orders.copy()
         monthly_rejections = monthly_rejections.drop_duplicates(subset=["DocEntry", "Date", "Time"])
         monthly_rejections["Month"] = pd.to_datetime(monthly_rejections["Date"], dayfirst=True).dt.month_name()
+
+        monthly_rejections = monthly_rejections[
+            (monthly_rejections["Date"] >= pd.to_datetime(start_date))
+        ]
+
         monthly_rejections_data = monthly_rejections[
             (monthly_rejections["Month"] == first_month) |
             (monthly_rejections["Month"] == second_month)

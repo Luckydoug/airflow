@@ -1,41 +1,24 @@
 import sys
 sys.path.append(".")
-
-#import libraries
-import json
-import psycopg2
 import requests
-import datetime
 import pandas as pd
 from datetime import date, timedelta
 from airflow.models import Variable
-from sqlalchemy import create_engine
-from pangres import upsert, DocsExampleTable
-from pandas.io.json._normalize import nested_to_record 
 import urllib3
 pd.set_option('max_columns', 100)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+from sub_tasks.data.connect_voler import engine
+from sub_tasks.libraries.utils import return_session_id
+from sub_tasks.libraries.utils import FromDate, ToDate
 
 
-from sub_tasks.data.connect_voler import (pg_execute, pg_fetch_all, engine)  
-from sub_tasks.api_login.api_login import(login_rwanda)
-
-SessionId = login_rwanda()
-
-# FromDate = '2023/05/01'
-# ToDate = '2023/05/10'
-
-today = date.today()
-pastdate = today - timedelta(days=7)
-FromDate = pastdate.strftime('%Y/%m/%d')
-ToDate = date.today().strftime('%Y/%m/%d')
-
-# api details
-pagecount_url = f"https://10.40.16.9:4300/RWANDA_BI/XSJS/BI_API.xsjs?pageType=GetInvoiceDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
-pagecount_payload={}
-pagecount_headers = {}
 
 def fetch_sap_invoices():
+    SessionId = return_session_id(country = "Rwanda")
+
+    pagecount_url = f"https://10.40.16.9:4300/RWANDA_BI/XSJS/BI_API.xsjs?pageType=GetInvoiceDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+    pagecount_payload={}
+    pagecount_headers = {}
 
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     data = pagecount_response.json()

@@ -33,7 +33,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.image import MIMEImage
 from email.mime.text import MIMEText
 from sub_tasks.libraries.styles import styles, properties
-from sub_tasks.libraries.utils import get_todate,send_report,assert_date_modified, create_initial_file, return_sent_emails, record_sent_branch, fetch_gsheet_data, fourth_week_start, fourth_week_end
+from sub_tasks.libraries.utils import get_todate,fetch_gsheet_data, fourth_week_start, fourth_week_end, assert_integrity
 
 from reports.draft_to_upload.utils.utils import return_report_daterange
 from reports.draft_to_upload.utils.utils import get_report_frequency
@@ -44,23 +44,27 @@ from sub_tasks.api_login.api_login import(login)
 conn = psycopg2.connect(host="10.40.16.19",database="mawingu", user="postgres", password="@Akb@rp@$$w0rtf31n")
 
 
-# selection = get_report_frequency()
-# print(selection)
-# if selection == 'Daily':
-#     start_date = return_report_daterange(selection)
-#     end_date = start_date
-# elif selection == 'Weekly':
-#     start_date = fourth_week_start
-#     end_date = fourth_week_end
-# start_date = return_report_daterange(selection)
+selection = get_report_frequency()
+print(selection)
+if selection == 'Daily':
+    start_date = return_report_daterange(selection)
+    end_date = start_date
+elif selection == 'Weekly':
+    start_date = fourth_week_start
+    end_date = fourth_week_end
+start_date = return_report_daterange(selection)
 
-# print(datetime.datetime.today())
-# print(end_date)
+print(datetime.datetime.today())
+print(end_date)
 
-start_date = '2023-08-28'
-end_date = '2023-09-24'
+# start_date = '2023-08-28'
+# end_date = '2023-09-24'
 
 def rejections():
+    if not assert_integrity(engine=engine,database="mawingu_staging"):
+        print("We run into an error. Ensure all the tables are updated in data warehouse and try again.")
+        return
+    
     branch_data = fetch_gsheet_data()["ug_srm_rm"]
     print(branch_data)
     orderscrnc1 = f"""

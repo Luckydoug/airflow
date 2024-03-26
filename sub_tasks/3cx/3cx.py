@@ -16,12 +16,13 @@ def download_file_from_email(email_id, mail):
     soup = BeautifulSoup(email_message.get_payload(), 'html.parser')
     links = soup.find_all('a')
     if len(links) >= 2:
-        link = links[0]['href']
+        link = links[1]['href']
     else:
         print("No link found in the email body.")
         return None
 
     response = requests.get(link, verify = False)
+    print(response)
     file_name = link.split('/')[-1]
     with open(r"/home/opticabi/Documents/optica_reports/{}".format(file_name = file_name), 'wb') as f:
         f.write(response.content)
@@ -32,7 +33,7 @@ def get_download_data():
     load_dotenv()
     global file_paths
     user = "douglas.kathurima@optica.africa"
-    password = "kathurima1999"
+    password = "Igotyou!"
     print(password)
     file_paths = []
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -78,7 +79,7 @@ def get_download_data():
     mail.logout()
 
 
-get_download_data()
+# get_download_data()
 
 
     

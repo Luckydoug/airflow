@@ -5,7 +5,6 @@ kenya = [
     'wazeem@optica.africa',
     'yuri@optica.africa', 
     'andrew@optica.africa',
-    'maxwell@optica.africa', 
     'cavin@optica.africa',
     'joseph.oluoch@optica.africa',
     'ian.gathumbi@optica.africa',
@@ -13,10 +12,17 @@ kenya = [
     'christopher@optica.africa',
     'nicholas@optica.africa',
     'shaka@optica.africa',
-    'peter@optica.africa',
     'john@optica.africa',
     'wairimu@optica.africa', 
-    'faithtesy.leo@optica.africa'
+    'faithtesy.leo@optica.africa',
+    'elizabeth.ndonye@optica.africa',
+    'emmaculate.adhiambo@optica.africa',
+    'doris.kinoti@optica.africa',
+    'nancy.wanjiru@optica.africa',
+    'diana.atieno@optica.africa',
+    'terresia.mureithi@optica.africa',
+    'ian.kiprono@optica.africa',
+    'james.mwangi@optica.africa'
 ]
 
 uganda = [

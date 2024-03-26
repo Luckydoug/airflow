@@ -31,6 +31,9 @@ from reports.insurance_conversion.smtp.emails import (
     rwanda
 )
 
+from reports.insurance_conversion.utils.utils import highlight_multindex
+from reports.insurance_conversion.utils.utils import clean_final_dataframe
+
 email = os.getenv("douglas_email")
 password = os.getenv("douglas_password")
 receiver_email = []
@@ -79,9 +82,11 @@ def send_to_management(selection, country, path) -> None:
     )
 
     if selection == "Weekly":
-        non_conversion = f"{path_appended}mng_noncoverted.xlsx"
+        non_conversion = f"{path_appended}conversion_management.xlsx"
     elif selection == "Monthly":
         non_conversion =  f"{path_appended}conversion_management.xlsx"
+
+    report = f"{path}insurance_conversion/mng_noncoverted.xlsx"
 
     branches_conversion = management_report.parse(
         "all_branches",
@@ -171,7 +176,9 @@ def send_to_management(selection, country, path) -> None:
     email_message["Subject"] = subject
     email_message.attach(MIMEText(html, "html"))
 
-    attach_file(email_message, non_conversion, "Non Converted Orders.xlsx")
+    attach_file(email_message, non_conversion, "Insurance Conversion Report.xlsx")
+    if selection == "Weekly":
+        attach_file(email_message, report, "Non Conversions.xlsx")
 
     context = ssl.create_default_context()
     with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
@@ -185,7 +192,6 @@ def send_to_branches(
     country:str,
     filename: str
 ) -> None: 
-     
     """
     This function explicitly returns Nothing, or in other words, it returns None.
     This function will send the Insurance Conversion Report to the branches.
@@ -234,11 +240,20 @@ def send_to_branches(
             individual_feedback = individual_feedback.reset_index(level=0)
             individual_feedback = individual_feedback.rename(columns={"Order Creator": ""})
             individual_feedback = individual_feedback.rename(columns={"": "Order Creator"}, level=1)
+
+            individual_feedback[("Insurance Fully Approved", "Conversion")] = individual_feedback[("Insurance Fully Approved", "Conversion")].apply(lambda x: x + 'f')
+            individual_feedback[("Insurance Partially Approved", "Conversion")] = individual_feedback[("Insurance Partially Approved", "Conversion")].apply(lambda x: x + 'p')
+            individual_feedback[("Use Available Amount on SMART", "Conversion")] = individual_feedback[("Use Available Amount on SMART", "Conversion")].apply(lambda x: x + 'u')
+            individual_feedback[("Declined by Insurance Company", "Conversion")] = individual_feedback[("Declined by Insurance Company", "Conversion")].apply(lambda x: x + 'd')
             
             overall_feedbacks = overall_feedbacks.style.hide_index().set_properties(**properties).set_table_styles(ug_styles)
 
-            individual_feedback = individual_feedback.style.hide_index(
-            ).set_properties(**properties).set_table_styles(ug_styles)
+            # individual_feedback = individual_feedback.style.hide_index(
+            # ).set_properties(**properties).set_table_styles(ug_styles)
+
+            individual_feedback = individual_feedback.style.hide_index().set_properties(**properties).set_table_styles(ug_styles).applymap(highlight_multindex, subset=pd.IndexSlice[:, pd.IndexSlice[:, 'Conversion']])
+            individual_feedback =individual_feedback.format(clean_final_dataframe)
+
 
             overall_feedbacks_html = overall_feedbacks.to_html(
                 doctype_html=True
@@ -286,7 +301,6 @@ def send_to_branches(
                     "kush@optica.africa",
                     "raghav@optica.africa",
                     rm_email,
-                    'fredrick@optica.africa',
                     branch_email
                 ]
             
@@ -341,3 +355,5 @@ def mop_folder(path):
 if __name__ == '__main__':
     send_to_management()
     send_to_branches()
+
+

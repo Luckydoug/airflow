@@ -5,7 +5,8 @@ from reports.insurance_conversion.data.fetch_data import FetchData
 from reports.insurance_conversion.smtp.smtp import send_to_management, mop_folder, send_to_branches
 from sub_tasks.libraries.utils import (
     create_unganda_engine,
-    uganda_path
+    uganda_path,
+    assert_integrity
 )
 from reports.draft_to_upload.utils.utils import (return_report_daterange)
 from reports.conversion.utils.utils import (get_conversion_frequency)
@@ -14,6 +15,7 @@ engine = create_unganda_engine()
 selection = get_conversion_frequency(
     report="Insurance Conversion"
 )
+
 start_date = return_report_daterange(selection=selection)
 data_fetcher = FetchData(
     engine=engine,
@@ -129,6 +131,10 @@ SEND REPORT TO THE MANAGEMENT
 
 
 def send_to_uganda_management() -> None:
+    if not assert_integrity(engine=engine,database="mawingu_staging"):
+        print("We run into an error. Ensure all the tables are updated in data warehouse and try again.")
+        return
+    
     send_to_management(
         selection=selection,
         country="Uganda",
@@ -142,6 +148,10 @@ SEND THE REPORT TO UGANDA MANAGEMENT
 
 
 def send_to_uganda_branches() -> None:
+    if not assert_integrity(engine=engine,database="mawingu_staging"):
+        print("We run into an error. Ensure all the tables are updated in data warehouse and try again.")
+        return
+    
     send_to_branches(
         path=uganda_path,
         branch_data=branch_data(),
@@ -158,3 +168,5 @@ REMOVE ALL THE .xlsx FILES AFTER THE ABOVE SENDING IS DONE.
 
 def clean_uganda_folder() -> None:
     mop_folder(path=uganda_path)
+
+

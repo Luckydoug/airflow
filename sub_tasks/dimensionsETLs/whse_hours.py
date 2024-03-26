@@ -1,27 +1,19 @@
 import sys
 sys.path.append(".")
-
-#import libraries
-import json
-import psycopg2
 import requests
 import pandas as pd
 from airflow.models import Variable
-from sqlalchemy import create_engine
-from datetime import date, timedelta
-from pangres import upsert, DocsExampleTable
-from pandas.io.json._normalize import nested_to_record 
-
+from pangres import upsert
 from sub_tasks.data.connect import (pg_execute, engine) 
 from sub_tasks.api_login.api_login import(login)
-
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+from sub_tasks.libraries.utils import return_session_id
 
-# get session id
-SessionId = login()
 
 def fetch_sap_whse_hours():
+    SessionId = return_session_id(country = "Kenya")
+    #SessionId = login()
     
     payload={}
     headers = {}
@@ -50,8 +42,7 @@ def fetch_sap_whse_hours():
         create_table=False)
 
     print('Update successful')
-    #whsehrs.to_sql('source_whse_hrs', con = engine, schema='mabawa_staging', if_exists = 'append', index=False)
-fetch_sap_whse_hours()
+
 def create_mviews_whse_hrs():
 
     query = """
@@ -74,11 +65,6 @@ def create_mviews_branch_hours_array():
     """
 
     whsehrs = pg_execute(whsehrs)
-
-    #query = """truncate mabawa_mviews.branch_hours_array;"""
-    #query = pg_execute(query)
-
-    #whsehrs.to_sql('branch_hours_array', con = engine, schema='mabawa_mviews', if_exists = 'append', index=False)
 
 def update_categories():
 

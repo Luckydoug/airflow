@@ -76,7 +76,7 @@ with DAG(
             provide_context = True
         )
 
-        refresh_order_line_with_details >> refresh_salesorders_line_cl_and_rr >> refresh_fact_orders_header 
+        refresh_order_line_with_details >> refresh_salesorders_line_cl_and_rr >> refresh_fact_orders_header >> refresh_order_contents
 
     with TaskGroup('prescriptions') as prescriptions:
 
@@ -85,6 +85,8 @@ with DAG(
             python_callable = refresh_et_conv,
             provide_context = True
         )
+
+        refresh_et_conv
     
     with TaskGroup('lens_silh') as lens_silh:
 
@@ -93,6 +95,8 @@ with DAG(
             python_callable = refresh_lens_silh,
             provide_context = True
         )
+
+        refresh_lens_silh
         
     finish = DummyOperator(
         task_id = "finish"

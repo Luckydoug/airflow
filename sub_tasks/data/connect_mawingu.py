@@ -1,26 +1,16 @@
 import psycopg2
 import pandas as pd
-from airflow.hooks.mssql_hook import MsSqlHook
 from airflow.exceptions import AirflowException
-#import pygrametl
-#from pygrametl.tables import SlowlyChangingDimension
 import io
 import datetime;
-import mysql.connector as database
 from sqlalchemy.engine import create_engine
 
 LOCAL_DIR = "/tmp/"
 engine = create_engine('postgresql://postgres:@Akb@rp@$$w0rtf31n@10.40.16.19:5432/mawingu')
-#engineString = 'mariadb+mariadbconnector://optica-admin:%s@10.40.16.17/mwangaza' % urlquote('@MWenendo../')
-#mariaengine = create_engine(engineString)
+
 username = "optica-admin"
 password = "@MWenendo../"
 
-# connection = database.connect(
-#     user=username,
-#     password=password,
-#     host="10.40.16.17",
-#     database="mwangaza")
 
 """
     Slow Changing dimention ETL to be used for any dimention table

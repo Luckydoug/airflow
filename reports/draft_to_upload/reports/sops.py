@@ -162,6 +162,8 @@ def create_ug_sops_report(
             (sop_compliance["Date"] <= sop_date)
         ].copy()
 
+        print(weekly_sops)
+
         weekly_customers = customers.copy()
         weekly_customers["Week Range"] = weekly_customers.apply(lambda row: check_date_range(row, "Date"), axis=1)
         weekly_customers = weekly_customers[weekly_customers["Week Range"] != "None"]
@@ -225,7 +227,7 @@ def create_ug_sops_report(
 
         sorted_columns = arrange_dateranges(final_weeky_sops)
         final_weeky_sops_report = final_weeky_sops.reindex(sorted_columns,axis = 1, level = 0)
-        weekly_sops_export_data = weekly_sops#[weekly_sops["Week Range"] == final_weeky_sops.columns.get_level_values(0).values[-1]]
+        weekly_sops_export_data = weekly_sops[weekly_sops["Week Range"] == final_weeky_sops.columns.get_level_values(0).values[-1]]
 
         final_weeky_sops_report = get_rm_srm_total_multiindex(
             final_weeky_sops_report,
@@ -252,6 +254,16 @@ def create_ug_sops_report(
     if selection == "Monthly":
         monthly_sops = sop_compliance.copy()
         monthly_sops["Month"] = pd.to_datetime(monthly_sops["Date"], dayfirst="%Y-%m-%d").dt.month_name()
+        monthly_sops["Date"] = pd.to_datetime(monthly_sops["Date"], dayfirst="%Y-%m-%d")
+
+        from reports.draft_to_upload.utils.utils import return_report_daterange
+        from reports.draft_to_upload.utils.utils import today
+        start_date = return_report_daterange("Monthly")
+
+        monthly_sops = monthly_sops[
+            (monthly_sops["Date"] >= pd.to_datetime(start_date))
+        ]
+
         monthly_sops_data = monthly_sops[(monthly_sops["Month"] == first_month) | (monthly_sops["Month"] == second_month)].copy()
         monthly_sops_data = monthly_sops_data[["Date", "Outlet", "Branch", "SOP", "No of times", "Month"]]
         monthly_sops_data = pd.merge(

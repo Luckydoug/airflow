@@ -1,3 +1,4 @@
+from airflow.models import variable
 import pandas as pd
 import requests
 import datetime
@@ -16,18 +17,22 @@ params = {
     "grant_type": "refresh_token"
 }
 
-try:
-    response = requests.post(refresh_token_url, params=params)
-    response.raise_for_status()
-    token_content = response.json()
-    token = token_content["access_token"]
 
-except requests.exceptions.RequestException as e:
-    print(f"An error occurred: {e}")
+def get_token():
+    try:
+        response = requests.post(refresh_token_url, params=params)
+        response.raise_for_status()
+        token_content = response.json()
+        token = token_content["access_token"]
 
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred: {e}")
+    
+    return token
 
 today = datetime.date.today()
 yesterday_date = (today - timedelta(days=1)).strftime("%Y-%m-%d")
+to_date = today.strftime("%Y-%m-%d")
 
 def extract_agent_details(row):
     data_object = row["assignee"]
@@ -45,10 +50,11 @@ def extract_department(row):
 
 
 def get_ticket_count():
+    token = get_token()
     url = "https://desk.zoho.com/api/v1/ticketsCountByFieldValues"
     params = {
         "field": "statusType",
-        "modifiedTimeRange": f"{yesterday_date}T00:00:00.000Z,{yesterday_date}T23:59:00.000Z"
+        "modifiedTimeRange": f"{yesterday_date}T00:00:00.000Z,{to_date}T23:59:00.000Z"
     }
     headers = {
         'Authorization': f"Bearer {token}"
@@ -68,6 +74,7 @@ def get_ticket_count():
 
 
 def fetch_zoho_tickets():
+    token = get_token()
     total = get_ticket_count()
     lists = list(range(0, total, 100))
     tickets = []
@@ -80,7 +87,7 @@ def fetch_zoho_tickets():
         params = {
             "from": number,
             "limit": limit,
-            "modifiedTimeRange": f"{yesterday_date}T00:00:00.000Z,{yesterday_date}T23:59:00.000Z"
+            "modifiedTimeRange": f"{yesterday_date}T00:00:00.000Z,{to_date}T23:59:00.000Z"
         }
         headers = {
             'Authorization': f"Bearer {token}"
@@ -183,5 +190,7 @@ def fetch_closed_tickets():
             create_table=True)
     else:
         return
+
+
 
 

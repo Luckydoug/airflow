@@ -1,39 +1,20 @@
 import sys
 sys.path.append(".")
-
-#import libraries
-import json
-import psycopg2
 import requests
-import datetime
 import pandas as pd
-from datetime import date, timedelta
-from pangres import upsert, DocsExampleTable
-from sqlalchemy import create_engine
+from pangres import upsert
 from airflow.models import Variable
-from pandas.io.json._normalize import nested_to_record 
+from sub_tasks.data.connect_voler import engine
+from sub_tasks.libraries.utils import return_session_id
+from sub_tasks.libraries.utils import FromDate, ToDate
 
-
-from sub_tasks.data.connect_voler import (pg_execute, pg_fetch_all, engine)  
-from sub_tasks.api_login.api_login import(login_rwanda)
-
-SessionId = login_rwanda()
-
-FromDate = '2023/01/01'
-# ToDate = '2023/07/28'
-
-today = date.today()
-# pastdate = today - timedelta(days=1)
-# FromDate = pastdate.strftime('%Y/%m/%d')
-ToDate = date.today().strftime('%Y/%m/%d')
-
-# api details
-
-pagecount_url = f"https://10.40.16.9:4300/RWANDA_BI/XSJS/BI_API.xsjs?pageType=GetInsuranceSchemeDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
-pagecount_payload={}
-pagecount_headers = {}
 
 def fetch_sap_insurance():
+    SessionId = return_session_id(country = "Rwanda")
+
+    pagecount_url = f"https://10.40.16.9:4300/RWANDA_BI/XSJS/BI_API.xsjs?pageType=GetInsuranceSchemeDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+    pagecount_payload={}
+    pagecount_headers = {}
 
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     data = pagecount_response.json()
@@ -53,9 +34,6 @@ def fetch_sap_insurance():
         stripped_insurance_df = pd.DataFrame.from_dict(stripped_insurance)
         insurance_df = insurance_df.append(stripped_insurance_df, ignore_index=True) 
     
-
-    
-    # This will check if there was no fetched data to prevent error
 
     if insurance_df.empty:
         print('INFO! Items dataframe is empty!')
@@ -166,9 +144,6 @@ def fetch_sap_insurance():
 
        
          # insurance_itemdetails_df.to_sql('source_insurance_plan', con = engine, schema='voler_staging', if_exists = 'append', index=False)
-         
-fetch_sap_insurance()
-
 
 
 

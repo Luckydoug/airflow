@@ -17,6 +17,11 @@ def create_queue_time_report(
 ) -> None:
     if not len(queue_data):
         return
+    
+    if country == "Kenya" or country == "Rwanda":
+        target = 10
+    elif country == "Uganda":
+        target = 8
 
     if selection == "Daily":
         daily_data = queue_data[
@@ -43,23 +48,32 @@ def create_queue_time_report(
     elif selection == "Weekly":
         weekly_data = queue_data.copy()
         weekly_data["Country"] = country
-        weekly_data["Week Range"] =  queue_data.apply(lambda row: check_date_range(row, "Completed Time"), axis=1)
+        weekly_data["Week Range"] =  queue_data.apply(lambda row: check_date_range(row, "CreateDate"), axis=1)
         weekly_data = weekly_data[weekly_data["Week Range"] != "None"]
 
         country_summary = create_queue_weekly(
             queue_data=weekly_data,
-            index="Country"
+            index="Country",
+            target = target
         )
 
         branch_summary = create_queue_weekly(
             queue_data=weekly_data,
-            index="Branch"
+            index="Branch",
+            target = target
         )
+
+        last_column = branch_summary.columns[3]
+        branch_summary = branch_summary.sort_values(by=last_column, ascending=False)
+
 
         optom_summary = create_queue_weekly(
             queue_data=weekly_data,
-            index=["Branch", "Optom Name"]
+            index=["Branch", "Optom Name"],
+            target = target
         )
+
+        # optom_summary = optom_summary.sort_values(by=last_column, ascending=False)
 
 
         with pd.ExcelWriter(f"{path}queue_time/queue_report.xlsx") as writer:

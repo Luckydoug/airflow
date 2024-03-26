@@ -1,42 +1,23 @@
 import sys
 sys.path.append(".")
-
-#import libraries
-import json
-import psycopg2
 import requests
 from datetime import date,timedelta
 import pandas as pd
-from pandas.io.json._normalize import nested_to_record 
-from sqlalchemy import create_engine
 from airflow.models import Variable
-from pandas.io.json._normalize import nested_to_record 
-from pangres import upsert, DocsExampleTable
-
-from sub_tasks.data.connect import (pg_execute, pg_fetch_all, engine) 
+from pangres import upsert
+from sub_tasks.data.connect import (pg_execute, engine) 
 from sub_tasks.api_login.api_login import(login)
+from sub_tasks.libraries.utils import return_session_id
+from sub_tasks.libraries.utils import FromDate, ToDate
 
-
-# get session id
-SessionId = login()
-
-# FromDate = '2023/10/16'
-# ToDate = '2023/10/16'
-
-today = date.today()
-pastdate = today - timedelta(days=2)
-# pastdate = today
-FromDate = pastdate.strftime('%Y/%m/%d')
-ToDate = date.today().strftime('%Y/%m/%d')
-print(FromDate)
-print(ToDate)
-
-# api details
-pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetItemDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
-pagecount_payload={}
-pagecount_headers = {}
 
 def fetch_sap_items():
+    SessionId = return_session_id(country = "Kenya")
+    #SessionId = login()
+
+    pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetItemDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+    pagecount_payload={}
+    pagecount_headers = {}
 
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     data = pagecount_response.json()
@@ -141,15 +122,12 @@ def fetch_sap_items():
 
     item_before_dup_calc = len(itemsdf)
 
-    # remove duplicates based on the item_code and maintain the last
     itemsdf = itemsdf.drop_duplicates('item_code', keep='last')
 
     item_after_dup_calc = len(itemsdf)
 
     duplicates = item_before_dup_calc - item_after_dup_calc
 
-    # am staging because there are a few duplicated on the
-    # itemsdf.to_sql('source_items', con = engine, schema='mabawa_staging', if_exists = 'append', index=False)
 
     print('INFO! %d duplicates deleted' %(duplicates))
 
@@ -170,10 +148,12 @@ def fetch_sap_items():
 
         print('Update successful')
 
-# fetch_sap_items()
+
 
 def fetch_item_groups():
-    
+    SessionId = return_session_id(country = "Kenya")
+    # SessionId = login()
+
     group_pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetItemgroups&pageNo=1&SessionId={SessionId}"
     group_pagecount_payload={}
     group_pagecount_headers = {}
@@ -210,7 +190,6 @@ def fetch_item_groups():
         if_row_exists='update',
         create_table=False,
         add_new_columns=True)
-# fetch_item_groups()
 
 def create_items_live():
 
@@ -221,20 +200,19 @@ def create_items_live():
     item_qty_orderde_from_vendor, item_purchasing_uom, item_no_ofitems_per_purchase_unit, 
     item_minimum_inventory_level, item_valuation_method, item_prod_date, item_active_to, item_category, 
     item_supplier, item_brand_name, item_model_no, item_sub_group, item_rim_type, item_shape, item_gender,
-      item_size, item_front_colour, item_colour_no, item_material, item_lab, item_lens_category, 
-      item_lens_type, item_lens_type_subcat, item_lens_name, item_lens_material, item_property, 
-      item_coating, item_coating_subcatg, item_lens_mtype, item_cl_lensname, item_cl_tyoe, item_cl_bc, 
-      item_cl_dia, item_front_material, item_temple_material, item_temple_colour, item_lens_color, 
-      item_front_size, item_age, item_bridge, item_temple_length, item_lens_family, item_lens_brand, 
-      item_lens_prog_design, item_lens_sph, item_lens_cyl, item_lens_base, item_lens_add, 
-      item_lens_sph_transpose, item_lens_cyl_transpose, item_lens_eye, item_lens_dia, item_lens_index, 
-      item_photo_brand, item_photo_color, item_lens_coating_group, item_manufacturer, item_stock_item,
-        item_lpo_item, item_overseas_item, item_cl_sell_or_trial, item_cl_frequency, item_cl_curve_type, 
-        item_design, item_cl_family, item_default_warehouse, item_lens_sub_brand, item_collection, 
-        item_front_finish, item_temple_finish, item_group_code
+    item_size, item_front_colour, item_colour_no, item_material, item_lab, item_lens_category, 
+    item_lens_type, item_lens_type_subcat, item_lens_name, item_lens_material, item_property, 
+    item_coating, item_coating_subcatg, item_lens_mtype, item_cl_lensname, item_cl_tyoe, item_cl_bc, 
+    item_cl_dia, item_front_material, item_temple_material, item_temple_colour, item_lens_color, 
+    item_front_size, item_age, item_bridge, item_temple_length, item_lens_family, item_lens_brand, 
+    item_lens_prog_design, item_lens_sph, item_lens_cyl, item_lens_base, item_lens_add, 
+    item_lens_sph_transpose, item_lens_cyl_transpose, item_lens_eye, item_lens_dia, item_lens_index, 
+    item_photo_brand, item_photo_color, item_lens_coating_group, item_manufacturer, item_stock_item,
+    item_lpo_item, item_overseas_item, item_cl_sell_or_trial, item_cl_frequency, item_cl_curve_type, 
+    item_design, item_cl_family, item_default_warehouse, item_lens_sub_brand, item_collection, 
+    item_front_finish, item_temple_finish, item_group_code
     FROM mabawa_dw.v_dim_items;
     """
 
     query = pg_execute(query)
 
-# create_items_live()

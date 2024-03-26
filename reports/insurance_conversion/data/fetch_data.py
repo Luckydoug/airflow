@@ -98,6 +98,7 @@ class FetchData:
         from {self.database}.source_orders_header
         where order_canceled <> 'Y'
         and creation_date::date between '{start_date}' and '{today}'
+        and draft_orderno <> 'nan'
         """
 
         return self.fetch_data(query)
@@ -124,6 +125,7 @@ class FetchData:
     def fetch_no_feedbacks(self, database, start_date) -> pd.DataFrame:
         query = f"""
         select order_number as "Order Number",
+        user_name as "Order Creator",
         create_date as "CreateDate",
         cust_code as "Customer Code",
         branch as "Outlet",

@@ -12,6 +12,9 @@ from reports.conversion.html.html import (conversion_html, branches_html)
 from reports.conversion.smtp.emails import (uganda, kenya, test, rwanda)
 from sub_tasks.libraries.utils import (
     save_file,
+    return_sent_emails,
+    record_sent_branch,
+    create_initial_file,
     get_todate,
     get_todate,
     clean_folder,
@@ -330,6 +333,10 @@ def send_management_report(path, country, selection):
 
 
 def send_branches_report(path, branch_data, selection):
+    create_initial_file(
+        filename=f"{path}conversion/log.txt"
+    )
+
     if selection == "Monthly":
         return
     else:
@@ -342,6 +349,7 @@ def send_branches_report(path, branch_data, selection):
         reg_salesperson_path = f"{path}conversion/registrations/sales_persons.xlsx"
         reg_branch = pd.ExcelFile(reg_branch_path)
         reg_salespersons = pd.ExcelFile(reg_salesperson_path)
+        
 
         #Eye Tests
         eyetest_branch_path = f"{path}conversion/eyetests/branches.xlsx"
@@ -372,20 +380,28 @@ def send_branches_report(path, branch_data, selection):
                 branch_rm = ug_srm_rm_index.loc[branch, "RM Email"]
 
                 """Registrations Parsing, Style and HTML"""
-                branch_reg_report = reg_branch.parse(str(branch), index_col=False)
-                salesperson_reg_report = reg_salespersons.parse(str(branch), index_col=False)
+                branch_reg_report = reg_branch.parse(str(branch), index_col=False).iloc[:, 1:]
+                salesperson_reg_report = reg_salespersons.parse(str(branch), index_col=False).iloc[:, 1:]
+
+                # reg_copy = branch_reg_report.copy()
+                # reg_copy = reg_copy.set_index("Outlet")
+
                 branch_reg_html = style_dataframe(branch_reg_report, ug_styles, properties)
                 salespersons_reg_html = style_dataframe(salesperson_reg_report, ug_styles, properties)
+                
+                # if reg_copy.loc[branch, "Conversion"].split("%").str[0].astype(int) == 100:
+                #     branch_reg_html = "<p style = color: green; >Registration Conversion - 100 %</p>"
+                #     salespersons_reg_html = "<p></p>"
 
-                branch_eyetest_report = eyetest_branch.parse(str(branch), index_col=False)
-                salespersons_eyetests_report = eyetest_salespersons.parse(str(branch), index_col=False)
-                optom_eyetests_report = eyetest_optom.parse(str(branch), index_col=False)
+                branch_eyetest_report = eyetest_branch.parse(str(branch), index_col=False).iloc[:, 1:]
+                salespersons_eyetests_report = eyetest_salespersons.parse(str(branch), index_col=False).iloc[:, 1:]
+                optom_eyetests_report = eyetest_optom.parse(str(branch), index_col=False).iloc[:, 1:]
                 branch_eyetest_html = style_dataframe(branch_eyetest_report, ug_styles, properties)
                 salesperson_eyetest_html = style_dataframe(salespersons_eyetests_report, ug_styles, properties)
                 optom_eyetest_html = style_dataframe(optom_eyetests_report, ug_styles, properties)
 
-                highrx_branch_report = highrx_branch.parse(str(branch), index_col=False)
-                highrx_optom_report = highrx_optom.parse(str(branch), index_col=False)
+                highrx_branch_report = highrx_branch.parse(str(branch), index_col=False).iloc[:, 1:]
+                highrx_optom_report = highrx_optom.parse(str(branch), index_col=False).iloc[:, 1:]
                 highrx_salesper_report = highrx_salesper.parse(str(branch), index_col=False).sort_values(by="%Conversion", ascending=False)
 
 
@@ -394,8 +410,8 @@ def send_branches_report(path, branch_data, selection):
                 highrx_salesper_html = style_dataframe(highrx_salesper_report, ug_styles, properties)
 
 
-                views_branch_report = views_branch.parse(str(branch), index_col=False)
-                salespersons_views_report = views_salespersons.parse(str(branch), index_col=False)
+                views_branch_report = views_branch.parse(str(branch), index_col=False).iloc[:, 1:]
+                salespersons_views_report = views_salespersons.parse(str(branch), index_col=False).iloc[:, 1:]
                 views_branch_html = style_dataframe(views_branch_report, ug_styles, properties)
                 salespersons_views_html = style_dataframe(salespersons_views_report, ug_styles, properties)
 
@@ -418,8 +434,6 @@ def send_branches_report(path, branch_data, selection):
                     salesperson_highrx_html = highrx_salesper_html
                 )
 
-                if branch not in ("COR"):
-                    continue
 
                 if branch == "OHO":
                     receiver_email = [
@@ -433,6 +447,13 @@ def send_branches_report(path, branch_data, selection):
                         branch_rm,
                         "yh.manager@optica.africa",
                         branch_email
+                    ]
+                
+                elif branch in ["ACA", "KAM", "ARE", "OAS"]:
+                    receiver_email = [
+                        "raghav@optica.africa",
+                        branch_rm,
+                        branch_email,
                     ]
 
                 else:
@@ -482,11 +503,19 @@ def send_branches_report(path, branch_data, selection):
                         file_name="ViewRX Non Conversions.xlsx", 
                         path = f"{path}conversion/viewrx/",
                     )
-    
-                context = ssl.create_default_context()
-                with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
-                    server.login(your_email, password)
-                    server.sendmail(your_email, receiver_email, email_message.as_string())
+
+                if branch_email not in return_sent_emails(f"{path}conversion/log.txt"):
+                    context = ssl.create_default_context()
+                    with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
+                        server.login(your_email, password)
+                        server.sendmail(your_email, receiver_email, email_message.as_string())
+
+                        record_sent_branch(
+                            branch_email=branch_email,
+                            filename=f"{path}conversion/log.txt"
+                        )
+                else:
+                    continue
 
 
 

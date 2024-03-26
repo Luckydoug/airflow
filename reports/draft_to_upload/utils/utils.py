@@ -17,10 +17,6 @@ uganda_target = 8
 
 today = datetime.datetime.now().strftime("%Y-%m-%d")
 
-service_key = pygsheets.authorize(service_file=service_file)
-sheet = service_key.open_by_key('1Wn7O54ohdn9z1YineGomEqIGCVw3GrzUSafOpYuIv_k')
-to_drop = pd.DataFrame(sheet[0].get_all_records())
-
 def get_report_frequency():
     today = datetime.date.today()
     
@@ -130,7 +126,7 @@ def plano_submission_multindex(plano_data, index, set_index, columns, month):
         )
 
         submission_branch = submission_branch.reset_index().fillna(0).rename(
-            columns={"count": "Plano Eyetests", "<lambda_0>": "Submitted", "<lambda_1>": "Not Submitted", "sum": "Converted"}
+            columns={"count": "Insurance Eyetests", "<lambda_0>": "Submitted", "<lambda_1>": "Not Submitted", "sum": "Converted"}
         ).set_index(set_index)
 
         return submission_branch
@@ -143,7 +139,7 @@ def plano_submission_multindex(plano_data, index, set_index, columns, month):
         columns=sorted_columns, level = 0).reindex(
             columns=["count", "<lambda_0>", "<lambda_1>", "sum"], level = 1
         ).reset_index().fillna(0).rename(
-            columns={"count": "Plano Eyetests", "<lambda_0>": "Submitted", "<lambda_1>": "Not Submitted", "sum": "Converted"}
+            columns={"count": "Insurance Eyetests", "<lambda_0>": "Submitted", "<lambda_1>": "Not Submitted", "sum": "Converted"}
         ).set_index(set_index)
 
         return submission_branch
@@ -238,8 +234,8 @@ def return_slade(row):
 def get_start_end_dates(selection):
     if selection == "Monthly":
         today = datetime.date.today()
-        if today.month <= 2:
-            target_month = today.month + 10
+        if today.month < 2:
+            target_month = today.month + 11
             target_year = today.year - 1
         else:
             target_month = today.month - 1
@@ -460,5 +456,96 @@ def create_no_views_report(
 
     return no_views[all_columns].sort_values(by = "No Views NoN", ascending=False)
 
+planos_cols = [
+    "Code",
+    "Plano RX",
+    "Customer Code",
+    "Insurance Company",
+    "Opthom Name",
+    "EWC Handover",
+    "Who Viewed RX"
+]
+
+
+def generate_html_and_subject(branch, branch_manager, dataframe_dict, date, styles):
+    html_start_template = f"""
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Document</title>
+        <style>
+            table {{border-collapse: collapse; font-family: Bahnschrift, sans-serif; font-size: 10px;}}
+            th {{text-align: left; font-family: Bahnschrift, sans-serif; padding: 2px;}}
+            body, p, h3, div, span, var {{font-family: Bahnschrift, sans-serif;}}
+            td {{text-align: left; font-family: Bahnschrift, sans-serif; font-size:11px; padding: 4px;}}
+            h4 {{font-size: 14px; font-family: Bahnschrift, sans-serif;}}
+        </style>
+        </head>
+        <body>
+        <b>Hi {branch_manager},</b> <br>
+        <p>Kindly comment on the following.</p>
+    """
+    html_end_template = """
+        </body>
+        </html>
+    """
+    
+    html_content = ""
+    subject_parts = []
+    counter = 1
+    
+    for df_key, df in dataframe_dict.items():
+        branch_data = df[df["Outlet"] == branch]
+        branch_data = branch_data.drop(columns = ["Outlet"])
+
+        if df_key =="Time From Eyetest to Order":
+            branch_data = branch_data[[
+                "visit_id",
+                "customer_code",
+                "order_number",
+                "order_creator",
+                "order_type",
+                "et_completed_time",
+                "order_date",
+                "time_taken",
+            ]].rename(columns = {"time_taken": "time_taken(target = 30mins)"})
+
+        elif df_key == "Non Submitted Insurance Clients":
+            branch_data = branch_data[planos_cols]
+
+        elif df_key == "Insurance Orders With No Feedback":
+            branch_data = branch_data[[
+                "Order Number",
+                "Order Creator",
+                "Insurance Company",
+                "Request Date"
+            ]]
+
+        elif df_key == "Insurance Errors":
+            branch_data = branch_data[[
+                "Order Number",
+                "Order Creator",
+                "Created User",
+                "Remarks"
+            ]]
+        
+        if not branch_data.empty:
+            subject_parts.append(df_key)
+            html_content += f"<b>{counter}. {df_key}</b>"
+            html_content += "<br>"
+            html_content += "<br>"
+            html_content += f"<table>{branch_data.style.hide_index().set_table_styles(styles).to_html(doctype_html=True)}</table>"
+            html_content += "<br>"
+            html_content += "<br>"
+            counter += 1
+    
+    if not subject_parts:
+        return None, None
+    
+    subject = branch + " Response Required - Daily Insurance Checks for " + str(date) + "."
+    # subject = branch + " Response Required - " + ", ".join(subject_parts[:-1]) + " and " + subject_parts[-1] + " for " + str(date)  if len(subject_parts) > 1 else branch + " Response Required - " + subject_parts[0] + " for " + str(date)
+    return html_start_template + html_content + html_end_template, subject
 
 

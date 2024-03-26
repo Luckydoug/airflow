@@ -1,4 +1,5 @@
 from uganda_sub_tasks.postgres.incentives import (
+    refresh_all_activity,
     refresh_lens_silh,
     refresh_insurance_rejections,
     refresh_insurance_feedback_conversion,
@@ -90,6 +91,12 @@ with DAG(
 
     with TaskGroup('incentive_factors') as incentive_factors:
 
+        refresh_all_activity = PythonOperator(
+            task_id='refresh_all_activity',
+            python_callable=refresh_all_activity,
+            provide_context=True
+        )
+
         refresh_lens_silh = PythonOperator(
             task_id='refresh_lens_silh',
             python_callable=refresh_lens_silh,
@@ -132,7 +139,7 @@ with DAG(
             provide_context=True
         )
 
-        refresh_lens_silh >> refresh_insurance_rejections >> refresh_insurance_feedback_conversion >> refresh_sop >> refresh_nps_summary >> refresh_google_reviews_summary >> refresh_sunglass_sales_summary
+        refresh_all_activity >> refresh_lens_silh >> refresh_insurance_rejections >> refresh_insurance_feedback_conversion >> refresh_sop >> refresh_nps_summary >> refresh_google_reviews_summary >> refresh_sunglass_sales_summary
 
     finish = DummyOperator(
         task_id="finish"

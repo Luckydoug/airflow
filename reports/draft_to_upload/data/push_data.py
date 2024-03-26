@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 from airflow.models import variable
 from sub_tasks.libraries.time_diff import calculate_time_difference
 from pangres import upsert
@@ -191,3 +190,5 @@ def push_insurance_efficiency_data(database, engine, orderscreen, all_orders, st
         if_row_exists='update',
         create_table=True
     )
+
+

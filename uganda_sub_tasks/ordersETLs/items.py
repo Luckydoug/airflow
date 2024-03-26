@@ -1,37 +1,19 @@
 import sys
 sys.path.append(".")
-
-#import libraries
-import json
-import psycopg2
 import requests
-from datetime import date
 import pandas as pd
-from pandas.io.json._normalize import nested_to_record 
-from sqlalchemy import create_engine
 from airflow.models import Variable
-from pandas.io.json._normalize import nested_to_record 
-from pangres import upsert, DocsExampleTable
+from pangres import upsert
+from sub_tasks.data.connect_mawingu import engine
+from sub_tasks.libraries.utils import return_session_id
+from sub_tasks.libraries.utils import FromDate, ToDate
 
-from sub_tasks.data.connect_mawingu import (pg_execute, pg_fetch_all, engine)  
-from sub_tasks.api_login.api_login import(login_uganda)
-
-
-# get session id
-SessionId = login_uganda()
-
-FromDate = '2023/01/01'
-# ToDate = '2022/11/30'
-
-# FromDate = date.today().strftime('%Y/%m/%d')
-ToDate = date.today().strftime('%Y/%m/%d')
-
-# api details
-pagecount_url = f"https://10.40.16.9:4300/UGANDA_BI/XSJS/BI_API.xsjs?pageType=GetItemDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
-pagecount_payload={}
-pagecount_headers = {}
 
 def fetch_sap_items():
+    SessionId = return_session_id(country="Uganda")
+    pagecount_url = f"https://10.40.16.9:4300/UGANDA_BI/XSJS/BI_API.xsjs?pageType=GetItemDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+    pagecount_payload={}
+    pagecount_headers = {}
 
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     data = pagecount_response.json()
@@ -169,6 +151,8 @@ def fetch_sap_items():
 
 def fetch_item_groups():
     
+    SessionId = return_session_id(country="Uganda")
+
     group_pagecount_url = f"https://10.40.16.9:4300/UGANDA_BI/XSJS/BI_API.xsjs?pageType=GetItemgroups&pageNo=1&SessionId={SessionId}"
     group_pagecount_payload={}
     group_pagecount_headers = {}
@@ -205,5 +189,5 @@ def fetch_item_groups():
         if_row_exists='update',
         create_table=False,
         add_new_columns=True)
-    
-# fetch_item_groups()
+ 
+# fetch_sap_items()

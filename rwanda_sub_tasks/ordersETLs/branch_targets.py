@@ -1,40 +1,23 @@
 import sys
 sys.path.append(".")
-
-#import libraries
-import json
-import psycopg2
 import requests
-import datetime
 import pandas as pd
-from datetime import date, timedelta
-from pangres import upsert, DocsExampleTable
-from sqlalchemy import create_engine
+from datetime import date
+from pangres import upsert
 from airflow.models import Variable
-from pandas.io.json._normalize import nested_to_record 
+from sub_tasks.data.connect_voler import engine
+from sub_tasks.libraries.utils import return_session_id
 
-
-from sub_tasks.data.connect_voler import (pg_execute, pg_fetch_all, engine, pg_bulk_insert) 
-from sub_tasks.api_login.api_login import(login_rwanda)
-
-
-# get session id
-SessionId = login_rwanda()
-
-# FromDate = '2023/01/01'
-
-today = date.today()
-pastdate = today - timedelta(days=3)
-FromDate = pastdate.strftime('%Y/%m/%d')
+FromDate = '2023-01-01'
 ToDate = date.today().strftime('%Y/%m/%d')
 
-# api details
-pagecount_url = f"https://10.40.16.9:4300/RWANDA_BI/XSJS/BI_API.xsjs?pageType=GetBranchTargetCalculation&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
-
-pagecount_payload={}
-pagecount_headers = {}
-
 def fetch_sap_branch_targets():
+    SessionId = return_session_id(country = "Rwanda")
+
+    pagecount_url = f"https://10.40.16.9:4300/RWANDA_BI/XSJS/BI_API.xsjs?pageType=GetBranchTargetCalculation&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+
+    pagecount_payload={}
+    pagecount_headers = {}
 
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     data = pagecount_response.json()
@@ -54,9 +37,6 @@ def fetch_sap_branch_targets():
         stripped_targets_df = pd.DataFrame.from_dict(stripped_targets)
         targets_df = targets_df.append(stripped_targets_df, ignore_index=True) 
     
-
-    
-    # This will check if there was no fetched data to prevent error
 
     if targets_df.empty:
         print('INFO! Targets dataframe is empty!')
@@ -144,4 +124,4 @@ def fetch_sap_branch_targets():
 
         # itemdetails_df.to_sql('source_targets_details', con = engine, schema='voler_staging', if_exists = 'append', index=False)
 
-fetch_sap_branch_targets()
+# fetch_sap_branch_targets()

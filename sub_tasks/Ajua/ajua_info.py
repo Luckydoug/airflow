@@ -1,6 +1,6 @@
 import sys
 sys.path.append(".")
-
+from airflow.models import variable
 import json
 import psycopg2
 import requests
@@ -11,22 +11,13 @@ from datetime import date,timedelta
 from sub_tasks.api_login.api_login import(login)
 from pangres import upsert
 from sub_tasks.data.connect import (pg_execute, engine) 
-
-SessionId = login()
-
-
-FromDate = '2023/06/01'
-# ToDate = '2023/12/31'
-
-today = date.today()
-# pastdate = today - timedelta(days=1)
-# FromDate = pastdate.strftime('%Y/%m/%d')
-ToDate = date.today().strftime('%Y/%m/%d')
-
-
-
+from sub_tasks.libraries.utils import return_session_id
+from sub_tasks.libraries.utils import FromDate, ToDate
 
 def fetch_ajua_info ():
+    SessionId = return_session_id(country = "Kenya")
+   #SessionId = login()
+
     #get number of pages
     page_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetAjuaInformation&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
     payload = {}
@@ -149,4 +140,4 @@ def update_log_nps():
 
     query = pg_execute(query)
 
-# fetch_ajua_info()
+# fetch_ajua_info ()

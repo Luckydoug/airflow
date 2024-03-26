@@ -1,21 +1,7 @@
 import sys
 sys.path.append(".")
-
-#import libraries
-import json
-import psycopg2
-import requests
-import pygsheets
-import io
-import pandas as pd
-from datetime import date
 from airflow.models import Variable
-from pangres import upsert, DocsExampleTable
-from sqlalchemy import create_engine, text, VARCHAR
-from pandas.io.json._normalize import nested_to_record 
-
-
-from sub_tasks.data.connect import (pg_execute, pg_fetch_all, engine) 
+from sub_tasks.data.connect import pg_execute
 
 
 def refresh_order_contents():

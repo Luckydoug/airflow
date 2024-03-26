@@ -1,42 +1,25 @@
 import sys
 sys.path.append(".")
-
-#import libraries
-import json
-import psycopg2
 import requests
 import pandas as pd
 from airflow.models import Variable
 from datetime import date, timedelta
-from pangres import upsert, fix_psycopg2_bad_cols, DocsExampleTable
-from sqlalchemy import create_engine, text, VARCHAR
+from pangres import upsert
 from pandas.io.json._normalize import nested_to_record 
+from sub_tasks.data.connect import (pg_execute, engine) 
+from sub_tasks.libraries.utils import return_session_id
+from sub_tasks.libraries.utils import FromDate, ToDate
 
-
-from sub_tasks.data.connect import (pg_execute, pg_fetch_all, engine) 
-from sub_tasks.api_login.api_login import(login)
-
-
-SessionId = login()
-
-# FromDate = '2023/08/01'
-# ToDate = '2023/05/13'
-
-today = date.today()
-pastdate = today - timedelta(days=2)
-FromDate = pastdate.strftime('%Y/%m/%d')
-ToDate = date.today().strftime('%Y/%m/%d')
-
-print(FromDate)
-print(ToDate)
-
-# api details
-pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetOrderDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
-pagecount_payload={}
-pagecount_headers = {}
-
+# FromDate = '2024/01/02'
+# ToDate = '2024/01/05'
 
 def fetch_sap_orderscreendetails():
+    SessionId = return_session_id(country = "Kenya")
+
+    pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetOrderDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+    # pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetOrderDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId=64d92d3e-c721-11ee-8000-00505685ba7e"
+    pagecount_payload={}
+    pagecount_headers = {}
 
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     data = pagecount_response.json()
@@ -44,6 +27,7 @@ def fetch_sap_orderscreendetails():
     orderscreendf = pd.DataFrame()
     payload={}
     headers = {}
+    # print(data)
     pages = data['result']['body']['recs']['PagesCount']
     for i in range(1, pages+1):
         page = i
@@ -52,6 +36,7 @@ def fetch_sap_orderscreendetails():
         response = requests.request("GET", url, headers=headers, data=payload, verify=False)
         response = response.json()
         response = nested_to_record(response, sep='_')
+        # print(response)
         response= response['result_body_recs_Results']
         response = pd.DataFrame.from_dict(response)
         response = pd.json_normalize(response['details'])
@@ -289,7 +274,7 @@ def fetch_sap_orderscreendetails():
     
     print('fetch_sap_orderscreendetails')
 
-# fetch_sap_orderscreendetails ()  
+
 
 def update_to_source_orderscreen():
 
@@ -318,7 +303,7 @@ def update_to_source_orderscreen():
     
     print('update_to_source_orderscreen')
 
-update_to_source_orderscreen()
+
 
 def create_source_orderscreen_staging():
 
@@ -396,8 +381,6 @@ def create_fact_orderscreen():
     query = pg_execute(query)
     
     print('create_fact_orderscreen')
-
-
 
 
 

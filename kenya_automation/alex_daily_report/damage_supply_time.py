@@ -35,12 +35,13 @@ from sub_tasks.libraries.utils import get_todate,send_report,assert_date_modifie
 
 # PG Execute(Query)
 from sub_tasks.data.connect import (pg_execute, engine) 
-from sub_tasks.api_login.api_login import(login)
+# from sub_tasks.api_login.api_login import(login)
 conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", password="@Akb@rp@$$w0rtf31n")
 
 
 ##Define the days that is yesterday
 today = datetime.date.today()
+# today = datetime.date(2024,1,25)
 yesterday = today - datetime.timedelta(days=1)
 formatted_date = yesterday.strftime('%Y-%m-%d')
 dateyesterday = pd.to_datetime(yesterday)

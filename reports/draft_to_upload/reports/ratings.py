@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 from airflow.models import variable
-from reports.draft_to_upload.utils.utils import to_drop
 from sub_tasks.libraries.utils import (
     get_yesterday_date, 
     get_rm_srm_total, 
@@ -22,11 +21,9 @@ first_month, second_month = get_comparison_months()
 def create_ratings_report(selection, surveys, branch_data, path):
     if not len(surveys):
         return
-    to_drop["Order Number"] = to_drop["Order Number"].astype(int)
-    surveys["SAP Internal Number"] = surveys["SAP Internal Number"].astype(int)
-    surveys = surveys[~surveys["SAP Internal Number"].isin(to_drop["Order Number"])]
-    all_detractors = surveys[surveys["NPS Rating"] < 7]
 
+    surveys["SAP Internal Number"] = surveys["SAP Internal Number"].astype(int)
+    all_detractors = surveys[surveys["NPS Rating"] < 7]
 
     if selection == "Daily":
         daily_detractors = all_detractors[(all_detractors["Trigger Date"] == get_yesterday_date(truth=True))]
@@ -77,7 +74,23 @@ def create_ratings_report(selection, surveys, branch_data, path):
     if selection == "Monthly":
         monthly_detractors = all_detractors.copy()
         monthly_detractors["Month"] = pd.to_datetime(monthly_detractors["Trigger Date"], dayfirst=True).dt.month_name()
-        monthly_detractors = monthly_detractors[(monthly_detractors["Month"] == first_month) | (monthly_detractors["Month"] == second_month)]
+        monthly_detractors["Trigger Date"] = pd.to_datetime(monthly_detractors["Trigger Date"], dayfirst=True)
+
+        from reports.draft_to_upload.utils.utils import return_report_daterange
+        
+        start_date = return_report_daterange("Monthly")
+
+        monthly_detractors = monthly_detractors[
+            (monthly_detractors["Trigger Date"] >= pd.to_datetime(start_date))
+        ]
+
+        monthly_detractors = monthly_detractors[
+            (monthly_detractors["Month"] == first_month) | 
+            (monthly_detractors["Month"] == second_month)
+        ]
+
+        monthly_detractors["Trigger Date"] = monthly_detractors["Trigger Date"].dt.date
+
         monthly_detractors = pd.merge(
             monthly_detractors,
             branch_data[["Outlet", "RM", "SRM"]].rename(columns={"Outlet": "Branch"}),

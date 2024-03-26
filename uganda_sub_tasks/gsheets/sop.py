@@ -20,7 +20,7 @@ def fetch_sop_branch_info():
     
     gc = pygsheets.authorize(service_file='/home/opticabi/airflow/dags/sub_tasks/gsheets/keys2.json')
     sh = gc.open_by_key('1fn8yaI3-1X6uq4Z_Vydxq3vl3F5jLryp09E6po_TJAI')
-    sh = sh[0]
+    sh = sh[1]
     values = sh.get_all_values()
     sh = pd.DataFrame(values)
     csv_string = sh.to_csv(index=False,header=False)
@@ -43,10 +43,10 @@ def fetch_sop_branch_info():
 def fetch_sop():
     gc = pygsheets.authorize(service_file='/home/opticabi/airflow/dags/sub_tasks/gsheets/keys2.json')
     sh = gc.open_by_key('1fn8yaI3-1X6uq4Z_Vydxq3vl3F5jLryp09E6po_TJAI')
-    df = sh[2]
+    df = sh[0]
     df = pd.DataFrame(df.get_all_records())
 
-    br = sh[0]
+    br = sh[1]
     br = pd.DataFrame(br.get_all_records())
 
     ug = br[br['Country']=='UG']['Branch Name']
@@ -96,7 +96,6 @@ def fetch_sop():
 
     df['sop_date'] = pd.to_datetime(df['sop_date'], dayfirst=True, errors='coerce')
 
-    # print(sh.columns)
     df[cols].to_sql('source_sop', con=engine, schema='mawingu_staging', if_exists = 'append', index=False)
 
 # fetch_sop()

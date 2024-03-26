@@ -5,7 +5,6 @@ from reports.draft_to_upload.utils.utils import today
 class FecthData:
     def __init__(self, engine) -> None:
         self.engine = engine
-        self.schema = "report_views"
 
     def fetch_data(self, query) -> pd.DataFrame:
         with self.engine.connect() as connection:
@@ -19,27 +18,26 @@ class FecthData:
         query = f"""
         select
         qt.visit_id as "Visit ID",
-        qt.create_date as "CreateDate",
-        trim(to_char(qt.create_date::date, 'Month')) as "Month",
-        qt.branch as "Branch",
-        qt.customer_code as "Customer Code",
-        qt.optom as "Optom",
+        qt.et_start::date as "CreateDate",
+        trim(to_char(qt.et_start::date, 'Month')) as "Month",
+        qt.outlet_id as "Branch",
+        qt.cust_id as "Customer Code",
+        qt.optom_id as "Optom",
         qt.optom_name as "Optom Name",
-        qt.added_queue_time as "AddedQueueTime",
-        qt.accepted_time as "Accepted Time",
-        qt.completed_time as "Completed Time",
-        qt.queue_time as "Queue Time",
-        qt.eyetest_time as "Eye Test Time",
+        qt.added_to_queue2 as "AddedQueueTime",
+        qt.eyetest_complete as "Completed Time",
+        qt.queue_time2 as "Queue Time",
+        qt.eye_testtime as "Eye Test Time",
         case when ets.days is not null then 'Yes' else 'No' end as "Converted",
         ets.mode_of_pay as "Customer Type"
-        from {self.schema}.queue_time qt 
+        from {mview}.eyetest_queue_time qt 
         left join {mview}.et_conv as ets
         on qt.visit_id::text = ets.code::text
-        where qt.create_date::date between '{start_date}' and '{today}'
-        and qt.branch <> 'nan'
-        and qt.branch is not null
-        and qt.branch <> 'null'
-        and qt.branch not in ('HOM');
+        where qt.et_start::date between '{start_date}' and '{today}'
+        and qt.outlet_id <> 'nan'
+        and qt.outlet_id is not null
+        and qt.outlet_id <> 'null'
+        and qt.outlet_id not in ('HOM')
         """
 
         queue_data = self.fetch_data(query)

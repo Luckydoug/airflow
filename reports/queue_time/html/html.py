@@ -55,7 +55,7 @@ management_html = """
     <p>
     Dear All,
     Please view the report below for analysis on the average time clients wait before <br>
-    being accepted by an optom for an eye test as well as the average time a check up takes per client.
+    being accepted by an optom for an eye test.
     </p> <br>
     <b>1) Over all Summary</b>
     <table style = "width: 70%;">{country_html}</table> 
@@ -93,7 +93,7 @@ queue_time_weekly = """
 <p><b>Hi {branch_name},</b></p> </br>
 <p>I Hope this email finds you well.</p> </br>
 Below is the overall average time clients have spent on the queue before being accepted by <br>
-the optom for an eye check up as well as the average time taken for a check up to be completed..</p> 
+the optom for an eye check up.</p> 
 <br> <br>
 <b>1) Branch Summary</b> <br>
 <table style = "width: 70%;">{branch_report_html}</table> 
@@ -101,8 +101,6 @@ the optom for an eye check up as well as the average time taken for a check up t
 <b>2) Optom Summary</b>
 <p>
 Below is the average time the optoms have taken to accept clients from the optom queue for a check up during the past 2 weeks.<br>
-<b>NOTE:</b> For optoms with an average queue time of 0 mins, <br>
-kindly check on the attachments to confirm whether they were present in the branch during that specific week.
 </p>
 <table style = "empty-cells: hide !important;">{optom_report_html}</table>
 <br>

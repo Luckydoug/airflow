@@ -23,6 +23,7 @@ from sub_tasks.libraries.utils import (
     fourth_week_end
 )
 from sub_tasks.libraries.styles import (properties, ug_styles)
+from reports.queue_time.smtp.emails import kenya, uganda, rwanda, test
 
 load_dotenv()
 your_email = os.getenv("douglas_email")
@@ -41,9 +42,9 @@ def send_to_management(path,country, selection) -> None:
     
     queue_report = pd.ExcelFile(road)
     if selection == "Weekly":
-        subject = f"{country} {selection} Average Queue and Eye Test Time from {fourth_week_start} to {fourth_week_end}"
+        subject = f"{country} {selection} Average Queue from {fourth_week_start} to {fourth_week_end}"
     elif selection == "Monthly":
-        subject = f"{country} Average Queue and Eye Test Time for {first_month} and  {second_month}."
+        subject = f"{country} Average Queue for {first_month} and  {second_month}."
     else:
         return 
     
@@ -86,7 +87,20 @@ def send_to_management(path,country, selection) -> None:
     else:
         return
     
-    receiver_email = ["tstbranch@gmail.com"]
+    if country == "Kenya":
+        receiver_email = kenya
+
+    elif country == "Uganda":
+        receiver_email = uganda
+
+    elif country == "Rwanda":
+        receiver_email = rwanda
+    
+    elif country == "Test":
+        receiver_email = test
+
+    else:
+        return
     
     email_message = MIMEMultipart("alternative")
     email_message["From"] = your_email
@@ -138,7 +152,6 @@ def send_branches_queue_time(path, branch_data, log_file, selection, country):
         random_branch = random.choice(branch_list)
 
         for branch in branch_list:
-            
             if selection == "Daily":
                 if branch in queues_data["Branch"].to_list():
                     branch_name = data.loc[branch, "Branch"]
@@ -164,11 +177,14 @@ def send_branches_queue_time(path, branch_data, log_file, selection, country):
                     
 
             elif selection == "Weekly":
+                
                 branches_report = report.parse(
                     "Branch Summary",
                     header=[0, 1],
                     index_col=[0]
                 )
+
+                print(branches_report.index.to_list())
 
                 optoms_report = report.parse(
                     "Optom Summary",
@@ -198,6 +214,8 @@ def send_branches_queue_time(path, branch_data, log_file, selection, country):
                     branch_html = branch_report_style.to_html(doctype_html = True)
 
                     # LaTeX formula
+                else:
+                    continue
 
             if not len(branch_export) and selection == "Daily":
                 continue
@@ -239,6 +257,9 @@ def send_branches_queue_time(path, branch_data, log_file, selection, country):
                     branch_email
                 ]
             
+            elif country == "Test":
+                receiver_email = ["tstbranch@gmail.com"]
+            
             else:
                 receiver_email = [rm_email, branch_email] 
     
@@ -250,6 +271,7 @@ def send_branches_queue_time(path, branch_data, log_file, selection, country):
             elif selection == "Monthly":
                 subject = f"{branch_name} Queue Time  Report for {second_month}"
             
+
             email_message = MIMEMultipart("alternative")
             email_message["From"] = your_email
             email_message["To"] = r','.join(receiver_email)
@@ -267,7 +289,6 @@ def send_branches_queue_time(path, branch_data, log_file, selection, country):
                     file_name="Queue Time.xlsx", 
                     path=f"{path}queue_time/",
                 )
-
 
             if branch_email not in return_sent_emails(log_file):
                 context = ssl.create_default_context()

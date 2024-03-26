@@ -55,6 +55,7 @@ def create_mtd_insurance_conversion(
     unique_feedback_rename['Timee'] = unique_feedback_rename['Remarks'].str.extract('\| \d{4}-\d{2}-\d{2} & (\d{4})')[0]
     unique_feedback_rename['Feedback Time'] = pd.to_datetime(unique_feedback_rename['Datee'] + ' ' + unique_feedback_rename['Timee'], format='%Y-%m-%d %H%M')
 
+
     unique_feedback_rename.loc[:, "Full Feedback Date"] = pd.to_datetime(
         unique_feedback_rename["Date"].astype(str) + " " +
         unique_feedback_rename["Time"].astype(str),
@@ -71,6 +72,7 @@ def create_mtd_insurance_conversion(
     unique_request_feedbacks = requests_feedbacks[
         ~requests_feedbacks["Feedback"].isna()
     ].drop_duplicates(subset = "Order Number") 
+
 
     all_orders["Order Create Date"] = pd.to_datetime(all_orders["CreateDate"],dayfirst=True)
     orders_req_feed = pd.merge(
@@ -121,6 +123,7 @@ def create_mtd_insurance_conversion(
         (pivoting_data["Full Feedback Date"].dt.date <= pd.to_datetime(today, format="%Y-%m-%d").date()) 
     ]
 
+
     final = feed_sales.copy()
     final["Dif Order Converted"] = np.nan
     final["Dif Order Converted"] = final.apply(lambda row: check_conversion(row, order_sales), axis=1)
@@ -130,7 +133,7 @@ def create_mtd_insurance_conversion(
     final["Conversion"] = final.apply(lambda row: calculate_conversion(row, data), axis = 1)
 
     final = final.drop_duplicates(subset=["Order Number"])
-    final = final.dropna(subset = ["Insurance Company"])
+    # final = final.dropna(subset = ["Insurance Company"])
     comparison_data = final.copy()
 
     pstart, pend = get_start_end_dates(selection=selection)

@@ -1,17 +1,16 @@
 import sys, os
 sys.path.insert(0,os.path.abspath(os.path.dirname(__file__)))
 from airflow import DAG
-from airflow.contrib.sensors.file_sensor import FileSensor
 from airflow.operators.python_operator import PythonOperator
-from airflow.operators.bash_operator import BashOperator
 from airflow.operators.dummy_operator import DummyOperator
-from airflow.example_dags.subdags.subdag import subdag
 from airflow.utils.task_group import TaskGroup
 from datetime import datetime, timedelta
-from sub_tasks.ordersETLs.overseas import(create_source_orderscreenc1_overseas,
-                                          update_source_orderscreenc1_overseas, 
-                                          transpose_overseas, 
-                                          create_fact_orderscreenc1_overseas)
+from sub_tasks.ordersETLs.overseas import(
+    create_source_orderscreenc1_overseas,
+    update_source_orderscreenc1_overseas, 
+    transpose_overseas, 
+    create_fact_orderscreenc1_overseas
+)
 
 # from tmp.python_test
 DAG_ID = 'Overseas1_ETLs_Pipeline'

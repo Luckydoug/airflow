@@ -1,21 +1,9 @@
 import sys
 sys.path.append(".")
-
-#import libraries
-import json
-import psycopg2
-import requests
 import pygsheets
 import pandas as pd
-from datetime import date
 from airflow.models import Variable
-from pangres import upsert, DocsExampleTable
-from sqlalchemy import create_engine, text, VARCHAR
-from pandas.io.json._normalize import nested_to_record 
-
-
-
-from sub_tasks.data.connect_mawingu import (pg_execute, pg_fetch_all, engine)  
+from sub_tasks.data.connect_mawingu import pg_execute,engine
 
 
 def fetch_hr_staff_codes():
@@ -30,5 +18,3 @@ def fetch_hr_staff_codes():
 
     sh.to_sql('source_hr_staff_codes', con = engine, schema='mawingu_staging', if_exists = 'append', index=False)
 
-
-# fetch_hr_staff_codes()

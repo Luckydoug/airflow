@@ -1,38 +1,22 @@
 import pandas as pd
 from airflow.models import variable
-from sub_tasks.libraries.utils import (
-    path,
-    createe_engine,
-    fourth_week_start,
-    first_week_start,
-    fetch_gsheet_data,
-    target
-)
-
-from reports.draft_to_upload.smtp.smtp import (
-    send_draft_upload_report,
-    clean_folders,
-    send_to_branches
-)
-
-from reports.draft_to_upload.reports.draft import (
-    create_draft_upload_report
-)
-from reports.draft_to_upload.utils.utils import (
-    get_report_frequency,
-    return_report_daterange,
-    get_start_end_dates
-)
-
+from sub_tasks.libraries.utils import path
+from sub_tasks.libraries.utils import createe_engine
+from sub_tasks.libraries.utils import fourth_week_start
+from sub_tasks.libraries.utils import first_week_start
+from sub_tasks.libraries.utils import target
+from sub_tasks.libraries.utils import assert_integrity
+from reports.draft_to_upload.smtp.smtp import send_draft_upload_report
+from reports.draft_to_upload.smtp.smtp import  clean_folders
+from reports.draft_to_upload.smtp.smtp import  send_to_branches
+from reports.draft_to_upload.reports.draft import create_draft_upload_report
+from reports.draft_to_upload.utils.utils import get_start_end_dates
+from reports.draft_to_upload.utils.utils import get_report_frequency
+from reports.draft_to_upload.utils.utils import return_report_daterange
 from reports.draft_to_upload.reports.rejections import create_rejection_report
-from reports.draft_to_upload.reports.plano import (
-    create_plano_report
-)
-
-from reports.draft_to_upload.reports.opening_time import (
-    create_opening_time_report
-)
-
+from reports.draft_to_upload.reports.plano import create_plano_report
+from reports.draft_to_upload.reports.opening_time import create_opening_time_report
+from reports.draft_to_upload.reports.et_to_order import eyetest_order_time
 from reports.insurance_conversion.data.fetch_data import FetchData
 from reports.insurance_conversion.reports.conversion import create_insurance_conversion
 from reports.draft_to_upload.reports.sops import create_ug_sops_report
@@ -40,40 +24,44 @@ from reports.draft_to_upload.reports.ratings import create_ratings_report
 from reports.draft_to_upload.data.push_data import push_insurance_efficiency_data
 from reports.draft_to_upload.reports.no_view_no_conv import create_non_conversions_non_view
 from reports.draft_to_upload.reports.mtd_insurance import create_mtd_insurance_conversion
-from reports.draft_to_upload.data.fetch_data import (
-    fetch_views,
-    fetch_orders,
-    fetch_eyetests,
-    fetch_salesorders,
-    fetch_payments,
-    fetch_orderscreen,
-    fetch_sops_branch_info,
-    fetch_insurance_companies,
-    fetch_planos,
-    fetch_planorderscreen,
-    fetch_registrations,
-    fetch_detractors,
-    fetch_opening_time,
-    fetch_insurance_efficiency,
-    fetch_mtd_efficiency,
-    fetch_daywise_efficiency,
-    fetch_daywise_rejections,
-    fetch_mtd_rejections,
-    fetch_customers,
-    fetch_branch_data,
-    fetch_non_conversion_non_viewed,
-    fetch_working_hours,
-    fetch_no_views_data
-)
+from reports.draft_to_upload.data.fetch_data import fetch_views
+from reports.draft_to_upload.data.fetch_data import fetch_orders
+from reports.draft_to_upload.data.fetch_data import fetch_eyetests
+from reports.draft_to_upload.data.fetch_data import fetch_salesorders
+from reports.draft_to_upload.data.fetch_data import fetch_payments
+from reports.draft_to_upload.data.fetch_data import fetch_orderscreen
+from reports.draft_to_upload.data.fetch_data import fetch_sops_branch_info
+from reports.draft_to_upload.data.fetch_data import fetch_insurance_companies
+from reports.draft_to_upload.data.fetch_data import fetch_planos
+from reports.draft_to_upload.data.fetch_data import fetch_planorderscreen
+from reports.draft_to_upload.data.fetch_data import fetch_registrations
+from reports.draft_to_upload.data.fetch_data import fetch_detractors
+from reports.draft_to_upload.data.fetch_data import fetch_opening_time
+from reports.draft_to_upload.data.fetch_data import fetch_insurance_efficiency
+from reports.draft_to_upload.data.fetch_data import fetch_mtd_efficiency
+from reports.draft_to_upload.data.fetch_data import fetch_daywise_efficiency
+from reports.draft_to_upload.data.fetch_data import fetch_daywise_rejections
+from reports.draft_to_upload.data.fetch_data import fetch_mtd_rejections
+from reports.draft_to_upload.data.fetch_data import fetch_customers
+from reports.draft_to_upload.data.fetch_data import fetch_branch_data
+from reports.draft_to_upload.data.fetch_data import fetch_non_conversion_non_viewed
+from reports.draft_to_upload.data.fetch_data import fetch_working_hours
+from reports.draft_to_upload.data.fetch_data import fetch_no_views_data
+from reports.draft_to_upload.data.fetch_data import fetch_rejections_drop
+from reports.draft_to_upload.data.fetch_data import fetch_eyetest_order
+from reports.draft_to_upload.data.fetch_data import fetch_upload_to_sent_preauth
+from reports.draft_to_upload.reports.upload_to_preauth import uploadToSentPreauth
 
 
 database = "mabawa_staging"
 engine = createe_engine()
 selection = get_report_frequency()
+selection = "Weekly"
 start_date = return_report_daterange(
     selection=selection
 )
 start_date = pd.to_datetime(start_date, format="%Y-%m-%d").date()
+
 
 """
 Assigning variables to fuctions that are fetching data
@@ -178,6 +166,7 @@ def payments():
     return payments
 
 
+
 def planos():
     planos = fetch_planos(
         engine=engine,
@@ -222,8 +211,9 @@ def registrations():
 
 def surveys():
     surveys = fetch_detractors(
-        database=database,
-        engine=engine
+        database="mabawa_mviews",
+        engine=engine,
+        table = "nps_surveys"
     )
 
     return surveys
@@ -244,7 +234,7 @@ if selection == "Daily":
 if selection == "Weekly":
     date = fourth_week_start
 if selection == "Monthly":
-    date = '2023-11-01'
+    date = '2024-01-01'
 
 pstart_date, pend_date = get_start_end_dates(
     selection=selection
@@ -363,9 +353,11 @@ def mtd_rejections():
 
     return mtd_rejections
 
+def rejections_drop():
+    drop = fetch_rejections_drop(engine = engine)
+    return drop
 
 def build_kenya_rejections():
-    to_drop = fetch_gsheet_data()["rejections_drop"]
     create_rejection_report(
         orderscreen=orderscreen(),
         all_orders=all_orders(),
@@ -376,7 +368,7 @@ def build_kenya_rejections():
         sales_orders=sales_orders(),
         mtd_data=mtd_rejections(),
         daywise_data=daywise_rejections(),
-        drop=to_drop
+        drop=rejections_drop()
     )
 
 
@@ -436,23 +428,32 @@ data_fetcher = FetchData(
 )
 
 
-def orderscreen():
+def orderscreenc1():
     orderscreen = data_fetcher.fetch_orderscreen(
         start_date=start_date
     )
 
     return orderscreen
 
+"""
+FETCH INSURANCE COMPANIES
+"""
 
 def insurance_companies():
     insurance_companies = data_fetcher.fetch_insurance_companies()
     return insurance_companies
 
+"""
+FETCH ORDERS DATA
+"""
 
 def orders():
     orders = data_fetcher.fetch_orders()
     return orders
 
+"""
+FETCH SALES ORDERS DATA
+"""
 
 def sales_orders():
     sales_orders = data_fetcher.fetch_sales_orders(
@@ -461,7 +462,9 @@ def sales_orders():
 
     return sales_orders
 
-
+"""
+FETCH NO FEEDBACKS DATA
+"""
 def no_feedbacks():
     no_feedbacks = data_fetcher.fetch_no_feedbacks(
         database="report_views",
@@ -470,6 +473,9 @@ def no_feedbacks():
 
     return no_feedbacks
 
+"""
+BUILD INSURANCE CONVERSION 
+"""
 
 def build_kenya_insurance_conversion() -> None:
     if selection == "Monthly":
@@ -477,7 +483,7 @@ def build_kenya_insurance_conversion() -> None:
     create_insurance_conversion(
         path=path,
         all_orders=orders(),
-        orderscreen=orderscreen(),
+        orderscreen=orderscreenc1(),
         branch_data=branch_data(),
         sales_orders=sales_orders(),
         insurance_companies=insurance_companies(),
@@ -491,6 +497,7 @@ def build_kenya_insurance_conversion() -> None:
 """
 FETCH ORDERSCREEN LOGS
 """
+
 def mtd_orderscreen():
     orderscreen = data_fetcher.fetch_orderscreen(
         start_date=str(pstart_date)
@@ -514,7 +521,9 @@ def build_mtd_insurance_conversion() -> None:
         selection="Monthly"
     )
 
-
+"""
+FETCH NON VIEW NON CONVERSION DATA
+"""
 def no_views_data() -> pd.DataFrame:
     no_views_data = fetch_no_views_data(
         database="mabawa_mviews",
@@ -524,6 +533,9 @@ def no_views_data() -> pd.DataFrame:
 
     return no_views_data
 
+"""
+NON VIEW NON-CONVERSIONS
+"""
 
 def build_kenya_non_view_non_conversions():
     create_non_conversions_non_view(
@@ -536,10 +548,68 @@ def build_kenya_non_view_non_conversions():
 
 
 """
+FETCH EYE TEST ORDER TIME
+"""
+
+def eyetest_order():
+    eyetest_order = fetch_eyetest_order(
+        engine=engine,
+        start_date=start_date
+    )
+
+    return eyetest_order
+
+"""
+BUILD EYE TEST ORDER REPORT
+"""
+def build_eyetest_order() -> None:
+    eyetest_order_time(
+        data=eyetest_order(),
+        path=path,
+        selection=selection
+    )
+
+
+"""
+FETCH TIME FROM UPLOAD ATTACHMENT TO SENT PREAUTH 
+"""
+
+def upload_to_sent_preauth() -> pd.DataFrame:
+    upload_to_sent_preauth = fetch_upload_to_sent_preauth(
+        engine = engine,
+        start_date = start_date,
+        database = "mabawa_mviews"
+    )
+
+    return upload_to_sent_preauth
+
+
+"""
+BUILD TIME FROM UPLOAD ATTACHMENT TO SENT PREAUTH REPORT
+"""
+
+def build_upload_to_sent_preuath() -> None:
+    uploadToSentPreauth(
+        data=upload_to_sent_preauth(),
+        path=path,
+        selection=selection
+
+    )
+
+
+"""
 LOWER LEVEL CODE
 """
 
+"""
+SEND TO THE BRANCHES
+"""
+
 def trigger_kenya_smtp():
+    if not assert_integrity(engine=engine,database="mabawa_staging"):
+        print("We run into an error. Ensure all the tables are updated in data warehouse and try again.")
+        return
+    
     send_draft_upload_report(
         selection=selection,
         path=path,
@@ -547,8 +617,14 @@ def trigger_kenya_smtp():
         target=target
     )
 
-
+"""
+SEND TO THE MANAGEMENT
+"""
 def trigger_kenya_branches_smtp():
+    if not assert_integrity(engine=engine,database="mabawa_staging"):
+        print("We run into an error. Ensure all the tables are updated in data warehouse and try again.")
+        return
+
     send_to_branches(
         branch_data=branch_data(),
         selection=selection,
@@ -569,4 +645,3 @@ IT SHOULD BE UNIQUE THOUGH
 SIGNED BY
 DOUGLAS KATHURIMA
 """
-

@@ -40,7 +40,7 @@ from sub_tasks.libraries.utils import (get_rm_srm_total, get_rm_srm_total_multii
 arrange_dateranges,get_todate,fourth_week_start,fourth_week_end)
 
 conn = psycopg2.connect(host="10.40.16.19",database="mawingu", user="postgres", password="@Akb@rp@$$w0rtf31n")
-SessionId = login_uganda()
+
 
 def google_reviews_automation():
     googlereviews = """
@@ -210,7 +210,7 @@ def google_reviews_automation():
     to_date = get_todate()
     sender_email = os.getenv("wairimu_email")
     # receiver_email = ['wairimu@optica.africa','douglas.kathurima@optica.africa']
-    receiver_email = ['wairimu@optica.africa','yuri@optica.africa','raghav@optica.africa','douglas.kathurima@optica.africa']
+    receiver_email = ['wairimu@optica.africa','yuri@optica.africa','raghav@optica.africa','douglas.kathurima@optica.africa','larry.larsen@optica.africa']
     email_message = MIMEMultipart()
     email_message["From"] = sender_email
     email_message["To"] = r','.join(receiver_email)
@@ -230,7 +230,6 @@ def google_reviews_automation():
     smtp_server.sendmail(sender_email, receiver_email, text)
     smtp_server.quit()
 if __name__ == '__main__':
-
     google_reviews_automation()    
 
         

@@ -50,7 +50,6 @@ def fetch_orders(database, engine, start_date='2023-01-01'):
 
 
 def fetch_views(database, engine, start_date='2023-01-01'):
-    print(start_date, today)
     views_query = f"""
     SELECT visit_id::text  as "Code", create_date::date as "Create Date", 
     case
@@ -116,7 +115,7 @@ def fetch_eyetests(database, engine, start_date='2023-01-01'):
 def fetch_salesorders(database, engine, start_date='2023-01-01'):
     sales_orders_query = f"""
     select draft_orderno::int as "Order Number" from {database}.source_orders_header
-    where posting_date::date between '{start_date}' and '{today}'
+    where creation_date::date between '{start_date}' and '{today}'
     """
     sales_orders = pd.read_sql_query(sales_orders_query, con=engine)
     return sales_orders
@@ -199,7 +198,7 @@ def fetch_planos(database, engine, schema, users, customers, table, views, start
                 FROM
                     {views}.{table}
                 WHERE
-                    status NOT IN ('Cancel', 'Unstable', 'Hold', 'CanceledEyeTest')
+                    status NOT IN ('Cancel', 'Unstable', 'Hold', 'CanceledEyeTest', 'Unconfirm')
                     AND (patient_to_ophth NOT IN ('Yes') OR patient_to_ophth IS NULL)
             ) AS a
             LEFT JOIN {schema}.{users} b ON a.optom::text = b.se_optom::text
@@ -207,7 +206,7 @@ def fetch_planos(database, engine, schema, users, customers, table, views, start
             LEFT JOIN {database}.source_insurance_company AS insurance ON customers.cust_insurance_company::text = insurance.insurance_code::text
         WHERE
             a.r = 1
-            AND a.plano_rx = 'Y'
+            --AND a.plano_rx = 'Y'
             AND a.create_date::date >= %s
             AND a.create_date::date <= %s
             AND a.cust_code <> '10026902'
@@ -255,21 +254,24 @@ def fetch_planorderscreen(database, engine, start_date='2023-01-01'):
         LEFT JOIN {database}.source_orderscreen AS orders ON orderscreen.doc_entry = orders.doc_entry
     WHERE 
         odsc_date::date BETWEEN '{start_date}' AND '{today}'
-        AND (orderscreen.odsc_status = 'Resent Pre-Auth to Insurance Company' 
-        OR orderscreen.odsc_status = 'Sent Pre-Auth to Insurance Company')
+        AND orderscreen.odsc_status in 
+        ('Resent Pre-Auth to Insurance Company',
+        'Sent Pre-Auth to Insurance Company', 'Upload Attachment')
     """
 
     plano_orderscreen = pd.read_sql_query(plano_orderscreen_query, con=engine)
     return plano_orderscreen
 
 
-def fetch_detractors(database, engine, start_date='2023-01-01'):
+def fetch_detractors(database, engine, table, start_date='2023-01-01'):
     detractors_query = f"""
     select sap_internal_number as "SAP Internal Number", branch as "Branch",
     trigger_date::date as "Trigger Date", nps_rating::int as "NPS Rating", long_feedback as "Long Remarks"
-    from {database}.source_ajua_info
+    from {database}.{table}
     where trigger_date::date between '{start_date}' and '{today}'
-    and ajua_response != '0'
+    and response = 'Yes'
+    and drop = 'No'
+    and nps_rating::int < 7
     """
     surveys = pd.read_sql_query(detractors_query, con=engine)
     return surveys
@@ -486,7 +488,9 @@ def fetch_branch_data(engine, database):
     srm_email as "SRM Email",
     branch_manager as "Branch Manager",
     front_desk as "Front Desk",
-    zone as "Zone"
+    zone as "Zone",
+    retail_analyst as "Retail Analyst",
+    analyst_email as "Analyst Email"
     from {database}.branch_data bd 
     """
 
@@ -579,7 +583,7 @@ def fetch_eyetest_order(engine, start_date):
     FROM (
         SELECT
             ROW_NUMBER() OVER (
-                PARTITION BY so.doc_entry, so.ods_createdon::DATE + LPAD(so.ods_createdat::TEXT, 4, '0')::TIME
+                PARTITION BY so.cust_code, so.ods_createdon::DATE
                 ORDER BY so.ods_createdon::DATE + LPAD(so.ods_createdat::TEXT, 4, '0')::TIME ASC
             ) AS r,
             qt.visit_id,
@@ -649,3 +653,32 @@ def fetch_submitted_insurance(engine, start_date):
 
     data = pd.read_sql_query(query, con=engine)
     return data
+
+
+def fetch_rejections_drop(engine):
+    query = f"""
+    SELECT order_no as "Order Number" 
+    FROM mabawa_staging.source_drop_insurance_errors sdie 
+    where order_no <> 'nan' 
+    """
+
+    data = pd.read_sql_query(query, con=engine)
+    return data
+
+
+def fetch_upload_to_sent_preauth(engine, start_date, database):
+    query = f"""
+    select doc_no as "Order Number",sent_branch_code as "Outlet",
+    ods_creator_name as "Creator",
+    upload_resent_tm as "Upload Time",sent_preauth_tm as "Sent-Preuath Time", 
+    upldorrsnt_to_sntprthorrjctd as "Time Taken (Target = 5)"
+    from {database}.insurance_efficiency_before_feedback 
+    where sent_preauth_tm::date between '{start_date}' and '{today}'
+    and sent_preauth <> 'Rejected by Optica Insurance'
+    and sent_branch_name <> 'Insurance Desk'
+    and upldorrsnt_to_sntprthorrjctd > 5
+    """
+
+    data = pd.read_sql_query(query, con=engine)
+    return data
+

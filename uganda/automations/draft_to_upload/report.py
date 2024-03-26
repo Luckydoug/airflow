@@ -3,6 +3,7 @@ from airflow.models import variable
 from reports.draft_to_upload.utils.utils import uganda_target
 from sub_tasks.libraries.utils import (
     uganda_path,
+    assert_integrity,
     create_unganda_engine,
     createe_engine,
     fourth_week_start,
@@ -15,20 +16,17 @@ from reports.draft_to_upload.smtp.smtp import (
     clean_folders
 )
 
-from reports.draft_to_upload.reports.draft import (
-    create_draft_upload_report
-)
-from reports.draft_to_upload.reports.opening_time import (
-    create_opening_time_report
-)
-from reports.draft_to_upload.utils.utils import get_report_frequency, return_report_daterange, get_start_end_dates
+from reports.draft_to_upload.reports.draft import create_draft_upload_report
+from reports.draft_to_upload.reports.opening_time import create_opening_time_report
+from reports.draft_to_upload.utils.utils import get_report_frequency
+from reports.draft_to_upload.utils.utils import return_report_daterange
+from reports.draft_to_upload.utils.utils import get_start_end_dates
 from reports.draft_to_upload.data.push_data import push_insurance_efficiency_data
 from reports.draft_to_upload.reports.rejections import create_rejection_report
 from reports.draft_to_upload.reports.ratings import create_ratings_report
-from reports.draft_to_upload.reports.plano import (
-    create_plano_report
-)
+from reports.draft_to_upload.reports.plano import create_plano_report
 from reports.insurance_conversion.reports.conversion import create_insurance_conversion
+from reports.draft_to_upload.reports.no_view_no_conv import create_non_conversions_non_view
 from reports.insurance_conversion.data.fetch_data import FetchData
 from reports.draft_to_upload.reports.sops import create_ug_sops_report
 from reports.draft_to_upload.data.fetch_data import (
@@ -52,7 +50,9 @@ from reports.draft_to_upload.data.fetch_data import (
     fetch_mtd_rejections,
     fetch_branch_data,
     fetch_working_hours,
-    fetch_detractors
+    fetch_detractors,
+    fetch_no_views_data,
+    fetch_non_conversion_non_viewed
 )
 
 database = "mawingu_staging"
@@ -62,6 +62,7 @@ selection = get_report_frequency()
 start_date = return_report_daterange(
     selection=selection
 )
+
 
 start_date = pd.to_datetime(start_date, format="%Y-%m-%d").date()
 
@@ -192,7 +193,7 @@ if selection == "Daily":
 if selection == "Weekly":
     date = fourth_week_start
 if selection == "Monthly":
-    date = '2023-11-01'
+    date = '2024-02-01' 
 
 
 def opening_data() -> pd.DataFrame:
@@ -203,6 +204,15 @@ def opening_data() -> pd.DataFrame:
     )
 
     return opening_data
+
+def no_view_non_conversions():
+    no_view_non_conversions = fetch_non_conversion_non_viewed(
+        database="mawingu_mviews",
+        engine=engine,
+        start_date=start_date
+    )
+
+    return no_view_non_conversions
 
 
 def build_uganda_opening_time() -> None:
@@ -220,6 +230,7 @@ def working_hours() -> pd.DataFrame:
 
 def push_uganda_efficiency_data() -> None:
     date = return_report_daterange(selection="Daily")
+    date = "2024-03-15"
     date = pd.to_datetime(date, format="%Y-%m-%d").date()
     push_insurance_efficiency_data(
         engine=engine,
@@ -346,8 +357,9 @@ def build_ug_sops() -> None:
 
 def surveys():
     surveys = fetch_detractors(
-        database=database,
-        engine=engine
+        database="mawingu_mviews",
+        engine=engine,
+        table="nps_surveys"
     )
 
     return surveys
@@ -426,11 +438,32 @@ def build_uganda_insurance_conversion() -> None:
     )
 
 
+def no_views_data() -> pd.DataFrame:
+    no_views_data = fetch_no_views_data(
+        database="mawingu_mviews",
+        engine=engine,
+        start_date=start_date
+    )
+
+    return no_views_data
+
+
+def build_uganda_non_view_non_conversions():
+    create_non_conversions_non_view(
+        path=uganda_path,
+        data=no_view_non_conversions(),
+        selection=selection,
+        start_date=fourth_week_start,
+        no_views_data=no_views_data()
+    )
+
+
+
 def trigger_uganda_smtp() -> None:
-    # This is the function to trigger SMTP.
-    # The Country argument is the name of the country the report is for.
-    # If wanted to send for Rwanda then you would pass Rwanda as the argument for country parameter.
-    # To Test this report. please pass Test as the argument.
+    if not assert_integrity(engine=engine,database="mawingu_staging"):
+        print("We run into an error. Ensure all the tables are updated in data warehouse and try again.")
+        return
+    
     send_draft_upload_report(
         selection=selection,
         path=uganda_path,
@@ -439,7 +472,10 @@ def trigger_uganda_smtp() -> None:
     )
 
 
-def trigger_uganda_branches_smtp() -> pd.DataFrame:
+def trigger_uganda_branches_smtp() -> None:
+    if not assert_integrity(engine=engine,database="mawingu_staging"):
+        print("We run into an error. Ensure all the tables are updated in data warehouse and try again.")
+        return
     send_to_branches(
         branch_data=branch_data(),
         selection=selection,
@@ -449,5 +485,5 @@ def trigger_uganda_branches_smtp() -> pd.DataFrame:
     )
 
 
-def clean_uganda_folder() -> pd.DataFrame:
+def clean_uganda_folder() -> None:
     clean_folders(path=uganda_path)

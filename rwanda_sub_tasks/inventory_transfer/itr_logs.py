@@ -22,26 +22,24 @@ from pandas.io.json._normalize import nested_to_record
 
 from sub_tasks.data.connect_voler import (pg_execute, pg_fetch_all, engine)  
 from sub_tasks.api_login.api_login import(login_rwanda)
-
-SessionId = login_rwanda()
+from sub_tasks.libraries.utils import return_session_id
 
 # FromDate = '2023/05/01'
 # ToDate = '2023/11/30'
-
 
 today = date.today()
 pastdate = today - timedelta(days=5)
 FromDate = pastdate.strftime('%Y/%m/%d')
 ToDate = date.today().strftime('%Y/%m/%d')
-print(FromDate)
-print(ToDate)
 
-# api details
-pagecount_url = f"https://10.40.16.9:4300/RWANDA_BI/XSJS/BI_API.xsjs?pageType=GetITRLOGDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
-pagecount_payload={}
-pagecount_headers = {}
 
 def fetch_sap_itr_logs ():
+    SessionId = return_session_id(country = "Rwanda")
+    #SessionId = login_rwanda()
+
+    pagecount_url = f"https://10.40.16.9:4300/RWANDA_BI/XSJS/BI_API.xsjs?pageType=GetITRLOGDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+    pagecount_payload={}
+    pagecount_headers = {}
 
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     data = pagecount_response.json()

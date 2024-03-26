@@ -1,50 +1,31 @@
 import sys
-
-from numpy import nan
 sys.path.append(".")
-
-#import libraries
-from io import StringIO
-import json
 import psycopg2
 import requests
 import pandas as pd
-from pandas.io.json._normalize import nested_to_record 
-from sqlalchemy import create_engine
 from airflow.models import Variable
-from pandas.io.json._normalize import nested_to_record 
-from pangres import upsert, DocsExampleTable
-from sqlalchemy import create_engine, text, VARCHAR
-from datetime import date, timedelta
+from pangres import upsert
 import datetime
-import pytz
 import businesstimedelta
 import pandas as pd
 import holidays as pyholidays
 from workalendar.africa import Kenya
 from sub_tasks.data.connect import (pg_execute, engine) 
-from sub_tasks.api_login.api_login import(login)
 conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", password="@Akb@rp@$$w0rtf31n")
+from sub_tasks.libraries.utils import return_session_id
+from sub_tasks.libraries.utils import FromDate, ToDate
 
-SessionId = login()
+# FromDate = '2024/02/05'
+# ToDate = '2024/02/05'
 
-
-# FromDate = '2023/10/20'
-# ToDate = '2023/10/20'
-
-today = date.today()
-pastdate = today - timedelta(days=1)
-FromDate = pastdate.strftime('%Y/%m/%d')
-ToDate = date.today().strftime('%Y/%m/%d')
-
-
-# api details
-#orderscreen_url = 'https://41.72.211.10:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetOrderDetails&pageNo=1'
-pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetOrderDetailsC1&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
-pagecount_payload={}
-pagecount_headers = {}
 
 def fetch_sap_orderscreendetailsc1 ():
+    
+    # SessionId = login()
+    SessionId = return_session_id(country = "Kenya")
+    pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetOrderDetailsC1&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+    pagecount_payload={}
+    pagecount_headers = {}
     
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     data = pagecount_response.json()
@@ -460,10 +441,7 @@ def transpose_orderscreenc1():
         odsc_datetime, odsc_status, odsc_new_status, 
         odsc_doc_no, odsc_createdby, odsc_usr_dept, is_dropped
     FROM mabawa_staging.source_orderscreenc1_staging4
-    where odsc_date::date >= '2022-11-01'
-    --where odsc_date::date >= '2022-08-01'
-    --and odsc_date::date <= '2022-08-31'
-    --where doc_entry in (753311,753319,778703,781266,781280)
+    where odsc_date::date >= '2024-01-01'
     """, con=engine)
 
     print('df created')
@@ -549,23 +527,20 @@ def create_fact_orderscreenc1_new():
 
     print("Converted Dates")
 
+    # All departments working hours 
     workday = businesstimedelta.WorkDayRule(
         start_time=datetime.time(9),
-        end_time=datetime.time(18),
+        end_time=datetime.time(19),
         working_days=[0,1, 2, 3, 4])
 
     saturday = businesstimedelta.WorkDayRule(
         start_time=datetime.time(9),
-        end_time=datetime.time(16),
-        working_days=[5])
-    
+        end_time=datetime.time(18),
+        working_days=[5])    
     vic_holidays = pyholidays.KE()
     holidays = businesstimedelta.HolidayRule(vic_holidays)
     cal = Kenya()
-    #hl = cal.holidays(2021)
     hl = data.values.tolist()
-    # hl.remove((datetime.date(2023, 12, 31), 'New Years Eve'),(datetime.date(2022, 12, 31), 'New Years Eve'))
-    #print(hl)
     my_dict=dict(hl)
     vic_holidays=vic_holidays.append(my_dict)
 
@@ -576,15 +551,58 @@ def create_fact_orderscreenc1_new():
             return float(businesshrs.difference(start,end).hours)*float(60)+float(businesshrs.difference(start,end).seconds)/float(60)
         else:
             return ""
+
+    # Designer store 
+    workday1 = businesstimedelta.WorkDayRule(
+        start_time=datetime.time(9),
+        end_time=datetime.time(18),
+        working_days=[0,1, 2, 3, 4])
+
+    saturday1 = businesstimedelta.WorkDayRule(
+        start_time=datetime.time(9),
+        end_time=datetime.time(16),
+        working_days=[5])    
+    vic_holidays = pyholidays.KE()
+    holidays = businesstimedelta.HolidayRule(vic_holidays)
+    cal = Kenya()
+    hl = data.values.tolist()
+    my_dict=dict(hl)
+    vic_holidays=vic_holidays.append(my_dict)
+
+    businesshrs1 = businesstimedelta.Rules([workday1, saturday1, holidays])
+
+    def BusHrs1(start, end):
+        if end>=start:
+            return float(businesshrs1.difference(start,end).hours)*float(60)+float(businesshrs1.difference(start,end).seconds)/float(60)
+        else:
+            return ""
     
-    # main and designer store
-    df['so_op_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Order Printed"]), axis=1)
-    df['op_sl_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["odsc_datetime_Frame Sent to Lens Store"]), axis=1)
-    df['op_sc_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["odsc_datetime_Sent to Control Room"]), axis=1)
-    df['op_ov_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["odsc_datetime_Frame Sent to Overseas Desk"]), axis=1)
-    df['so_sl_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Frame Sent to Lens Store"]), axis=1)
-    df['so_sc_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Sent to Control Room"]), axis=1)
-    df['so_ov_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Frame Sent to Overseas Desk"]), axis=1)
+    filtercolumns = ["odsc_createdby_Order Printed","odsc_createdby_Frame Sent to Lens Store","odsc_createdby_Frame Sent to Overseas Desk",
+                     "odsc_createdby_Sent to Control Room"]
+
+    mainstoredf = df[df[filtercolumns].apply(lambda x: x.isin(['main1', 'main2', 'main3']).any(), axis=1)]
+    designerdf = df[df[filtercolumns].apply(lambda x: x.isin(['designer1', 'designer2', 'designer3']).any(), axis=1)]
+
+    #designer store    
+    designerdf['so_op_diff']=designerdf.apply(lambda row: BusHrs1(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Order Printed"]), axis=1)
+    designerdf['op_sl_diff']=designerdf.apply(lambda row: BusHrs1(row["odsc_datetime_Order Printed"], row["odsc_datetime_Frame Sent to Lens Store"]), axis=1)
+    designerdf['op_sc_diff']=designerdf.apply(lambda row: BusHrs1(row["odsc_datetime_Order Printed"], row["odsc_datetime_Sent to Control Room"]), axis=1)
+    designerdf['op_ov_diff']=designerdf.apply(lambda row: BusHrs1(row["odsc_datetime_Order Printed"], row["odsc_datetime_Frame Sent to Overseas Desk"]), axis=1)
+    designerdf['so_sl_diff']=designerdf.apply(lambda row: BusHrs1(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Frame Sent to Lens Store"]), axis=1)
+    designerdf['so_sc_diff']=designerdf.apply(lambda row: BusHrs1(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Sent to Control Room"]), axis=1)
+    designerdf['so_ov_diff']=designerdf.apply(lambda row: BusHrs1(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Frame Sent to Overseas Desk"]), axis=1)
+
+
+    #mainstore
+    mainstoredf['so_op_diff']=mainstoredf.apply(lambda row: BusHrs(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Order Printed"]), axis=1)
+    mainstoredf['op_sl_diff']=mainstoredf.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["odsc_datetime_Frame Sent to Lens Store"]), axis=1)
+    mainstoredf['op_sc_diff']=mainstoredf.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["odsc_datetime_Sent to Control Room"]), axis=1)
+    mainstoredf['op_ov_diff']=mainstoredf.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["odsc_datetime_Frame Sent to Overseas Desk"]), axis=1)
+    mainstoredf['so_sl_diff']=mainstoredf.apply(lambda row: BusHrs(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Frame Sent to Lens Store"]), axis=1)
+    mainstoredf['so_sc_diff']=mainstoredf.apply(lambda row: BusHrs(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Sent to Control Room"]), axis=1)
+    mainstoredf['so_ov_diff']=mainstoredf.apply(lambda row: BusHrs(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Frame Sent to Overseas Desk"]), axis=1)
+    maindesigner = pd.concat([mainstoredf,designerdf])
+    maindesigner = maindesigner[['doc_entry','so_op_diff','op_sl_diff','op_sc_diff','op_ov_diff','so_sl_diff','so_sc_diff','so_ov_diff']]
 
     print("Completed Main & Designer Store Working Hours")
 
@@ -645,6 +663,14 @@ def create_fact_orderscreenc1_new():
     df['sp_gbstb_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Sent to Packaging"], row["odsc_datetime_Branch Glazing Sent to Branch"]), axis=1)
 
     print("Calculated All Working Hours")
+
+    df = pd.merge(df,maindesigner,on ='doc_entry',how = 'left')
+
+    print("Data Merged")  
+    print(df['doc_entry'].duplicated().sum())  
+    df = df.drop_duplicates(subset=['doc_entry'],keep = 'first')
+    print('Existing Duplicates Dropped ')
+
 
     #main and designer stored
     df['so_op_diff'] = pd.to_numeric(df['so_op_diff'])
@@ -858,22 +884,47 @@ def create_fact_orderscreenc1_staging():
     df["odsc_datetime_Branch Glazing Sent to Branch"] = pd.to_datetime(df["odsc_datetime_Branch Glazing Sent to Branch"])
     df["odsc_datetime_Sent to Branch"] = pd.to_datetime(df["odsc_datetime_Sent to Branch"])
 
-    workday = businesstimedelta.WorkDayRule(
+
+    # Designer store 
+    workday1 = businesstimedelta.WorkDayRule(
         start_time=datetime.time(9),
         end_time=datetime.time(18),
         working_days=[0,1, 2, 3, 4])
 
-    saturday = businesstimedelta.WorkDayRule(
+    saturday1 = businesstimedelta.WorkDayRule(
         start_time=datetime.time(9),
-        end_time=datetime.time(17),
-        working_days=[5])
-    
+        end_time=datetime.time(16),
+        working_days=[5]) 
+       
     vic_holidays = pyholidays.KE()
     holidays = businesstimedelta.HolidayRule(vic_holidays)
     cal = Kenya()
-    #hl = cal.holidays(2021)
     hl = data.values.tolist()
-    #print(hl)
+    my_dict=dict(hl)
+    vic_holidays=vic_holidays.append(my_dict)
+
+    businesshrs1 = businesstimedelta.Rules([workday1, saturday1, holidays])
+
+    def BusHrs1(start, end):
+        if end>=start:
+            return float(businesshrs1.difference(start,end).hours)*float(60)+float(businesshrs1.difference(start,end).seconds)/float(60)
+        else:
+            return ""
+        
+    # All departments working hours 
+    workday = businesstimedelta.WorkDayRule(
+        start_time=datetime.time(9),
+        end_time=datetime.time(19),
+        working_days=[0,1, 2, 3, 4])
+
+    saturday = businesstimedelta.WorkDayRule(
+        start_time=datetime.time(9),
+        end_time=datetime.time(18),
+        working_days=[5])    
+    vic_holidays = pyholidays.KE()
+    holidays = businesstimedelta.HolidayRule(vic_holidays)
+    cal = Kenya()
+    hl = data.values.tolist()
     my_dict=dict(hl)
     vic_holidays=vic_holidays.append(my_dict)
 
@@ -884,15 +935,35 @@ def create_fact_orderscreenc1_staging():
             return float(businesshrs.difference(start,end).hours)*float(60)+float(businesshrs.difference(start,end).seconds)/float(60)
         else:
             return ""
+
     
-    # main and designer store
-    df['so_op_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Order Printed"]), axis=1)
-    df['op_sl_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["odsc_datetime_Frame Sent to Lens Store"]), axis=1)
-    df['op_sc_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["odsc_datetime_Sent to Control Room"]), axis=1)
-    df['op_ov_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["odsc_datetime_Frame Sent to Overseas Desk"]), axis=1)
-    df['so_sl_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Frame Sent to Lens Store"]), axis=1)
-    df['so_sc_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Sent to Control Room"]), axis=1)
-    df['so_ov_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Frame Sent to Overseas Desk"]), axis=1)
+    filtercolumns = ["odsc_createdby_Order Printed","odsc_createdby_Frame Sent to Lens Store","odsc_createdby_Frame Sent to Overseas Desk",
+                     "odsc_createdby_Sent to Control Room"]
+
+    mainstoredf = df[df[filtercolumns].apply(lambda x: x.isin(['main1', 'main2', 'main3']).any(), axis=1)]
+    designerdf = df[df[filtercolumns].apply(lambda x: x.isin(['designer1', 'designer2', 'designer3']).any(), axis=1)]
+
+
+    #designer store    
+    designerdf['so_op_diff']=designerdf.apply(lambda row: BusHrs1(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Order Printed"]), axis=1)
+    designerdf['op_sl_diff']=designerdf.apply(lambda row: BusHrs1(row["odsc_datetime_Order Printed"], row["odsc_datetime_Frame Sent to Lens Store"]), axis=1)
+    designerdf['op_sc_diff']=designerdf.apply(lambda row: BusHrs1(row["odsc_datetime_Order Printed"], row["odsc_datetime_Sent to Control Room"]), axis=1)
+    designerdf['op_ov_diff']=designerdf.apply(lambda row: BusHrs1(row["odsc_datetime_Order Printed"], row["odsc_datetime_Frame Sent to Overseas Desk"]), axis=1)
+    designerdf['so_sl_diff']=designerdf.apply(lambda row: BusHrs1(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Frame Sent to Lens Store"]), axis=1)
+    designerdf['so_sc_diff']=designerdf.apply(lambda row: BusHrs1(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Sent to Control Room"]), axis=1)
+    designerdf['so_ov_diff']=designerdf.apply(lambda row: BusHrs1(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Frame Sent to Overseas Desk"]), axis=1)
+
+
+    #mainstore
+    mainstoredf['so_op_diff']=mainstoredf.apply(lambda row: BusHrs(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Order Printed"]), axis=1)
+    mainstoredf['op_sl_diff']=mainstoredf.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["odsc_datetime_Frame Sent to Lens Store"]), axis=1)
+    mainstoredf['op_sc_diff']=mainstoredf.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["odsc_datetime_Sent to Control Room"]), axis=1)
+    mainstoredf['op_ov_diff']=mainstoredf.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["odsc_datetime_Frame Sent to Overseas Desk"]), axis=1)
+    mainstoredf['so_sl_diff']=mainstoredf.apply(lambda row: BusHrs(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Frame Sent to Lens Store"]), axis=1)
+    mainstoredf['so_sc_diff']=mainstoredf.apply(lambda row: BusHrs(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Sent to Control Room"]), axis=1)
+    mainstoredf['so_ov_diff']=mainstoredf.apply(lambda row: BusHrs(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Frame Sent to Overseas Desk"]), axis=1)
+    maindesigner = pd.concat([mainstoredf,designerdf])
+    maindesigner = maindesigner[['doc_entry','so_op_diff','op_sl_diff','op_sc_diff','op_ov_diff','so_sl_diff','so_sc_diff','so_ov_diff']]
 
     #len store
     df['sl_sc_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Frame Sent to Lens Store"], row["odsc_datetime_Sent to Control Room"]), axis=1)
@@ -939,6 +1010,7 @@ def create_fact_orderscreenc1_staging():
     df['sp_stb_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Sent to Packaging"], row["odsc_datetime_Sent to Branch"]), axis=1)
     df['sp_gbstb_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Sent to Packaging"], row["odsc_datetime_Branch Glazing Sent to Branch"]), axis=1)
 
+    df = pd.merge(df,maindesigner,on ='doc_entry',how = 'left')
 
     #main and designer stored
     df['so_op_diff'] = pd.to_numeric(df['so_op_diff'])
@@ -1034,22 +1106,45 @@ def create_fact_orderscreenc1():
 
     print("Converted Dates")
 
-    workday = businesstimedelta.WorkDayRule(
+    # Designer store 
+    workday1 = businesstimedelta.WorkDayRule(
         start_time=datetime.time(9),
         end_time=datetime.time(18),
         working_days=[0,1, 2, 3, 4])
 
-    saturday = businesstimedelta.WorkDayRule(
+    saturday1 = businesstimedelta.WorkDayRule(
         start_time=datetime.time(9),
-        end_time=datetime.time(17),
-        working_days=[5])
-    
+        end_time=datetime.time(16),
+        working_days=[5])    
     vic_holidays = pyholidays.KE()
     holidays = businesstimedelta.HolidayRule(vic_holidays)
     cal = Kenya()
-    #hl = cal.holidays(2021)
     hl = data.values.tolist()
-    #print(hl)
+    my_dict=dict(hl)
+    vic_holidays=vic_holidays.append(my_dict)
+
+    businesshrs1 = businesstimedelta.Rules([workday1, saturday1, holidays])
+
+    def BusHrs1(start, end):
+        if end>=start:
+            return float(businesshrs1.difference(start,end).hours)*float(60)+float(businesshrs1.difference(start,end).seconds)/float(60)
+        else:
+            return ""
+        
+    # All departments working hours 
+    workday = businesstimedelta.WorkDayRule(
+        start_time=datetime.time(9),
+        end_time=datetime.time(19),
+        working_days=[0,1, 2, 3, 4])
+
+    saturday = businesstimedelta.WorkDayRule(
+        start_time=datetime.time(9),
+        end_time=datetime.time(18),
+        working_days=[5])    
+    vic_holidays = pyholidays.KE()
+    holidays = businesstimedelta.HolidayRule(vic_holidays)
+    cal = Kenya()
+    hl = data.values.tolist()
     my_dict=dict(hl)
     vic_holidays=vic_holidays.append(my_dict)
 
@@ -1060,15 +1155,34 @@ def create_fact_orderscreenc1():
             return float(businesshrs.difference(start,end).hours)*float(60)+float(businesshrs.difference(start,end).seconds)/float(60)
         else:
             return ""
+
     
-    # main and designer store
-    df['so_op_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Order Printed"]), axis=1)
-    df['op_sl_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["odsc_datetime_Frame Sent to Lens Store"]), axis=1)
-    df['op_sc_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["odsc_datetime_Sent to Control Room"]), axis=1)
-    df['op_ov_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["odsc_datetime_Frame Sent to Overseas Desk"]), axis=1)
-    df['so_sl_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Frame Sent to Lens Store"]), axis=1)
-    df['so_sc_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Sent to Control Room"]), axis=1)
-    df['so_ov_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Frame Sent to Overseas Desk"]), axis=1)
+    filtercolumns = ["odsc_createdby_Order Printed","odsc_createdby_Frame Sent to Lens Store","odsc_createdby_Frame Sent to Overseas Desk",
+                     "odsc_createdby_Sent to Control Room"]
+
+    mainstoredf = df[df[filtercolumns].apply(lambda x: x.isin(['main1', 'main2', 'main3']).any(), axis=1)]
+    designerdf = df[df[filtercolumns].apply(lambda x: x.isin(['designer1', 'designer2', 'designer3']).any(), axis=1)]
+
+    #designer store    
+    designerdf['so_op_diff']=designerdf.apply(lambda row: BusHrs1(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Order Printed"]), axis=1)
+    designerdf['op_sl_diff']=designerdf.apply(lambda row: BusHrs1(row["odsc_datetime_Order Printed"], row["odsc_datetime_Frame Sent to Lens Store"]), axis=1)
+    designerdf['op_sc_diff']=designerdf.apply(lambda row: BusHrs1(row["odsc_datetime_Order Printed"], row["odsc_datetime_Sent to Control Room"]), axis=1)
+    designerdf['op_ov_diff']=designerdf.apply(lambda row: BusHrs1(row["odsc_datetime_Order Printed"], row["odsc_datetime_Frame Sent to Overseas Desk"]), axis=1)
+    designerdf['so_sl_diff']=designerdf.apply(lambda row: BusHrs1(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Frame Sent to Lens Store"]), axis=1)
+    designerdf['so_sc_diff']=designerdf.apply(lambda row: BusHrs1(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Sent to Control Room"]), axis=1)
+    designerdf['so_ov_diff']=designerdf.apply(lambda row: BusHrs1(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Frame Sent to Overseas Desk"]), axis=1)
+
+
+    #mainstore
+    mainstoredf['so_op_diff']=mainstoredf.apply(lambda row: BusHrs(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Order Printed"]), axis=1)
+    mainstoredf['op_sl_diff']=mainstoredf.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["odsc_datetime_Frame Sent to Lens Store"]), axis=1)
+    mainstoredf['op_sc_diff']=mainstoredf.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["odsc_datetime_Sent to Control Room"]), axis=1)
+    mainstoredf['op_ov_diff']=mainstoredf.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["odsc_datetime_Frame Sent to Overseas Desk"]), axis=1)
+    mainstoredf['so_sl_diff']=mainstoredf.apply(lambda row: BusHrs(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Frame Sent to Lens Store"]), axis=1)
+    mainstoredf['so_sc_diff']=mainstoredf.apply(lambda row: BusHrs(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Sent to Control Room"]), axis=1)
+    mainstoredf['so_ov_diff']=mainstoredf.apply(lambda row: BusHrs(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Frame Sent to Overseas Desk"]), axis=1)
+    maindesigner = pd.concat([mainstoredf,designerdf])
+    maindesigner = maindesigner[['doc_entry','so_op_diff','op_sl_diff','op_sc_diff','op_ov_diff','so_sl_diff','so_sc_diff','so_ov_diff']]
 
     #len store
     df['sl_sc_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Frame Sent to Lens Store"], row["odsc_datetime_Sent to Control Room"]), axis=1)
@@ -1114,6 +1228,8 @@ def create_fact_orderscreenc1():
     #packaging
     df['sp_stb_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Sent to Packaging"], row["odsc_datetime_Sent to Branch"]), axis=1)
     df['sp_gbstb_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Sent to Packaging"], row["odsc_datetime_Branch Glazing Sent to Branch"]), axis=1)
+
+    df = pd.merge(df,maindesigner,on ='doc_entry',how = 'left')
 
     print("Calculated Working Minutes")
 
@@ -1240,5 +1356,21 @@ def get_fact_collected_orders():
     
     print('get_fact_collected_orders')
 
+# create_source_orderscreenc1_staging()
+# create_source_orderscreenc1_staging2()
+# create_source_orderscreenc1_staging3()
+# create_source_orderscreenc1_staging4()
+# update_orderscreenc1_staging4()
+# get_collected_orders()
+# transpose_orderscreenc1()
+# index_trans()
+# create_fact_orderscreenc1_new()
+# reindex_db()
+# get_techs()
+# create_source_orderscreenc1_staging5()
+# index_staging5()
+# create_fact_orderscreenc1_staging()
+# create_fact_orderscreenc1()
+# index_fact_c1()
 # get_fact_collected_orders()
 

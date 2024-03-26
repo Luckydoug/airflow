@@ -77,7 +77,7 @@ branches_html = """
     </head>
     <body>
         <p><b>Hi {branch_name},</b></p> </br>
-        <p><i>I Hope this email finds you well.</i></p> </br>
+        <b style = "color: green">I Hope this email finds you well.</b> </br>
         <p>Kindly see insurance conversion per the insurance feedback for the period on the subject.</p>
         <br>
         <table style = "width: 70%;">{overall_feedbacks_html}</table> 

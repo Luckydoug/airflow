@@ -1,42 +1,28 @@
 import sys
 sys.path.append(".")
-
-#import libraries
-import json
-import psycopg2
 import requests
-import datetime
 import pandas as pd
 from datetime import date
-from pangres import upsert, DocsExampleTable
-from sqlalchemy import create_engine
+from pangres import upsert
 from airflow.models import Variable
-from pandas.io.json._normalize import nested_to_record 
-
-
-from sub_tasks.data.connect import (pg_execute, pg_fetch_all, engine, pg_bulk_insert) 
+from sub_tasks.data.connect import engine
 from sub_tasks.api_login.api_login import(login)
+from sub_tasks.libraries.utils import return_session_id
 
-
-# get session id
-SessionId = login()
 FromDate = '2018/01/01'
-# ToDate = date.today().strftime('%Y/%m/%d')
-
-# FromDate = date.today().strftime('%Y/%m/%d')
 ToDate = date.today().strftime('%Y/%m/%d')
 
-# api details
-pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetCashIncentive&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
-pagecount_payload={}
-pagecount_headers = {}
-
 def fetch_sap_incentive_slab():
+
+    # SessionId = login()
+    SessionId = return_session_id(country = "Kenya")
+    pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetCashIncentive&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+    pagecount_payload={}
+    pagecount_headers = {}
 
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     data = pagecount_response.json()
     pages = data['result']['body']['recs']['PagesCount']
-    print("Pages outputted", pages)
 
     incentives_df = pd.DataFrame()
     payload={}
@@ -123,4 +109,3 @@ def fetch_sap_incentive_slab():
 
         return "insert incentive_slabs successfull"
 
-# fetch_sap_incentive_slab()

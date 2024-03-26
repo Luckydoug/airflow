@@ -1,16 +1,9 @@
 import sys
-from numpy import nan
 sys.path.append(".")
-#import libraries
-import json
 import requests
 import psycopg2
 import pandas as pd
 from airflow.models import Variable 
-from pangres import upsert, DocsExampleTable
-from sqlalchemy import create_engine, text, VARCHAR
-from pandas.io.json._normalize import nested_to_record 
-
 
 from sub_tasks.data.connect import (pg_execute, engine) 
 from sub_tasks.googlereviews.refresh_token import (refresh_tokens)
@@ -19,10 +12,7 @@ conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", p
 token = refresh_tokens()
 
 def fetch_locations():
-
-    print (token)
     
-    #url = "https://mybusiness.googleapis.com/v4/accounts/105865586632368693390/locations"
     url = "https://mybusinessbusinessinformation.googleapis.com/v1/accounts/105865586632368693390/locations?readMask=title&readMask=name&readMask=storeCode"
     
     

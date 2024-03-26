@@ -306,6 +306,13 @@ def create_draft_upload_report(data_orders, daywise_data, mtd_data, selection,st
         monthly_data = final_data_orders.copy()
         monthly_data["Month"] = monthly_data["Upload Time"].dt.month_name()
 
+        from reports.draft_to_upload.utils.utils import return_report_daterange
+        start_date = return_report_daterange("Monthly")
+
+        monthly_data = monthly_data[
+            (monthly_data["Upload Time"] >= pd.to_datetime(start_date))
+        ]
+
         monthly_data = monthly_data[
             (monthly_data["Month"] == first_month) | 
             (monthly_data["Month"] == second_month)

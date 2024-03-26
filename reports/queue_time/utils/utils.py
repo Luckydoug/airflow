@@ -49,7 +49,8 @@ def create_queue_summary(
 
 def create_queue_weekly(
     queue_data: pd.DataFrame,
-    index: Union[list, str]
+    index: Union[list, str],
+    target: int
 ) -> pd.MultiIndex:
     
     weekly_summary = pd.pivot_table(
@@ -69,7 +70,7 @@ def create_queue_weekly(
     )
 
     weekly_summary =  weekly_summary.reindex(
-        ["Visit ID", "Queue Time", "Eye Test Time"], 
+        ["Visit ID", "Queue Time"], 
         level = 0, 
         axis = 1
     )
@@ -95,8 +96,8 @@ def create_queue_weekly(
 
     weekly_summary = weekly_summary.rename(
         columns = {
-            "Visit ID": "ETs Count",
-            "Queue Time": "Avg. Queue Time",
+            "Visit ID": "Total Added to Queue",
+            "Queue Time": f"Avg. Queue Time (Target = {target})",
             "Eye Test Time": "Avg. ET Time"
         },
         level = 0).round(0).fillna("-")
@@ -128,7 +129,7 @@ def create_queue_monthly(
     )
 
     month_summary = month_summary.reindex(
-        ["Visit ID", "Queue Time", "Eye Test Time"], 
+        ["Visit ID", "Queue Time"], 
         level = 0, 
         axis = 1
     )
@@ -187,7 +188,7 @@ def transform_multindex(
 
 def get_two_weeks_date_range():
     today = datetime.datetime.now().date()
-    end_date = today - datetime.timedelta(days=14)
+    end_date = (today - datetime.timedelta(days=1)) - datetime.timedelta(days=14)
     start_date = end_date
     date_range = []
     for i in range(2):

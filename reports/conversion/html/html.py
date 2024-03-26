@@ -87,26 +87,10 @@ conversion_html = """
                                 </li>
                             </ol>
                         </li>
-
-                        <li>
-                            <h3>View High RX Conversions</h3>
-                            <ol>
-                                <li><b>{weekly_monthly} Overall Comparison</b>
-                                <br> <br>
-                                    <table>{overall_views_html}</table>
-                                </li>
-                                <br><br>
-                                <li><b>Branchwise {weekly_monthly} Conversion Comparison</b>
-                                <br>
-                                    <table>{branches_views_html}</table>
-                                </li>
-                                <br><br>
-                            </ol>
-                        </li>
                     </ol>
 
                     <br><br>
-                    Also see the non-conversions on the attachments.
+                    Also see the non-conversions and the view rx report on the attachments.
                 </div>
             </div>
 
@@ -218,18 +202,6 @@ branches_html =  """
                         </ol>
                     </li>
 
-                    <li><h3>View RX Conversion</h3>
-                        <ol>
-                            <li class = "inner">Branch Conversion
-                                <table>{views_branch_html}</table>
-                            </li>
-
-                            <li class = "inner">Staff Conversion <br><br>
-                                <tabl>{salespersons_views_html}</tabl>
-                            </li>
-                        </ol>
-
-                    </li>
                 </ol>
 
                 <p>Kindly see a list of non-conversions of the attachments.</p>

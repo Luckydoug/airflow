@@ -35,6 +35,8 @@ first_month, second_month = get_comparison_months()
 
 
 def send_branches_efficiency(path, target, branch_data, log_file, selection, country):
+    if selection == "Daily":
+        return
     create_initial_file(log_file)
     sales_persons = f"{path}draft_upload/draft_to_upload_sales_efficiency.xlsx"
     branches = f"{path}draft_upload/draft_to_upload_branch_efficiency.xlsx"
@@ -126,7 +128,7 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection, cou
                     msg = """
                      <b> 3) Time from Eye Test Completion to Draft Order Created </b>
                         <p>Please help us understand why the below client(s) <br>
-                        had to wait more that one hour after an eye test for you to draft the order</p>
+                        had to wait more than one hour after an eye test for you to draft the order.</p>
                     """
                 else:
                     order_et_html = ""

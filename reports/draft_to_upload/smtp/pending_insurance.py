@@ -20,8 +20,9 @@ from sub_tasks.libraries.utils import (
 )
 
 from sub_tasks.libraries.styles import (properties, ug_styles)
+from sub_tasks.libraries.utils import return_evn_credentials
 load_dotenv()
-your_email = os.getenv("douglas_email")
+sender_email = os.getenv("douglas_email")
 password = os.getenv("douglas_password")
 date_ranges = get_four_weeks_date_range()
 start_date = date_ranges[3][0].strftime('%Y-%b-%d')
@@ -36,6 +37,15 @@ def send_pending_insurance(path, branch_data, log_file):
     export_data = pd.ExcelFile(branches_data)
     export_data = export_data.parse("Data", index_col=False)
 
+    stephen_data = branch_data[branch_data["Retail Analyst"] == "Stephen"]
+    stephen_branches = stephen_data["Outlet"].to_list()
+
+    felix_data = branch_data[branch_data["Retail Analyst"] == "Felix"]
+    felix_branches = felix_data["Outlet"].to_list()
+
+    getrude_data = branch_data[branch_data["Retail Analyst"] == "Getrude"]
+    getrude_branches = getrude_data["Outlet"].to_list()
+
     if not assert_date_modified([branches_data]):
         return
     
@@ -46,6 +56,7 @@ def send_pending_insurance(path, branch_data, log_file):
         random_branch = random.choice(random_list)
 
         for branch in branch_list:
+            return
             if branch in export_data["Branch"].to_list():
                 branch_name = data.loc[branch, "Branch"]
                 branch_email = data.loc[branch, "Email"]
@@ -67,6 +78,7 @@ def send_pending_insurance(path, branch_data, log_file):
                         "wazeem@optica.africa",
                         rm_email, 
                         "wairimu@optica.africa", 
+                        "douglas.kathurima@optica.africa",
                         branch_email
                     ]
                 
@@ -90,10 +102,20 @@ def send_pending_insurance(path, branch_data, log_file):
                 
                 else:
                     receiver_email = [rm_email, branch_email]
+
+                if branch in getrude_branches:
+                    sender_email, password = return_evn_credentials("getrude")
+                elif branch in stephen_branches:
+                    sender_email, password = return_evn_credentials("stephen")
+                elif branch in felix_branches:
+                    sender_email, password = return_evn_credentials("felix")
+                else:
+                    return
+            
                 
                 subject = f"{branch_name} Non-Submitted Insurance Customers Eye tests, {todate}"
                 email_message = MIMEMultipart("alternative")
-                email_message["From"] = your_email
+                email_message["From"] = sender_email
                 email_message["To"] = r','.join(receiver_email)
                 email_message["Subject"] = subject
                 email_message.attach(MIMEText(html, "html"))
@@ -102,9 +124,9 @@ def send_pending_insurance(path, branch_data, log_file):
                 if branch_email not in return_sent_emails(log_file):
                     context = ssl.create_default_context()
                     with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
-                        server.login(your_email, password)
+                        server.login(sender_email, password)
                         server.sendmail(
-                            your_email, 
+                            sender_email, 
                             receiver_email, 
                             email_message.as_string()
                         )

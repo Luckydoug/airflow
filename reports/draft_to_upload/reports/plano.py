@@ -23,9 +23,11 @@ def get_customer_type(row):
         return row["Mode of Pay"]
     
 def check_plano_submission(row):
+    if pd.isna(row["Request"]) and not pd.isna(row["Order Number"]) and row["Customer Type"] == "Insurance" and row["Conversion"] == 0:
+        return "Not Submitted"
     if pd.isna(row["Request"]) and not pd.isna(row["Order Number"]):
         return "Submitted: (Cash/Direct)"
-    elif pd.isna(row["Request"]) and pd.isna(row["Order Number"]):
+    elif pd.isna(row["Request"]) and pd.isna(row["Order Number"]) and row["Conversion"] == 0:
         return "Not Submitted"
     else:
         return "Submitted"
@@ -43,7 +45,8 @@ required_columns = [
     'RX Type', 
     'Opthom Name', 
     'Final Customer Type',
-    'Conversion'
+    'Conversion',
+    'Plano RX'
 ]
 
 columns_order = [
@@ -51,6 +54,7 @@ columns_order = [
     "SRM",
     "RM",
     "Code",
+    "Plano RX",
     "RX Type",
     "Status",
     "Branch",
@@ -87,7 +91,9 @@ def create_plano_report(branch_data, path, registrations, payments, all_planos, 
     plano_orders["Code"] = plano_orders["Code"].astype(int)
     insurance_planos["Code"] = insurance_planos["Code"].astype(int)
     insurance_plano_requests = pd.merge(insurance_planos, unique_orderscreen, on = "Code", how="left")
+    insurance_plano_requests["Code"] = insurance_plano_requests["Code"].astype(int)
     plano_insurance_orders = pd.merge(insurance_plano_requests, plano_orders, on = "Code", how="left")
+    print(plano_insurance_orders[plano_insurance_orders["Order Number"] == '24105335'])
 
     plano_insurance_orders["Submission"] = plano_insurance_orders.apply(lambda row: check_plano_submission(row), axis=1)
     plano_insurance_orders["Month"] = pd.to_datetime(plano_insurance_orders["Create Date"], format="%Y-%m-%d").dt.month_name()
@@ -207,7 +213,15 @@ def create_plano_report(branch_data, path, registrations, payments, all_planos, 
 
 
     if selection == "Monthly":
+        from reports.draft_to_upload.utils.utils import return_report_daterange
+        from reports.draft_to_upload.utils.utils import today
+        start_date = return_report_daterange("Monthly")
+
         monthly_plano_data = final_plano_data.copy()
+        monthly_plano_data = monthly_plano_data[
+            (monthly_plano_data["Create Date"] >= pd.to_datetime(start_date))
+        ]
+       
         monthly_plano_data = monthly_plano_data[
             (monthly_plano_data["Month"] == first_month) |
             (monthly_plano_data["Month"] == second_month)

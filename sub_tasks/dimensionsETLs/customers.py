@@ -1,52 +1,30 @@
 import sys
 sys.path.append(".")
-
-#import libraries
-import json
-import psycopg2
 import requests
 import pandas as pd
 from datetime import date, timedelta
-
-from pandas.io.json._normalize import nested_to_record 
-from sqlalchemy import create_engine
 from airflow.models import Variable
-from pandas.io.json._normalize import nested_to_record 
-from pangres import upsert, DocsExampleTable
-
-from sub_tasks.data.connect import (pg_execute, pg_fetch_all, engine, pg_bulk_insert) 
+from pangres import upsert
+from sub_tasks.data.connect import pg_execute, engine
 from sub_tasks.api_login.api_login import(login)
-
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+from sub_tasks.libraries.utils import return_session_id
+from sub_tasks.libraries.utils import FromDate, ToDate
 
-# LOCAL_DIR = "/tmp/"
-#location = Variable.get("LOCAL_DIR", deserialize_json=True)
-#dimensionstore = location["dimensionstore"]
-
-# get session id
-SessionId = login()
-
-# FromDate = '2023/04/01'
-# ToDate = '2023/05/30'
-
-today = date.today()
-pastdate = today - timedelta(days=1)
-FromDate = pastdate.strftime('%Y/%m/%d')
-ToDate = date.today().strftime('%Y/%m/%d')
-
-
-# api details
-pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetBussinesPartners&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
-pagecount_payload={}
-pagecount_headers = {}
 
 def fetch_sap_customers():
+    SessionId = return_session_id(country = "Kenya")
+    #SessionId = login()
+    
+    pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetBussinesPartners&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+    pagecount_payload={}
+    pagecount_headers = {}
+
+
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     data = pagecount_response.json()
     pages = data['result']['body']['recs']['PagesCount']
-
-    print("Pages outputted", pages)
 
     customersdf = pd.DataFrame()
     payload={}
@@ -90,24 +68,13 @@ def fetch_sap_customers():
                        'U_VSPCONRE':'conversion_remark'}
             ,inplace=True)
     
-    #query = """drop table mabawa_staging.source_customers;"""
-    #query = pg_execute(query)
-    print('INFO! %d rows' %(len(customersdf)))
-    # customersdf.to_sql('source_customers', con = engine, schema='mabawa_staging', if_exists = 'append', index=False)
-
-    # table_name = 'source_customers'
-    # schema = 'mabawa_staging'
-
-    # print("started insert")
-
-    # pg_bulk_insert(customers_df2, table_name, schema)
+  
     customersdf = customersdf.drop_duplicates('cust_code')
 
     if customersdf.empty:
         print('INFO! customers dataframe is empty!')
     else:
         customersdf = customersdf.set_index(['cust_code'])
-        print('INFO! Customer upsert started...')
 
         upsert(engine=engine,
         df=customersdf,
@@ -115,8 +82,6 @@ def fetch_sap_customers():
         table_name='source_customers',
         if_row_exists='update',
         create_table=False)
-
-        print('Update successful')
 
 def create_dim_customers():
 
@@ -132,6 +97,7 @@ def create_dim_customers():
     """
 
     query = pg_execute(query)
+    
 def create_reg_conv():
     
     query = """
@@ -141,6 +107,3 @@ def create_reg_conv():
 
     query = pg_execute(query)
 
-
-# fetch_sap_customers()
-# create_dim_customers()

@@ -43,6 +43,7 @@ def create_incentive_insurance():
 
     query = """
     refresh materialized view voler_mviews.incentive_insurance2; 
+    insert into voler_dw.update_log(table_name, update_time) values('incentives', default);
     """
 
     query = pg_execute(query)

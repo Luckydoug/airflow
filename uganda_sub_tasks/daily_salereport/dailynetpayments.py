@@ -29,7 +29,6 @@ from sub_tasks.data.connect_mawingu import (pg_execute, pg_fetch_all, engine)
 from sub_tasks.api_login.api_login import(login_uganda)
 
 conn = psycopg2.connect(host="10.40.16.19",database="mawingu", user="postgres", password="@Akb@rp@$$w0rtf31n")
-SessionId = login_uganda()
 
 ##Define the days that is yesterday and when the month starts
 today = datetime.date.today()

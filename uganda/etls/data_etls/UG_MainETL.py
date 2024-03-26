@@ -26,6 +26,8 @@ from uganda_sub_tasks.ordersETLs.salesorders import (fetch_sap_orders, update_so
 from uganda_sub_tasks.ordersETLs.prescriptions import fetch_prescriptions
 from uganda_sub_tasks.ordersETLs.customers import fetch_sap_customers
 from uganda_sub_tasks.ordersETLs.payments import fetch_sap_payments
+from uganda_sub_tasks.gsheets.sop import (fetch_sop_branch_info,fetch_sop)
+from uganda_sub_tasks.gsheets.ajuatodrop import fetch_npsreviews_with_issues
 from airflow.operators.python_operator import PythonOperator
 from airflow.contrib.sensors.file_sensor import FileSensor
 from airflow.operators.dummy_operator import DummyOperator
@@ -270,4 +272,29 @@ with DAG(
             python_callable=fetch_ajua_info,
             provide_context=True
         )
-    start >> orders >> orderlog >> payments >> customers >> prescriptions >> view >> salesorders >> discounts >> users >> items >> insurance >> targets >> purchaseorders >> nps_survey >> itrlog >> inventorytransferdetails >> itrdetails >> finish
+
+        fetch_npsreviews_with_issues = PythonOperator(
+            task_id='fetch_npsreviews_with_issues',
+            python_callable=fetch_npsreviews_with_issues,
+            provide_context=True
+        )
+
+        fetch_ajua_info >> fetch_npsreviews_with_issues
+    
+    with TaskGroup('sop') as sop:
+
+        fetch_sop_branch_info = PythonOperator(
+            task_id='fetch_sop_branch_info',
+            python_callable=fetch_sop_branch_info,
+            provide_context=True
+        )
+
+        fetch_sop = PythonOperator(
+            task_id='fetch_sop',
+            python_callable=fetch_sop,
+            provide_context=True
+        )
+
+        fetch_sop_branch_info >> fetch_sop
+
+    start >> orders >> orderlog >> payments >> customers >> prescriptions >> view >> salesorders >> discounts >> users >> items >> insurance >> targets >> purchaseorders >> nps_survey >> itrlog >> inventorytransferdetails >> itrdetails >> sop >> finish

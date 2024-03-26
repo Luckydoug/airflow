@@ -1,48 +1,21 @@
 import sys
-
 from numpy import nan
 sys.path.append(".")
-
-#import libraries
-from io import StringIO
-import json
-import psycopg2
 import requests
 import pandas as pd
-from pandas.io.json._normalize import nested_to_record 
-from sqlalchemy import create_engine
 from airflow.models import Variable
-from pandas.io.json._normalize import nested_to_record 
-from pangres import upsert, DocsExampleTable
-from sqlalchemy import create_engine, text, VARCHAR
-from datetime import date, timedelta
-import datetime
+from pangres import upsert
+from sub_tasks.data.connect_mawingu import  engine 
+from sub_tasks.libraries.utils import return_session_id
+from sub_tasks.libraries.utils import FromDate, ToDate
 
-
-from sub_tasks.data.connect_mawingu import (pg_execute, pg_fetch_all, engine)  
-from sub_tasks.api_login.api_login import(login_uganda)
-
-
-SessionId = login_uganda()
-
-FromDate = '2023/08/01'
-# ToDate = '2023/05/04'
-
-today = date.today()
-# pastdate = today - timedelta(days=1)
-# FromDate = pastdate.strftime('%Y/%m/%d')
-ToDate = date.today().strftime('%Y/%m/%d')
-
-print(FromDate)
-print(ToDate)
-
-pagecount_url = f"https://10.40.16.9:4300/UGANDA_BI/XSJS/BI_API.xsjs?pageType=GetJEinformation&pageNo=1&SessionId={SessionId}&FromDate={FromDate}&ToDate={ToDate}"
-pagecount_payload={}
-pagecount_headers = {}
-pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
-print(pagecount_response)
 
 def fetch_sap_ojdt():
+    SessionId = return_session_id(country = "Uganda")
+    
+    pagecount_url = f"https://10.40.16.9:4300/UGANDA_BI/XSJS/BI_API.xsjs?pageType=GetJEinformation&pageNo=1&SessionId={SessionId}&FromDate={FromDate}&ToDate={ToDate}"
+    pagecount_payload={}
+    pagecount_headers = {}
 
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     pagecount_response = pagecount_response.json()
@@ -166,5 +139,3 @@ def fetch_sap_ojdt():
         create_table=False)
 
         print('Update successful')
-
-# fetch_sap_ojdt()

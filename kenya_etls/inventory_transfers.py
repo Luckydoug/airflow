@@ -30,8 +30,7 @@ create_mviews_all_itr_logs, update_branch_codes, create_mviews_all_itrs, create_
 create_mviews_all_itrs_createdate,
 create_mviews_all_itr_logs_2, update_all_dropstatus, transpose_mviews_all_itr_logs, update_missing_dates, 
 update_missing_dates_dept,
-create_mviews_fact_all_itr_logs, create_fact_all_itr_logs,update_fact_all_itr_logs_dropped, update_fact_all_itr_logs_dept,
-create_all_branch_itr_logs, update_branch_itr_dropstatus, transpose_mviews_all_branch_itr_logs)
+create_mviews_fact_all_itr_logs, create_fact_all_itr_logs,update_fact_all_itr_logs_dropped, update_fact_all_itr_logs_dept)
 from sub_tasks.dimensionsETLs.items import fetch_sap_items
 
 # from tmp.python_test

@@ -40,6 +40,7 @@ from kenya_automation.alex_daily_report.data.fetch_data import repdata, to_wareh
 
 
 today = datetime.date.today()
+# today = datetime.date(2024,1,25)
 yesterday = today - datetime.timedelta(days=1)
 print(yesterday)
 formatted_date = yesterday.strftime('%Y-%m-%d')
@@ -208,130 +209,132 @@ def cutoff():
     Summary_BRS.style.format(format_dict)
     Summary_BRS.reset_index()
 
-    """1.1 BRS Cut Off - Uganda"""
-    ##Filtering Out OTC Items,Since OTC items are done in the evenning
-    Repdata1_ug = Repdata_ug.copy(deep=True)
-    Repdata1_ug['Item/Service Description'] = Repdata1_ug['Item/Service Description'].astype(str)
-    Repdata1_ug = Repdata1_ug[~Repdata1_ug['Item/Service Description'].str.contains("CASE", "BAG")]
-    Repdata2_ug = Repdata1_ug[~Repdata1_ug['Item/Service Description'].str.contains("CLOTH")]
-    Repdata2_ug=Repdata2_ug.dropna(subset=['Order Number'],inplace=False)
-    NormalRep_ug = Repdata2_ug
+    if not Repdata_ug.empty:
+        """1.1 BRS Cut Off - Uganda"""
+        ##Filtering Out OTC Items,Since OTC items are done in the evenning
+        Repdata1_ug = Repdata_ug.copy(deep=True)
+        Repdata1_ug['Item/Service Description'] = Repdata1_ug['Item/Service Description'].astype(str)
+        Repdata1_ug = Repdata1_ug[~Repdata1_ug['Item/Service Description'].str.contains("CASE", "BAG")]
+        Repdata2_ug = Repdata1_ug[~Repdata1_ug['Item/Service Description'].str.contains("CLOTH")]
+        Repdata2_ug=Repdata2_ug.dropna(subset=['Order Number'],inplace=False)
+        NormalRep_ug = Repdata2_ug
 
-    ##Merging towhse data into rep data i.e to get To Warehouse
-    towhse_ug=towhse_ug[["Internal Number","To Warehouse Code"]]
-    NormalRep_ug =pd.merge(NormalRep_ug,towhse_ug,  on = 'Internal Number', how = 'left').rename(columns = {"To Warehouse Code": "Branch"})
-    NormalRepRegion_ug=NormalRep_ug
+        ##Merging towhse data into rep data i.e to get To Warehouse
+        towhse_ug=towhse_ug[["Internal Number","To Warehouse Code"]]
+        NormalRep_ug =pd.merge(NormalRep_ug,towhse_ug,  on = 'Internal Number', how = 'left').rename(columns = {"To Warehouse Code": "Branch"})
+        NormalRepRegion_ug=NormalRep_ug
 
-    ###Separating First and Second cut offs then finding the max value per [Branch,Day & Cut off]
-    NormalRepRegion_ug["Type"]=np.where(NormalRepRegion_ug['Creatn Time - Incl. Secs']>=datetime.time(12, 0, 0),"Second","First")
-    print(NormalRepRegion_ug)
-    print('NormalRepRegion_ug Printed')
-    Brs_Pivot_ug=pd.pivot_table(NormalRepRegion_ug,index=["Branch",'Creation Date',"Type"],values='Creatn Time - Incl. Secs',aggfunc=np.max)
-    Brs_Pivot_ug = Brs_Pivot_ug.reset_index()
-    Brs_Pivot_ug=Brs_Pivot_ug.rename(columns={'Creatn Time - Incl. Secs':"Max"})
+        ###Separating First and Second cut offs then finding the max value per [Branch,Day & Cut off]
+        NormalRepRegion_ug["Type"]=np.where(NormalRepRegion_ug['Creatn Time - Incl. Secs']>=datetime.time(12, 0, 0),"Second","First")
+        print(NormalRepRegion_ug)
+        print('NormalRepRegion_ug Printed')
+        Brs_Pivot_ug=pd.pivot_table(NormalRepRegion_ug,index=["Branch",'Creation Date',"Type"],values='Creatn Time - Incl. Secs',aggfunc=np.max)
+        Brs_Pivot_ug = Brs_Pivot_ug.reset_index()
+        Brs_Pivot_ug=Brs_Pivot_ug.rename(columns={'Creatn Time - Incl. Secs':"Max"})
 
-    ###Calculating the cut off
-    NormalRepRegion_ug=pd.merge(NormalRepRegion_ug,Brs_Pivot_ug,on=["Branch","Creation Date","Type"],how="left")
-    NormalRepRegion_ug = pd.merge(NormalRepRegion_ug,Branches2,  on = ['Branch',"Type"], how = 'left')
-    NormalRepRegion_ug['Region'] = ['Uganda' if x== 'Rider_UG' else ' ' for x in NormalRepRegion_ug['Address']]
+        ###Calculating the cut off
+        NormalRepRegion_ug=pd.merge(NormalRepRegion_ug,Brs_Pivot_ug,on=["Branch","Creation Date","Type"],how="left")
+        NormalRepRegion_ug = pd.merge(NormalRepRegion_ug,Branches2,  on = ['Branch',"Type"], how = 'left')
+        NormalRepRegion_ug['Region'] = ['Uganda' if x== 'Rider_UG' else ' ' for x in NormalRepRegion_ug['Address']]
+        
+        print(NormalRepRegion_ug[['Creatn Time - Incl. Secs','BRS Cut']])
+        NormalRepRegion_ug['Creatn Time - Incl. Secs'] = NormalRepRegion_ug['Creatn Time - Incl. Secs'].astype(str)
+        NormalRepRegion_ug['BRS CUT OFF'] = np.where(NormalRepRegion_ug['Creatn Time - Incl. Secs'] > NormalRepRegion_ug["BRS Cut"],0, 1)   
+        
+        NormalRep_ug=NormalRepRegion_ug
+        sameNormalRep_ug = NormalRepRegion_ug.copy()
+        NormalRepRegion_ug = pd.merge(sameNormalRep_ug,ITRWithIssues,on="ITR Number", how="left")
+
+        # branchesfilter=['JUN','HUB','YOR','OHO',"CAP","GAR","TMA","TRM","VMA","WGT","MEG","COR","KAU","WES","TWO","ARE","ACA","KAM","OAS"]
+        NormalRep_ug["Type"]=np.where((NormalRep_ug["Type"]=="Second"),"First",NormalRep_ug["Type"])
+        
+
+        filterBRS=['BRS','ALL']
+        issuesBRS_ug = NormalRepRegion_ug[(NormalRepRegion_ug['DEPARTMENT'].isin(filterBRS) | (NormalRepRegion_ug['DEPARTMENT 2'].isin(filterBRS)))]
+        issuesBRS_ug = issuesBRS_ug["ITR Number"].to_list()
+
+        NormalRepRegion_ug = NormalRepRegion_ug[~NormalRepRegion_ug["ITR Number"].isin(issuesBRS)]
+
+        ###Grouping per Department and region
+        count_summary_ug=pd.pivot_table(NormalRepRegion_ug,index=['Type', "Region"],values="BRS CUT OFF",aggfunc='count',margins=True).reset_index()
+
+        sum_summary_ug=pd.pivot_table(NormalRepRegion_ug,index=['Type', "Region"],values="BRS CUT OFF",aggfunc=np.sum,margins=True).reset_index()
+
+        count_ITR_ug=pd.pivot_table(NormalRepRegion_ug,index=['Type', "Region"],values="ITR Number",aggfunc=pd.Series.nunique,margins=True).reset_index()
+
+        ###Merging the data
+        Summary_BRS_ug=pd.merge(sum_summary_ug,count_summary_ug,on=["Type","Region"])
+        Summary_BRS_ug["%_ge Efficiency"]=Summary_BRS_ug["BRS CUT OFF_x"]/Summary_BRS_ug["BRS CUT OFF_y"]
+        Summary_BRS_ug=pd.merge(Summary_BRS_ug,count_ITR_ug,on=["Type","Region"],how="left")
     
-    print(NormalRepRegion_ug[['Creatn Time - Incl. Secs','BRS Cut']])
-    NormalRepRegion_ug['Creatn Time - Incl. Secs'] = NormalRepRegion_ug['Creatn Time - Incl. Secs'].astype(str)
-    NormalRepRegion_ug['BRS CUT OFF'] = np.where(NormalRepRegion_ug['Creatn Time - Incl. Secs'] > NormalRepRegion_ug["BRS Cut"],0, 1)   
+        Summary_BRS_ug.drop(["BRS CUT OFF_x","BRS CUT OFF_y"], axis='columns', inplace=True)
+        print('uganda')
+        print(Summary_BRS_ug)
+        format_dict = { '%_ge Efficiency': '{:.2%}'}
+        Summary_BRS_ug.style.format(format_dict)
+        Summary_BRS_ug.reset_index()
+
+    if not Repdata_rw.empty:
+        """1.1 BRS Cut Off - Rwanda"""
+        ##Filtering Out OTC Items,Since OTC items are done in the evenning
+        Repdata1_rw = Repdata_rw.copy(deep=True)
+        Repdata1_rw['Item/Service Description'] = Repdata1_rw['Item/Service Description'].astype(str)
+        Repdata1_rw = Repdata1_rw[~Repdata1_rw['Item/Service Description'].str.contains("CASE", "BAG")]
+        Repdata2_rw = Repdata1_rw[~Repdata1_rw['Item/Service Description'].str.contains("CLOTH")]
+        Repdata2_rw=Repdata2_rw.dropna(subset=['Order Number'],inplace=False)
+        NormalRep_rw = Repdata2_rw
+
+        ##Merging towhse data into rep data i.e to get To Warehouse
+        towhse_rw=towhse_rw[["Internal Number","To Warehouse Code"]]
+        NormalRep_rw =pd.merge(NormalRep_rw,towhse_rw,  on = 'Internal Number', how = 'left').rename(columns = {"To Warehouse Code": "Branch"})
+        NormalRepRegion_rw =NormalRep_rw
+
+        ###Separating First and Second cut offs then finding the max value per [Branch,Day & Cut off]
+        NormalRepRegion_rw["Type"]=np.where(NormalRepRegion_rw['Creatn Time - Incl. Secs']>=datetime.time(12, 0, 0),"Second","First")
+        Brs_Pivot_rw=pd.pivot_table(NormalRepRegion_rw,index=["Branch",'Creation Date',"Type"],values='Creatn Time - Incl. Secs',aggfunc=np.max).reset_index()
+        Brs_Pivot_rw=Brs_Pivot_rw.rename(columns={'Creatn Time - Incl. Secs':"Max"})
+
+        ###Calculating the cut off
+        NormalRepRegion_rw=pd.merge(NormalRepRegion_rw,Brs_Pivot_rw,on=["Branch","Creation Date","Type"],how="left")
+        NormalRepRegion_rw = pd.merge(NormalRepRegion_rw,Branches2,  on = ['Branch',"Type"], how = 'left')
+        NormalRepRegion_rw['Region'] = ['Rwanda' if x== 'Rider_RW' else ' ' for x in NormalRepRegion_rw['Address']]
+        
+        print(NormalRepRegion_rw[['Creatn Time - Incl. Secs','BRS Cut']])
+        NormalRepRegion_rw['Creatn Time - Incl. Secs'] = NormalRepRegion_rw['Creatn Time - Incl. Secs'].astype(str)
+        NormalRepRegion_rw['BRS CUT OFF'] = np.where(NormalRepRegion_rw['Creatn Time - Incl. Secs'] > NormalRepRegion_rw["BRS Cut"],0, 1)   
+        
+        NormalRep_rw=NormalRepRegion_rw
+        sameNormalRep_rw = NormalRepRegion_rw.copy()
+        NormalRepRegion_rw = pd.merge(sameNormalRep_rw,ITRWithIssues,on="ITR Number", how="left")
+
+        # branchesfilter=['JUN','HUB','YOR','OHO',"CAP","GAR","TMA","TRM","VMA","WGT","MEG","COR","KAU","WES","TWO","ARE","ACA","KAM","OAS"]
+        NormalRep_rw["Type"]=np.where((NormalRep_rw["Type"]=="Second"),"First",NormalRep_rw["Type"])
+        
+
+        filterBRS=['BRS','ALL']
+        issuesBRS_rw = NormalRepRegion_rw[(NormalRepRegion_rw['DEPARTMENT'].isin(filterBRS) | (NormalRepRegion_rw['DEPARTMENT 2'].isin(filterBRS)))]
+        issuesBRS_rw = issuesBRS_rw["ITR Number"].to_list()
+
+        NormalRepRegion_rw = NormalRepRegion_rw[~NormalRepRegion_rw["ITR Number"].isin(issuesBRS)]
+
+        ###Grouping per Department and region
+        count_summary_rw=pd.pivot_table(NormalRepRegion_rw,index=['Type', "Region"],values="BRS CUT OFF",aggfunc='count',margins=True).reset_index()
+
+        sum_summary_rw=pd.pivot_table(NormalRepRegion_rw,index=['Type', "Region"],values="BRS CUT OFF",aggfunc=np.sum,margins=True).reset_index()
     
-    NormalRep_ug=NormalRepRegion_ug
-    sameNormalRep_ug = NormalRepRegion_ug.copy()
-    NormalRepRegion_ug = pd.merge(sameNormalRep_ug,ITRWithIssues,on="ITR Number", how="left")
+        count_ITR_rw=pd.pivot_table(NormalRepRegion_rw,index=['Type', "Region"],values="ITR Number",aggfunc=pd.Series.nunique,margins=True).reset_index()
 
-    # branchesfilter=['JUN','HUB','YOR','OHO',"CAP","GAR","TMA","TRM","VMA","WGT","MEG","COR","KAU","WES","TWO","ARE","ACA","KAM","OAS"]
-    NormalRep_ug["Type"]=np.where((NormalRep_ug["Type"]=="Second"),"First",NormalRep_ug["Type"])
-     
-
-    filterBRS=['BRS','ALL']
-    issuesBRS_ug = NormalRepRegion_ug[(NormalRepRegion_ug['DEPARTMENT'].isin(filterBRS) | (NormalRepRegion_ug['DEPARTMENT 2'].isin(filterBRS)))]
-    issuesBRS_ug = issuesBRS_ug["ITR Number"].to_list()
-
-    NormalRepRegion_ug = NormalRepRegion_ug[~NormalRepRegion_ug["ITR Number"].isin(issuesBRS)]
-
-    ###Grouping per Department and region
-    count_summary_ug=pd.pivot_table(NormalRepRegion_ug,index=['Type', "Region"],values="BRS CUT OFF",aggfunc='count',margins=True).reset_index()
-
-    sum_summary_ug=pd.pivot_table(NormalRepRegion_ug,index=['Type', "Region"],values="BRS CUT OFF",aggfunc=np.sum,margins=True).reset_index()
-
-    count_ITR_ug=pd.pivot_table(NormalRepRegion_ug,index=['Type', "Region"],values="ITR Number",aggfunc=pd.Series.nunique,margins=True).reset_index()
-
-    ###Merging the data
-    Summary_BRS_ug=pd.merge(sum_summary_ug,count_summary_ug,on=["Type","Region"])
-    Summary_BRS_ug["%_ge Efficiency"]=Summary_BRS_ug["BRS CUT OFF_x"]/Summary_BRS_ug["BRS CUT OFF_y"]
-    Summary_BRS_ug=pd.merge(Summary_BRS_ug,count_ITR_ug,on=["Type","Region"],how="left")
- 
-    Summary_BRS_ug.drop(["BRS CUT OFF_x","BRS CUT OFF_y"], axis='columns', inplace=True)
-    print('uganda')
-    print(Summary_BRS_ug)
-    format_dict = { '%_ge Efficiency': '{:.2%}'}
-    Summary_BRS_ug.style.format(format_dict)
-    Summary_BRS_ug.reset_index()
-
-    """1.1 BRS Cut Off - Rwanda"""
-    ##Filtering Out OTC Items,Since OTC items are done in the evenning
-    Repdata1_rw = Repdata_rw.copy(deep=True)
-    Repdata1_rw['Item/Service Description'] = Repdata1_rw['Item/Service Description'].astype(str)
-    Repdata1_rw = Repdata1_rw[~Repdata1_rw['Item/Service Description'].str.contains("CASE", "BAG")]
-    Repdata2_rw = Repdata1_rw[~Repdata1_rw['Item/Service Description'].str.contains("CLOTH")]
-    Repdata2_rw=Repdata2_rw.dropna(subset=['Order Number'],inplace=False)
-    NormalRep_rw = Repdata2_rw
-
-    ##Merging towhse data into rep data i.e to get To Warehouse
-    towhse_rw=towhse_rw[["Internal Number","To Warehouse Code"]]
-    NormalRep_rw =pd.merge(NormalRep_rw,towhse_rw,  on = 'Internal Number', how = 'left').rename(columns = {"To Warehouse Code": "Branch"})
-    NormalRepRegion_rw =NormalRep_rw
-
-    ###Separating First and Second cut offs then finding the max value per [Branch,Day & Cut off]
-    NormalRepRegion_rw["Type"]=np.where(NormalRepRegion_rw['Creatn Time - Incl. Secs']>=datetime.time(12, 0, 0),"Second","First")
-    Brs_Pivot_rw=pd.pivot_table(NormalRepRegion_rw,index=["Branch",'Creation Date',"Type"],values='Creatn Time - Incl. Secs',aggfunc=np.max).reset_index()
-    Brs_Pivot_rw=Brs_Pivot_rw.rename(columns={'Creatn Time - Incl. Secs':"Max"})
-
-    ###Calculating the cut off
-    NormalRepRegion_rw=pd.merge(NormalRepRegion_rw,Brs_Pivot_rw,on=["Branch","Creation Date","Type"],how="left")
-    NormalRepRegion_rw = pd.merge(NormalRepRegion_rw,Branches2,  on = ['Branch',"Type"], how = 'left')
-    NormalRepRegion_rw['Region'] = ['Rwanda' if x== 'Rider_RW' else ' ' for x in NormalRepRegion_rw['Address']]
+        ###Merging the data
+        Summary_BRS_rw=pd.merge(sum_summary_rw,count_summary_rw,on=["Type","Region"])
+        Summary_BRS_rw["%_ge Efficiency"]=Summary_BRS_rw["BRS CUT OFF_x"]/Summary_BRS_rw["BRS CUT OFF_y"]
+        Summary_BRS_rw=pd.merge(Summary_BRS_rw,count_ITR_rw,on=["Type","Region"],how="left")
     
-    print(NormalRepRegion_rw[['Creatn Time - Incl. Secs','BRS Cut']])
-    NormalRepRegion_rw['Creatn Time - Incl. Secs'] = NormalRepRegion_rw['Creatn Time - Incl. Secs'].astype(str)
-    NormalRepRegion_rw['BRS CUT OFF'] = np.where(NormalRepRegion_rw['Creatn Time - Incl. Secs'] > NormalRepRegion_rw["BRS Cut"],0, 1)   
-    
-    NormalRep_rw=NormalRepRegion_rw
-    sameNormalRep_rw = NormalRepRegion_rw.copy()
-    NormalRepRegion_rw = pd.merge(sameNormalRep_rw,ITRWithIssues,on="ITR Number", how="left")
-
-    # branchesfilter=['JUN','HUB','YOR','OHO',"CAP","GAR","TMA","TRM","VMA","WGT","MEG","COR","KAU","WES","TWO","ARE","ACA","KAM","OAS"]
-    NormalRep_rw["Type"]=np.where((NormalRep_rw["Type"]=="Second"),"First",NormalRep_rw["Type"])
-     
-
-    filterBRS=['BRS','ALL']
-    issuesBRS_rw = NormalRepRegion_rw[(NormalRepRegion_rw['DEPARTMENT'].isin(filterBRS) | (NormalRepRegion_rw['DEPARTMENT 2'].isin(filterBRS)))]
-    issuesBRS_rw = issuesBRS_rw["ITR Number"].to_list()
-
-    NormalRepRegion_rw = NormalRepRegion_rw[~NormalRepRegion_rw["ITR Number"].isin(issuesBRS)]
-
-    ###Grouping per Department and region
-    count_summary_rw=pd.pivot_table(NormalRepRegion_rw,index=['Type', "Region"],values="BRS CUT OFF",aggfunc='count',margins=True).reset_index()
-
-    sum_summary_rw=pd.pivot_table(NormalRepRegion_rw,index=['Type', "Region"],values="BRS CUT OFF",aggfunc=np.sum,margins=True).reset_index()
-  
-    count_ITR_rw=pd.pivot_table(NormalRepRegion_rw,index=['Type', "Region"],values="ITR Number",aggfunc=pd.Series.nunique,margins=True).reset_index()
-
-    ###Merging the data
-    Summary_BRS_rw=pd.merge(sum_summary_rw,count_summary_rw,on=["Type","Region"])
-    Summary_BRS_rw["%_ge Efficiency"]=Summary_BRS_rw["BRS CUT OFF_x"]/Summary_BRS_rw["BRS CUT OFF_y"]
-    Summary_BRS_rw=pd.merge(Summary_BRS_rw,count_ITR_rw,on=["Type","Region"],how="left")
- 
-    Summary_BRS_rw.drop(["BRS CUT OFF_x","BRS CUT OFF_y"], axis='columns', inplace=True)
-    print('rwanda')
-    print(Summary_BRS_rw)
-    format_dict = { '%_ge Efficiency': '{:.2%}'}
-    Summary_BRS_rw.style.format(format_dict)
-    Summary_BRS_rw.reset_index()
+        Summary_BRS_rw.drop(["BRS CUT OFF_x","BRS CUT OFF_y"], axis='columns', inplace=True)
+        print('rwanda')
+        print(Summary_BRS_rw)
+        format_dict = { '%_ge Efficiency': '{:.2%}'}
+        Summary_BRS_rw.style.format(format_dict)
+        Summary_BRS_rw.reset_index()
 
 
     """ 2. Main Store Cut Off """
@@ -568,15 +571,17 @@ def cutoff():
     import xlsxwriter
     print(xlsxwriter.__version__)
     #Create a Pandas Excel writer using XlsxWriter as the engine.
-    with pd.ExcelWriter(r"/home/opticabi/Documents/optica_reports/order_efficiency/Cutoff_Summary.xlsx", engine='xlsxwriter') as writer:          
+    with pd.ExcelWriter(r"/home/opticabi/Documents/optica_reports/order_efficiency/Cutoff_Summary.xlsx", engine='xlsxwriter') as writer:      
         Summary_BRS.to_excel(writer, sheet_name='BRS',startrow=0 , startcol=0)
         Summary_BRS_ug.to_excel(writer, sheet_name='BRS_UG',startrow=0 , startcol=0,index = False)
-        Summary_BRS_rw.to_excel(writer, sheet_name='BRS_RW',startrow=0 , startcol=0,index = False)
+        # Summary_BRS_rw.to_excel(writer, sheet_name='BRS_RW',startrow=0 , startcol=0,index = False)
         Summary_MainStore.to_excel(writer, sheet_name='Main',startrow=0 , startcol=0)
         Summary_designerStore.to_excel(writer, sheet_name='Designer',startrow=0, startcol=0)
         Summary_LensStore.to_excel(writer, sheet_name='Lens',startrow=0, startcol=0)
         Summary_control.to_excel(writer, sheet_name='Control',startrow=0, startcol=0)
-        Summary_packaging.to_excel(writer, sheet_name='Packaging',startrow=0, startcol=0)            
+        Summary_packaging.to_excel(writer, sheet_name='Packaging',startrow=0, startcol=0)  
+
+            
     writer.save()
 
     def save_xls(list_dfs, xls_path):
@@ -587,7 +592,8 @@ def cutoff():
 
 
     #Create a Pandas Excel writer using XlsxWriter as the engine.
-    with pd.ExcelWriter(r"/home/opticabi/Documents/optica_reports/order_efficiency/cutoff_Full_Report.xlsx", engine='xlsxwriter') as writer:      
+    with pd.ExcelWriter(r"/home/opticabi/Documents/optica_reports/order_efficiency/cutoff_Full_Report.xlsx", engine='xlsxwriter') as writer: 
+      
         BRS.to_excel(writer, sheet_name='Summary Cut Off',startrow=0 , startcol=0,header=False,index=False)
         Summary_BRS.to_excel(writer, sheet_name='Summary Cut Off',startrow=2 , startcol=0,header="Brs Summary")
         
@@ -607,12 +613,13 @@ def cutoff():
         Summary_packaging.to_excel(writer, sheet_name='Summary Cut Off',startrow=2, startcol=25)
         NormalRepRegion.to_excel(writer, sheet_name='BRS Data')
         NormalRepRegion_ug.to_excel(writer, sheet_name='BRS Data UG')
-        NormalRepRegion_rw.to_excel(writer, sheet_name='BRS Data RW')
+        # NormalRepRegion_rw.to_excel(writer, sheet_name='BRS Data RW')
         MainStore_data.to_excel(writer, sheet_name='MainStore Data')
         DesinerStore_data.to_excel(writer, sheet_name='DesignerStore Data')
         ControlRoom_data.to_excel(writer, sheet_name='ControlRoom Data')
         Packaging_data.to_excel(writer, sheet_name='Packaging Data')
         LensStore_data.to_excel(writer, sheet_name='Lens Data')
+   
         
     writer.save()
 
@@ -621,5 +628,6 @@ def cutoff():
             for n, df in enumerate(list_dfs):
                 df.to_excel(writer,'sheet%s' % n)
             writer.save()            
+
 
 # cutoff()            

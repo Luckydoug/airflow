@@ -122,6 +122,7 @@ pstart_date, pend_date = get_start_end_dates(
     selection=selection
 )
 
+
 def daywise_efficiency():
     daywise_efficiency = fetch_daywise_efficiency(
         database=database,

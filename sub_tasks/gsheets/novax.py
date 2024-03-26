@@ -32,10 +32,13 @@ def fetch_novax_data():
                         'CusCompany':'branch_name',
                         'ProFullName':'pro_full_name'}
             ,inplace=True)
+     print(wk1.columns)
      wk1 = wk1.drop_duplicates(subset = "order_no",keep = 'first') 
      wk1["order_date"] = pd.to_datetime(wk1["order_date"])
      wk1["order_delivery_date"] = pd.to_datetime(wk1["order_delivery_date"])
      wk1 = wk1.set_index('order_no')
+     substrings_to_exclude = ['ACACIA', 'ARENA', 'OASIS', 'BOULVARD', 'KIGALI', 'SILVERBACK']
+     wk1 = wk1[~wk1['branch_name'].str.contains('|'.join(substrings_to_exclude))]
 
      upsert(engine=engine,
           df=wk1,
@@ -45,6 +48,7 @@ def fetch_novax_data():
           create_table=False)
 
      return 'something' 
+
 
 def create_dim_novax_data():
     
@@ -61,7 +65,7 @@ def create_dim_novax_data():
      query = pg_execute(query)
      print(query)
      return 'something' 
-# create_dim_novax_data()
+
 
 def fetch_dhl_data():
     
@@ -85,6 +89,8 @@ def fetch_dhl_data():
      wk1.to_sql('source_dhl_data', con = engine, schema='mabawa_staging', if_exists = 'append', index=False)
      print(wk1)
      return 'something'
+
+
 
 def create_dim_dhl_data():
     
@@ -116,4 +122,9 @@ def create_dhl_with_orderscreen_data():
      query = pg_execute(query)
      
      return 'something'
+
+# fetch_novax_data()
+# create_dim_novax_data()
+# fetch_dhl_data()
+# create_dim_dhl_data()
 # create_dhl_with_orderscreen_data()

@@ -1,41 +1,21 @@
 import sys
 sys.path.append(".")
-
-#import libraries
-import json
-import psycopg2
 import requests
 from datetime import date
 import pandas as pd
-from pandas.io.json._normalize import nested_to_record 
-from sqlalchemy import create_engine
 from airflow.models import Variable
-from pandas.io.json._normalize import nested_to_record 
-from pangres import upsert, DocsExampleTable
-from datetime import date, timedelta
+from pangres import upsert
+from datetime import date
+from sub_tasks.data.connect_voler import engine
+from sub_tasks.libraries.utils import return_session_id
+from sub_tasks.libraries.utils import FromDate, ToDate
 
-from sub_tasks.data.connect_voler import (pg_execute, pg_fetch_all, engine)  
-from sub_tasks.api_login.api_login import(login_rwanda)
-
-SessionId = login_rwanda()
-
-FromDate = '2023/01/01'
-# ToDate = '2023/05/28'
-
-today = date.today()
-# pastdate = today - timedelta(days=3)
-# FromDate = pastdate.strftime('%Y/%m/%d')
-ToDate = date.today().strftime('%Y/%m/%d')
-
-print(FromDate)
-print(ToDate)
-
-# api details
-pagecount_url = f"https://10.40.16.9:4300/RWANDA_BI/XSJS/BI_API.xsjs?pageType=GetItemDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
-pagecount_payload={}
-pagecount_headers = {}
 
 def fetch_sap_items():
+    SessionId = return_session_id(country = "Rwanda")
+    pagecount_url = f"https://10.40.16.9:4300/RWANDA_BI/XSJS/BI_API.xsjs?pageType=GetItemDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+    pagecount_payload={}
+    pagecount_headers = {}
 
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     data = pagecount_response.json()
@@ -172,10 +152,13 @@ def fetch_sap_items():
 # fetch_sap_items()
 
 def fetch_item_groups():
-    
+    SessionId = return_session_id(country = "Rwanda")
+    #SessionId = login_rwanda()
+
     group_pagecount_url = f"https://10.40.16.9:4300/RWANDA_BI/XSJS/BI_API.xsjs?pageType=GetItemgroups&pageNo=1&SessionId={SessionId}"
     group_pagecount_payload={}
     group_pagecount_headers = {}
+
     group_pagecount_response = requests.request("GET", group_pagecount_url, headers=group_pagecount_payload, data=group_pagecount_headers, verify=False)
     data = group_pagecount_response.json()
     pages = data['result']['body']['recs']['PagesCount']
@@ -184,6 +167,7 @@ def fetch_item_groups():
     itemgroupdf = pd.DataFrame()
     payload={}
     headers = {}
+
     for i in range(1, pages+1):
         page = i
         url = f"https://10.40.16.9:4300/RWANDA_BI/XSJS/BI_API.xsjs?pageType=GetItemgroups&pageNo={page}&SessionId={SessionId}"

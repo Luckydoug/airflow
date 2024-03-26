@@ -1,45 +1,22 @@
 import sys
-
-from numpy import nan
 sys.path.append(".")
-
-#import libraries
-from io import StringIO
-import json
-import datetime
 import requests
 import psycopg2
 import pandas as pd
-import businesstimedelta
 from datetime import date, timedelta
-import holidays as pyholidays
-from workalendar.africa import Kenya
-from airflow.models import Variable
-from sqlalchemy import create_engine
-from pangres import upsert, DocsExampleTable
-from pangres import upsert, DocsExampleTable
-from sqlalchemy import create_engine, text, VARCHAR
-from pandas.io.json._normalize import nested_to_record 
-
+from pangres import upsert
 from sub_tasks.data.connect import (pg_execute, engine) 
-from sub_tasks.api_login.api_login import(login)
 conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", password="@Akb@rp@$$w0rtf31n")
+from sub_tasks.libraries.utils import return_session_id
+from sub_tasks.libraries.utils import FromDate, ToDate
 
-SessionId = login()
 
-# FromDate = '2023/03/06'
-# ToDate = '2023/03/14'
-
-today = date.today()
-pastdate = today - timedelta(days=1)
-FromDate = pastdate.strftime('%Y/%m/%d')
-ToDate = date.today().strftime('%Y/%m/%d')
-
-pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetGoodsReceiptsDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
-pagecount_headers = {}
-pagecount_payload = {}
 
 def fetch_goods_receipt():
+    SessionId = return_session_id(country = "Kenya")
+    pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetGoodsReceiptsDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+    pagecount_headers = {}
+    pagecount_payload = {}
     
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     data = pagecount_response.json()
@@ -58,7 +35,6 @@ def fetch_goods_receipt():
         response = response['result']['body']['recs']['Results']
         response = pd.DataFrame.from_dict(response)
         goods_receipt = goods_receipt.append(response, ignore_index=True)
-        # print(goods_receipt)
     
 
     goods_receipt = goods_receipt['details'].apply(pd.Series)

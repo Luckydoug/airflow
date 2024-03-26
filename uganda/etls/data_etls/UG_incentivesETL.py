@@ -39,7 +39,7 @@ default_args = {
 with DAG(
     DAG_ID, 
     default_args=default_args,
-    schedule_interval='00 9,15,17 * * *',
+    schedule_interval='00 17 * * *',
     catchup=False
     ) as dag:
     

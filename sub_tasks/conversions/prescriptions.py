@@ -1,44 +1,21 @@
 import sys
-
-from numpy import nan
 sys.path.append(".")
-
-#import libraries
-import json
-import psycopg2
 import requests
-import datetime
 import pandas as pd
-from io import StringIO
-import holidays as pyholidays
-from airflow.models import Variable
 from datetime import date, timedelta
-from sqlalchemy import create_engine
-from pangres import upsert, DocsExampleTable
-from sqlalchemy import create_engine, text, VARCHAR
-from pandas.io.json._normalize import nested_to_record 
-
-
-from sub_tasks.data.connect import (pg_execute, engine) 
+from airflow.models import variable
+from pangres import upsert
+from sub_tasks.data.connect import (pg_execute, engine)
 from sub_tasks.api_login.api_login import(login)
+from sub_tasks.libraries.utils import return_session_id
+from sub_tasks.libraries.utils import FromDate, ToDate
 
-SessionId = login()
+def fetch_prescriptions():
+    SessionId = return_session_id(country = "Kenya")
 
-# FromDate = '2023/07/01'
-# ToDate = '2023/05/24'
-
-today = date.today()
-pastdate = today - timedelta(days=30)
-FromDate = pastdate.strftime('%Y/%m/%d')
-ToDate = date.today().strftime('%Y/%m/%d')
-
-# api details
-pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetPrescriptionDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
-pagecount_payload={}
-pagecount_headers = {}
-
-# fetch order checking details
-def fetch_prescriptions ():
+    pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetPrescriptionDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+    pagecount_payload={}
+    pagecount_headers = {}
     
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     data = pagecount_response.json()
@@ -60,14 +37,14 @@ def fetch_prescriptions ():
         response = requests.request("GET", url, headers=headers, data=payload, verify=False)
         response = response.json()
 
-        try:
-            response = response['result']['body']['recs']['Results']
-            details = pd.DataFrame([d['details'] for d in response])
-            c1 = pd.DataFrame([{"id": k, **v} for d in response for k, v in d['VSP_OPT_PRES_C1'].items()])
-            prescription_details = prescription_details.append(details, ignore_index=True)
-            prescription_c1 = prescription_c1.append(c1, ignore_index=True)
-        except:
-            print('Error')
+    # try:
+        response = response['result']['body']['recs']['Results']
+        details = pd.DataFrame([d['details'] for d in response])
+        c1 = pd.DataFrame([{"id": k, **v} for d in response for k, v in d['VSP_OPT_PRES_C1'].items()])
+        prescription_details = prescription_details.append(details, ignore_index=True)
+        prescription_c1 = prescription_c1.append(c1, ignore_index=True)
+    # except:
+    #     print('Error')
 
     '''
     PRESCRIPTION DETAILS
@@ -485,5 +462,5 @@ def create_et_conv ():
     query = pg_execute(query)
 
 # fetch_prescriptions()
-# create_et_conv()
+# fact_prescriptions()
 

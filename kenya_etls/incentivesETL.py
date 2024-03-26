@@ -45,7 +45,8 @@ default_args = {
 with DAG(
     DAG_ID, 
     default_args=default_args,
-    schedule_interval='45 5,7,9,11,13,14,15,16 * * *',
+    # schedule_interval='45 5,7,9,11,13,14,15,16 * * *',
+    schedule_interval='45 16 * * *',
     catchup=False
     ) as dag:
     

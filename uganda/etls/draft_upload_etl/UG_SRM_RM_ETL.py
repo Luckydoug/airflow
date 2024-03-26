@@ -43,7 +43,8 @@ with DAG(
                 build_ug_sops,
                 build_plano_report,
                 build_uganda_opening_time,
-                build_uganda_insurance_conversion
+                build_uganda_insurance_conversion,
+                build_uganda_non_view_non_conversions
 
             )
 
@@ -96,7 +97,13 @@ with DAG(
                 provide_context=True
             )
 
-            push_uganda_efficiency_data >> build_ug_draft_upload >> build_ug_sops >> build_uganda_ratings_report >> build_ug_rejections >> build_plano_report >>  build_uganda_opening_time >> build_uganda_insurance_conversion
+            build_uganda_non_view_non_conversions = PythonOperator(
+                task_id='build_uganda_non_view_non_conversions',
+                python_callable=build_uganda_non_view_non_conversions,
+                provide_context=True
+            )
+
+            push_uganda_efficiency_data >> build_ug_draft_upload >> build_ug_sops >> build_uganda_ratings_report >> build_ug_rejections >> build_plano_report >>  build_uganda_opening_time >> build_uganda_insurance_conversion >> build_uganda_non_view_non_conversions
 
     with TaskGroup('smtp') as smtp:
         with TaskGroup('send') as sends:

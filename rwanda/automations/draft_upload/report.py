@@ -5,9 +5,9 @@ from sub_tasks.libraries.utils import (
     rwanda_path,
     create_rwanda_engine,
     createe_engine,
-    fourth_week_start
+    fourth_week_start,
+    assert_integrity
 )
-
 from reports.draft_to_upload.smtp.smtp import (
     send_draft_upload_report,
     send_to_branches,
@@ -60,88 +60,124 @@ start_date = return_report_daterange(
 )
 
 start_date = pd.to_datetime(start_date, format="%Y-%m-%d").date()
-all_views = fetch_views(
-    database=database,
-    engine=engine
-)
-
-all_orders = fetch_orders(
-    database=database,
-    engine=engine
-)
-
-eyetests = fetch_eyetests(
-    database=database,
-    engine=engine
-)
-
-orderscreen = fetch_orderscreen(
-    database=database,
-    engine=engine
-)
-
-branch_data = fetch_branch_data(
-    engine=engine,
-    database="reports_tables"
-)
-
-insurance_companies = fetch_insurance_companies(
-    database=database,
-    engine=engine
-)
-
-all_orders = pd.merge(
-    all_orders,
-    all_views[["Code", "Last View Date"]],
-    on="Code",
-    how="left"
-)
-
-all_orders = pd.merge(
-    all_orders,
-    insurance_companies[[
-        "DocNum", "Insurance Company",
-        "Scheme Type", "Insurance Scheme",
-        "Feedback 1", "Feedback 2"
-    ]],
-    on="DocNum",
-    how="left"
-)
-
-sales_orders = fetch_salesorders(
-    database=database,
-    engine=engine
-)
 
 
-payments = fetch_payments(
-    database=database,
-    engine=engine
-)
+def all_orders():
+    all_views = fetch_views(
+        database=database,
+        engine=engine
+    )
+
+    all_orders = fetch_orders(
+        database=database,
+        engine=engine
+    )
+
+    insurance_companies = fetch_insurance_companies(
+        database=database,
+        engine=engine
+    )
+
+    all_orders = pd.merge(
+        all_orders,
+        all_views[["Code", "Last View Date"]],
+        on="Code",
+        how="left"
+    )
+
+    all_orders = pd.merge(
+        all_orders,
+        insurance_companies[[
+            "DocNum", "Insurance Company",
+            "Scheme Type", "Insurance Scheme",
+            "Feedback 1", "Feedback 2"
+        ]],
+        on="DocNum",
+        how="left"
+    )
 
 
-planos = fetch_planos(
-    engine=engine,
-    database=database,
-    schema="voler_staging",
-    customers="source_customers",
-    users="source_users",
-    table="et_conv",
-    views="voler_mviews"
-)
+    return all_orders
 
-plano_orderscreen = fetch_planorderscreen(
-    database=database,
-    engine=engine
-)
+def eyetests() -> pd.DataFrame:
+    eyetests = fetch_eyetests(
+        database=database,
+        engine=engine
+    )
 
-sops_info = fetch_sops_branch_info(engine=engine2)
-registrations = fetch_registrations(
-    engine=engine,
-    database="voler_staging",
-    table="source_customers",
-    table2="source_users"
-)
+    return eyetests
+
+def orderscreen() -> pd.DataFrame:
+    orderscreen = fetch_orderscreen(
+        database=database,
+        engine=engine
+    )
+
+    return orderscreen
+
+def branch_data() -> pd.DataFrame:
+    branch_data = fetch_branch_data(
+        engine=engine,
+        database="reports_tables"
+    )
+
+    return branch_data
+
+
+
+def sales_orders() -> pd.DataFrame:
+    sales_orders = fetch_salesorders(
+        database=database,
+        engine=engine
+    )
+
+    return sales_orders
+
+def payments() -> pd.DataFrame:
+    payments = fetch_payments(
+        database=database,
+        engine=engine
+    )
+
+    return payments
+
+
+def planos() -> pd.DataFrame:
+    planos = fetch_planos(
+        engine=engine,
+        database=database,
+        schema="voler_staging",
+        customers="source_customers",
+        users="source_users",
+        table="et_conv",
+        views="voler_mviews"
+    )
+
+    return planos
+
+def plano_orderscreen() -> pd.DataFrame:
+    plano_orderscreen = fetch_planorderscreen(
+        database=database,
+        engine=engine
+    )
+
+    return plano_orderscreen
+
+
+def sops_info() -> pd.DataFrame:
+    sops_info = fetch_sops_branch_info(engine=engine2)
+
+    return sops_info
+
+def registrations() -> pd.DataFrame:
+    registrations = fetch_registrations(
+        engine=engine,
+        database="voler_staging",
+        table="source_customers",
+        table2="source_users"
+    )
+
+    return registrations
 
 date = ''
 if selection == "Daily":
@@ -149,18 +185,21 @@ if selection == "Daily":
 if selection == "Weekly":
     date = fourth_week_start
 if selection == "Monthly":
-    date = '2023-11-01'
+    date = '2024-01-01'
 
-opening_data = fetch_opening_time(
-    database=database,
-    start_date=date,
-    engine=engine
-)
+def opening_data() -> pd.DataFrame:
+    opening_data = fetch_opening_time(
+        database=database,
+        start_date=date,
+        engine=engine
+    )
+
+    return opening_data
 
 
 def build_rwanda_opening_time():
     create_opening_time_report(
-        opening_data,
+        opening_data(),
         rwanda_path
     )
 
@@ -172,13 +211,14 @@ def working_hours() -> pd.DataFrame:
 
 def push_rwanda_efficiency_data():
     date = return_report_daterange(selection="Daily")
+    date = '2024-03-01'
     date = pd.to_datetime(date, format="%Y-%m-%d").date()
     push_insurance_efficiency_data(
         engine=engine,
-        orderscreen=orderscreen,
-        all_orders=all_orders,
+        orderscreen=orderscreen(),
+        all_orders=all_orders(),
         start_date=date,
-        branch_data=branch_data,
+        branch_data=branch_data(),
         working_hours=working_hours(),
         database=database
     )
@@ -188,72 +228,86 @@ pstart_date, pend_date = get_start_end_dates(
     selection=selection
 )
 
-data_orders = fetch_insurance_efficiency(
-    database=database,
-    engine=engine,
-    start_date=start_date,
-    dw="voler_dw"
-)
+def data_orders() -> pd.DataFrame:
+    data_orders = fetch_insurance_efficiency(
+        database=database,
+        engine=engine,
+        start_date=start_date,
+        dw="voler_dw"
+    )
 
+    return data_orders
 
-daywise_efficiency = fetch_daywise_efficiency(
-    database=database,
-    engine=engine,
-    start_date=pstart_date,
-    end_date=pend_date,
-    dw="voler_dw"
-)
+def daywise_efficiency() -> pd.DataFrame:
+    daywise_efficiency = fetch_daywise_efficiency(
+        database=database,
+        engine=engine,
+        start_date=pstart_date,
+        end_date=pend_date,
+        dw="voler_dw"
+    )
 
-mtd_efficiency = fetch_mtd_efficiency(
-    database=database,
-    engine=engine,
-    start_date=pstart_date,
-    end_date=pend_date,
-    dw="voler_dw"
-)
+    return daywise_efficiency
+
+def mtd_efficiency() -> pd.DataFrame:
+    mtd_efficiency = fetch_mtd_efficiency(
+        database=database,
+        engine=engine,
+        start_date=pstart_date,
+        end_date=pend_date,
+        dw="voler_dw"
+    )
+
+    return mtd_efficiency
 
 
 def build_rw_draft_upload():
     create_draft_upload_report(
-        mtd_data=mtd_efficiency,
-        daywise_data=daywise_efficiency,
-        data_orders=data_orders,
+        mtd_data=mtd_efficiency(),
+        daywise_data=daywise_efficiency(),
+        data_orders=data_orders(),
         selection=selection,
         start_date=start_date,
         target=target,
-        branch_data=branch_data,
+        branch_data=branch_data(),
         path=rwanda_path
     )
 
 
+def daywise_rejections() -> pd.DataFrame:
+    daywise_rejections = fetch_daywise_rejections(
+        database=database,
+        view="voler_mviews",
+        engine=engine,
+        start_date=pstart_date,
+        end_date=pend_date
+    )
 
-daywise_rejections = fetch_daywise_rejections(
-    database=database,
-    view="voler_mviews",
-    engine=engine,
-    start_date=pstart_date,
-    end_date=pend_date
-)
 
-mtd_rejections = fetch_mtd_rejections(
-    database=database,
-    view="voler_mviews",
-    engine=engine,
-    start_date=pstart_date,
-    end_date=pend_date
-)
+    return daywise_rejections
+
+def mtd_rejections() -> pd.DataFrame:
+    mtd_rejections = fetch_mtd_rejections(
+        database=database,
+        view="voler_mviews",
+        engine=engine,
+        start_date=pstart_date,
+        end_date=pend_date
+    )
+
+    return mtd_rejections
 
 def build_rw_rejections():
     create_rejection_report(
-        orderscreen=orderscreen,
-        all_orders=all_orders,
-        branch_data=branch_data,
+        orderscreen=orderscreen(),
+        all_orders=all_orders(),
+        branch_data=branch_data(),
         path=rwanda_path,
         selection=selection,
         start_date=start_date,
-        sales_orders=sales_orders,
-        mtd_data=mtd_rejections,
-        daywise_data=daywise_rejections
+        sales_orders=sales_orders(),
+        mtd_data=mtd_rejections(),
+        daywise_data=daywise_rejections()
     )
 
 
@@ -267,8 +321,8 @@ customers = fetch_customers(
 def build_rw_sops():
     create_ug_sops_report(
         selection=selection,
-        branch_data=branch_data,
-        sops_info=sops_info,
+        branch_data=branch_data(),
+        sops_info=sops_info(),
         start_date=start_date,
         path=rwanda_path,
         customers=customers
@@ -277,22 +331,21 @@ def build_rw_sops():
 
 def build_plano_report():
     create_plano_report(
-        branch_data=branch_data,
+        branch_data=branch_data(),
         path=rwanda_path,
-        registrations=registrations,
-        payments=payments,
-        all_planos=planos,
-        plano_orderscreen=plano_orderscreen,
-        all_orders=all_orders,
+        registrations=registrations(),
+        payments=payments(),
+        all_planos=planos(),
+        plano_orderscreen=plano_orderscreen(),
+        all_orders=all_orders(),
         selection=selection
     )
 
 
 def trigger_rwanda_smtp():
-    #This is the function to trigger SMTP.
-    #When country is the name of the function the report is for.
-    #If wanted to send for Rwanda then you would pass Rwanda as the argument for country parameter.
-    #To Test this report. please pass Test as the argument.
+    if not assert_integrity(engine=engine,database="voler_staging"):
+        print("We run into an error. Ensure all the tables are updated in data warehouse and try again.")
+        return
     send_draft_upload_report(
         selection=selection,
         path=rwanda_path,
@@ -301,8 +354,11 @@ def trigger_rwanda_smtp():
     )
 
 def trigger_rwanda_branches_smtp():
+    if not assert_integrity(engine=engine,database="voler_staging"):
+        print("We run into an error. Ensure all the tables are updated in data warehouse and try again.")
+        return
     send_to_branches(
-        branch_data=branch_data,
+        branch_data=branch_data(),
         selection=selection,
         path=rwanda_path,
         country="Rwanda",
@@ -311,6 +367,8 @@ def trigger_rwanda_branches_smtp():
 
 def clean_rwanda_folder():
     clean_folders(path=rwanda_path)
+
+
 
 
 

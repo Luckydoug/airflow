@@ -1,38 +1,16 @@
 import sys
 sys.path.append(".")
-
-#import libraries
-import json
-import psycopg2
 import requests
-import datetime
 import pandas as pd
 from datetime import date
-from pangres import upsert, DocsExampleTable
-from sqlalchemy import create_engine
+from pangres import upsert
 from airflow.models import Variable
-from pandas.io.json._normalize import nested_to_record 
-
-
-from sub_tasks.data.connect_mawingu import (pg_execute, pg_fetch_all, engine, pg_bulk_insert) 
-from sub_tasks.api_login.api_login import(login_uganda)
-
-
-# get session id
-SessionId = login_uganda()
-FromDate = '2018/01/01'
-# ToDate = date.today().strftime('%Y/%m/%d')
-
-# FromDate = date.today().strftime('%Y/%m/%d')
-ToDate = date.today().strftime('%Y/%m/%d')
-
-# api details
-pagecount_url = f"https://10.40.16.9:4300/UGANDA_BI/XSJS/BI_API.xsjs?pageType=GetBranchTargetCalculation&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
-pagecount_payload={}
-pagecount_headers = {}
+from sub_tasks.data.connect_mawingu import (engine) 
+from sub_tasks.libraries.utils import return_session_id
+from sub_tasks.libraries.utils import FromDate, ToDate
 
 def fetch_ajua_info ():
-    #get number of pages
+    SessionId = return_session_id(country="Uganda")   
     page_url = f"https://10.40.16.9:4300/UGANDA_BI/XSJS/BI_API.xsjs?pageType=GetAjuaInformation&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
     payload = {}
     headers = {}

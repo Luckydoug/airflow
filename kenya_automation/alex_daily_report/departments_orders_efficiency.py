@@ -39,17 +39,17 @@ from reports.draft_to_upload.utils.utils import get_report_frequency
 
 # PG Execute(Query)
 from sub_tasks.data.connect import (pg_execute, engine) 
-from sub_tasks.api_login.api_login import(login)
+# from sub_tasks.api_login.api_login import(login)
 conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", password="@Akb@rp@$$w0rtf31n")
 
 
 
 #Define the days that is yesterday
 today = datetime.date.today()
-yesterday = today - datetime.timedelta(days=1)
+# today = datetime.date(2024,1,25)
+yesterday = today - datetime.timedelta(days= 1)
 print(yesterday)
 formatted_date = yesterday.strftime('%Y-%m-%d')
-
 
 
 def update_calculated_field():

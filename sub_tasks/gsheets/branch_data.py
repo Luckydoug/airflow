@@ -26,7 +26,9 @@ def fetch_kenya_branch_data():
        "SRM Email": "srm_email",
        "Branch Manager": "branch_manager",
        "Front Desk": "front_desk",
-       "Zone": "zone"
+       "Zone": "zone",
+       "Retail Analyst": "retail_analyst",
+       "Analyst Email": "analyst_email"
     }, inplace=True)
 
     sh = sh[[
@@ -40,7 +42,9 @@ def fetch_kenya_branch_data():
         "srm_email",
         "branch_manager",
         "front_desk",
-        "zone"
+        "zone",
+        "retail_analyst",
+        "analyst_email"
     ]].set_index(['branch_code'])
 
     upsert(engine=engine,
@@ -50,9 +54,8 @@ def fetch_kenya_branch_data():
            if_row_exists='update',
            create_table=False
     )
+  
     
-
-
 def fetch_rwanda_branch_data():
     gc = pygsheets.authorize(
         service_file='/home/opticabi/airflow/dags/sub_tasks/gsheets/keys2.json'

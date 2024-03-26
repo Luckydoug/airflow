@@ -1,38 +1,23 @@
 import sys
 sys.path.append(".")
-
-#import libraries
-import json
-import psycopg2
 from datetime import date
 import requests
 import pandas as pd
 from datetime import date
-from pangres import upsert, DocsExampleTable
-
-from pandas.io.json._normalize import nested_to_record 
-from sqlalchemy import create_engine
+from pangres import upsert
 from airflow.models import Variable
-
-from sub_tasks.data.connect import (pg_execute, pg_fetch_all, engine, pg_bulk_insert) 
+from sub_tasks.data.connect import pg_execute,engine
 from sub_tasks.api_login.api_login import(login)
-
-# LOCAL_DIR = "/tmp/"
-#location = Variable.get("LOCAL_DIR", deserialize_json=True)
-#dimensionstore = location["dimensionstore"]
-
-# get session id
-SessionId = login()
-
-FromDate = date.today().strftime('%Y/%m/%d')
-ToDate = date.today().strftime('%Y/%m/%d')
-
-# api details
-pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetUserDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
-pagecount_payload={}
-pagecount_headers = {}
+from sub_tasks.libraries.utils import return_session_id
+from sub_tasks.libraries.utils import FromDate, ToDate
 
 def fetch_sap_users():
+    SessionId = return_session_id(country = "Kenya")
+    #SessionId = login()
+
+    pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetUserDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+    pagecount_payload={}
+    pagecount_headers = {}
 
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     data = pagecount_response.json()
@@ -55,7 +40,6 @@ def fetch_sap_users():
 
     print('TRANSFORMATION! Adding new columns')
 
-    # condition to add new column if optom or sales person
     usersdf.loc[usersdf['Department'] == 1, 'user_department_name'] = 'Sales Person' 
     usersdf.loc[usersdf['Department'] == 2, 'user_department_name'] = 'Optom' 
 
@@ -71,15 +55,6 @@ def fetch_sap_users():
                 'Spct_Len_Eligible':'spct_len_eligible', 
                 'SE_Optom':'se_optom'}
     ,inplace=True)
-
-    # query = """truncate mabawa_staging.source_users;"""
-    # query = pg_execute(query)
-    
-    # # usersdf.to_sql('source_users_staging', con = engine, schema='mabawa_staging', if_exists = 'append', index=False)
-    # table_name = 'source_users'
-    # schema = 'mabawa_staging'
-
-    # pg_bulk_insert(usersdf, table_name, schema)
 
     if usersdf.empty:
         print('INFO! Users dataframe is empty!')
@@ -110,4 +85,3 @@ def create_dim_users():
 
     query = pg_execute(query)
 
-# fetch_sap_users()

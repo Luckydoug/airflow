@@ -26,10 +26,10 @@ import time
 
 # PG Execute(Query)
 from sub_tasks.data.connect_voler import (pg_execute, pg_fetch_all, engine)  
-from sub_tasks.api_login.api_login import(login_rwanda)
+# from sub_tasks.api_login.api_login import(login_rwanda)
 
 conn = psycopg2.connect(host="10.40.16.19",database="voler", user="postgres", password="@Akb@rp@$$w0rtf31n")
-SessionId = login_rwanda()
+# SessionId = login_rwanda()
 
 #Define the days that is yesterday and when the month starts
 today = datetime.date.today()
@@ -274,6 +274,3 @@ def mtd_daily_net_payments_rwanda():
 
 
 
-# daily_net_payments_rwanda()
-# daily_mtd_payments_rwanda()
-# mtd_daily_net_payments_rwanda()

@@ -1,47 +1,24 @@
 import sys
 import numpy as np
 sys.path.append(".")
-
-# Import Libraries
-import json
 import psycopg2
-import requests
 import pandas as pd
-from sqlalchemy import create_engine
 from airflow.models import Variable
-from airflow.exceptions import AirflowException
-from pangres import upsert, DocsExampleTable
-from sqlalchemy import create_engine, text, VARCHAR
-from datetime import date
 import datetime
-import pytz
-import businesstimedelta
 import pandas as pd
-import holidays as pyholidays
-from workalendar.africa import Kenya
-import pygsheets
-import mysql.connector as database
-import urllib.parse
-import time
 
-# PG Execute(Query)
-from sub_tasks.data.connect import (pg_execute, engine) 
-from sub_tasks.api_login.api_login import(login)
 conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", password="@Akb@rp@$$w0rtf31n")
-
-SessionId = login()
-
-# Define the days that is yesterday and when the month starts
 today = datetime.date.today()
 yesterday = today - datetime.timedelta(days=1)
 start_month = datetime.date(today.year,today.month,1)
 
 # today = datetime.date.today()
-# yesterday = today - datetime.timedelta(days=1)
+# yesterday = today - datetime.timedelta(days=8)
 # start_month = datetime.date(yesterday.year,yesterday.month,1)
-# print(yesterday)
+
 
 def daily_net_payments():
+  
     payments = """
     SELECT doc_entry, doc_no, user_sign, createdon, createdat,case
         when length(createdat::text) in (1,2) then null
@@ -270,11 +247,10 @@ def mtd_daily_net_payments():
     netsalesnew = netsales[["Branch","MTD Cash","MTD Insurance","MTD Net Sales"]] 
     print("printed") 
     print(netsalesnew)
-    #Save the data in an excel file
     import xlsxwriter
     print(xlsxwriter.__version__)
 
-    #Create a Pandas Excel writer using XlsxWriter as the engine.
+   
     with pd.ExcelWriter(r"/home/opticabi/Documents/optica_reports/BranchWise Net Sales Report.xlsx", engine='xlsxwriter') as writer:    
         for group, dataframe in paymentsmtd_daily.groupby('Create_Date'):
             print(group)
@@ -290,5 +266,4 @@ def mtd_daily_net_payments():
 # daily_net_payments()
 # daily_mtd_payments()
 # mtd_daily_net_payments()
-
 

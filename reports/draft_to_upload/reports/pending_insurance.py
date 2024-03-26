@@ -19,7 +19,8 @@ def create_pending_insurance(
     )
     pending = merged_data[merged_data["Request"].isna()].copy()
     pending["ET Date"] = pd.to_datetime(pending["ET Date"], format="%Y-%m-%d").dt.strftime("%Y-%m-%d")
-    
+
+
     with pd.ExcelWriter(f"{path}draft_upload/pending_insurance.xlsx") as writer:
         pending.to_excel(writer, sheet_name = "Data", index = False)
     

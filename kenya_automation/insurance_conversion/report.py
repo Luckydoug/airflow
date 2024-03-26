@@ -1,6 +1,7 @@
 from airflow.models import variable
 from reports.insurance_conversion.reports.conversion import create_insurance_conversion
 from reports.insurance_conversion.data.fetch_data import FetchData
+from sub_tasks.libraries.utils import assert_integrity
 from reports.insurance_conversion.smtp.smtp import (
     send_to_management, 
     mop_folder, 
@@ -63,7 +64,7 @@ FETCH SALES ORDERS
 """
 def sales_orders():
     sales_orders = data_fetcher.fetch_sales_orders(
-        start_date="2023-04-27"
+        start_date="2024-01-01"
     )
 
     return sales_orders
@@ -120,6 +121,9 @@ WHEN YOU WANT TO SEND A TEST EMAIL
 PASS "Test" AS AN ARGUMENT TO THE country PARAMETER
 """
 def send_to_kenya_management() -> None:
+    if not assert_integrity(engine=engine,database="mabawa_staging"):
+        print("We run into an error. Ensure all the tables are updated in data warehouse and try again.")
+        return
     send_to_management(
         selection=selection,
         country = "Kenya",
@@ -131,6 +135,9 @@ SEND THE REPORT THE THE BRANCHES
 """
 
 def send_to_kenya_branches() -> None:
+    if not assert_integrity(engine=engine,database="mabawa_staging"):
+        print("We run into an error. Ensure all the tables are updated in data warehouse and try again.")
+        return
     send_to_branches(
         path=path,
         branch_data=branch_data(),
@@ -146,9 +153,6 @@ def clean_kenya_folder():
     mop_folder(path=path)
 
 
-
-
-
 """
 DOUGLAS FROM
 OPTICA DATA TEAM
@@ -160,6 +164,4 @@ EPHASIZING ON BEST PRACTICES TO
 REDUCE LOAD ON THE SERVER
 AS ACHIEVED BY OPTIMIZATION
 """
-
-
 

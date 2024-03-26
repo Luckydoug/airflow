@@ -7,13 +7,13 @@ from reports.conversion.data.fetch_data import (
     fetch_branch_data
 )
 
-from sub_tasks.libraries.utils import (create_unganda_engine, uganda_path)
+from sub_tasks.libraries.utils import (create_unganda_engine, uganda_path, assert_integrity)
 from reports.conversion.reports.viewrx import (create_views_conversion)
 from reports.conversion.utils.utils import (return_conversion_daterange)
 from reports.conversion.utils.utils import (get_conversion_frequency)
 from reports.conversion.reports.eyetests import (create_eyetests_conversion)
 from reports.conversion.reports.registrations import (create_registrations_conversion)
-from reports.conversion.smtp.smtp import (
+from reports.conversion.smtp.smtpcopy import (
     send_management_report,
     send_branches_report,
     clean_registrations,
@@ -155,6 +155,14 @@ Pass "Test" as an argument to the country parameter
 
 
 def trigger_uganda_management_smtp():
+    if not assert_integrity(engine=engine,database="mawingu_staging"):
+        print("We run into an error. Ensure all the tables are updated in data warehouse and try again.")
+        return
+    
+    """
+    At this point we check the intergrity of the report before sending it.
+    """
+    
     send_management_report(
         path=uganda_path,
         country="Uganda",
@@ -163,6 +171,10 @@ def trigger_uganda_management_smtp():
 
 
 def trigger_uganda_branches_smtp():
+    if not assert_integrity(engine=engine,database="mawingu_staging"):
+        print("We run into an error. Ensure all the tables are updated in data warehouse and try again.")
+        return
+    
     send_branches_report(
         path=uganda_path,
         branch_data=branch_data(),
@@ -182,7 +194,6 @@ def clean_uganda_registrations():
 def clean_uganda_eyetests():
     clean_eyetests(path=uganda_path)
 
-
 def clean_uganda_views():
     clean_views(path=uganda_path)
 
@@ -197,3 +208,8 @@ Let's keep it flowing
 
 # Written and Curated by Douglas
 # We shall remember.
+# build_uganda_et_conversion()
+# build_uganda_reg_conversion()
+# build_uganda_viewrx_conversion()
+# trigger_uganda_branches_smtp()
+

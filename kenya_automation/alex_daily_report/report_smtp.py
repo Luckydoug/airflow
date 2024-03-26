@@ -79,19 +79,24 @@ def order_efficiency_smtp():
     #control_damge_supply
     control_to_store_damge_supply = pd.read_excel(damage_supply_efficiency, sheet_name="control to store")
     store_to_control_damge_supply = pd.read_excel(damage_supply_efficiency, sheet_name="store to control")
-    departments = ["Main store","Designer","Lens store","Control","Packaging","BRS","BRS_UG","BRS_RW"]
+    # departments = ["Main store","Designer","Lens store","Control","Packaging","BRS","BRS_UG","BRS_RW"]
+    departments = ["Main store","Designer","Lens store","Control","Packaging","BRS","BRS_UG"]
 
     #lensstore awaiting efficiency
     lensstore_awaiting_efficiency = r"/home/opticabi/Documents/optica_reports/order_efficiency/lensstoreawaiting.xlsx"
     lensstore_awaiting_efficiency_sheet="Awaiting feedback"
     lensstore_awaiting = pd.read_excel(lensstore_awaiting_efficiency, sheet_name=lensstore_awaiting_efficiency_sheet)
 
+    #receiving to lenstore
+    receiving_lenstore = pd.read_excel(r"/home/opticabi/Documents/optica_reports/order_efficiency/lensstoreawaiting.xlsx",sheet_name='From Receiving')
+
     #cutoff efficiency
     cutoff_efficiency_summary = r"/home/opticabi/Documents/optica_reports/order_efficiency/Cutoff_Summary.xlsx"
     print(cutoff_efficiency_summary)
     cutoff_efficiency_full= r"/home/opticabi/Documents/optica_reports/order_efficiency/cutoff_Full_Report.xlsx"
     
-    cutoff_efficiency_summary_sheet_names =  ["Main","Designer","Lens","Control","Packaging","BRS","BRS_UG","BRS_RW"]
+    # cutoff_efficiency_summary_sheet_names =  ["Main","Designer","Lens","Control","Packaging","BRS","BRS_UG","BRS_RW"]
+    cutoff_efficiency_summary_sheet_names =  ["Main","Designer","Lens","Control","Packaging","BRS","BRS_UG"]
     cutoff_efficiency_summary_dfs = []
     for sheet_name in cutoff_efficiency_summary_sheet_names:
         print(sheet_name)
@@ -100,7 +105,8 @@ def order_efficiency_smtp():
         
     cutoff_efficiency_summary1 = cutoff_efficiency_summary_dfs[0]
 
-    cutoff_efficiency_full_sheet_names =  ["MainStore Data","DesignerStore Data","Lens Data","ControlRoom Data","Packaging Data","BRS Data","BRS Data UG","BRS Data RW"]
+    # cutoff_efficiency_full_sheet_names =  ["MainStore Data","DesignerStore Data","Lens Data","ControlRoom Data","Packaging Data","BRS Data","BRS Data UG","BRS Data RW"]
+    cutoff_efficiency_full_sheet_names =  ["MainStore Data","DesignerStore Data","Lens Data","ControlRoom Data","Packaging Data","BRS Data","BRS Data UG"]
     cutoff_efficiency_full_dfs = []
     for sheet_name in cutoff_efficiency_full_sheet_names:
         print(sheet_name)
@@ -123,13 +129,14 @@ def order_efficiency_smtp():
     replacements_efficiency_summary1 = replacements_efficiency_summary_dfs[0]
 
     today = date.today()
+    # today=date(2024,1,25)
     report_date = today
     if today.weekday() == 0:  # 0 means Monday
         report_date = (today - relativedelta(days=2)).strftime('%d-%m-%Y')
     else:
         report_date = (today - relativedelta(days=1)).strftime('%d-%m-%Y')
 
-    # report_date = '2023-10-13'
+    # report_date = '29-12-2023'
 
     i=0
     j=0
@@ -165,6 +172,8 @@ def order_efficiency_smtp():
         table9html = ""
         table10heading = ""
         table10html = ""
+        table11heading = ""
+        table11html = ""
 
         if department == "BRS":
             table1heading = "Cut Off Summary"
@@ -205,24 +214,24 @@ def order_efficiency_smtp():
                 table4heading = "cut off delays"
                 table4html = table4.to_html(index=False)
 
-            table5heading = "Cut Off Summary - Rwanda"
-            table5 = cutoff_efficiency_summary_dfs[7].fillna("")
-            table5html = table5.to_html(index=False,formatters={
-            # 'var1': '{:,.2f}'.format,
-                    '%_ge Efficiency': '{:,.2%}'.format
-                })
-            brs_cutoff_full_rw = cutoff_efficiency_full_dfs[7].rename(columns = {'Unnamed: 0':''})
-            table6 = brs_cutoff_full_rw[brs_cutoff_full_rw["BRS CUT OFF"] == 0][['Item No.', 'Item/Service Description', 'ITR Status',
-                                                                            'ITR Number', 'Internal Number', 'ITR Date', 'Exchange Type',
-                                                                            'Sales Order number', 'Sales Order entry', 'Sales Branch',
-                                                                            'Draft order entry', 'Order Number', 'Creation Date',
-                                                                            'Creatn Time - Incl. Secs', 'Picker Name', 'Branch', 'Type', 'Max',
-                                                                            'Warehouse Name', 'Address', 'BRS Cut', 'Lens Store Cut',
-                                                                            'Designer Store Cut', 'Main Store Cut', 'Control Cut', 'Packaging Cut',
-                                                                            'Region', 'BRS CUT OFF', 'DEPARTMENT', 'DEPARTMENT 2']]
-            if not table6.empty:  
-                table6heading = "cut off delays"
-                table6html = table6.to_html(index=False)    
+            # table5heading = "Cut Off Summary - Rwanda"
+            # table5 = cutoff_efficiency_summary_dfs[7].fillna("")
+            # table5html = table5.to_html(index=False,formatters={
+            # # 'var1': '{:,.2f}'.format,
+            #         '%_ge Efficiency': '{:,.2%}'.format
+            #     })
+            # brs_cutoff_full_rw = cutoff_efficiency_full_dfs[7].rename(columns = {'Unnamed: 0':''})
+            # table6 = brs_cutoff_full_rw[brs_cutoff_full_rw["BRS CUT OFF"] == 0][['Item No.', 'Item/Service Description', 'ITR Status',
+            #                                                                 'ITR Number', 'Internal Number', 'ITR Date', 'Exchange Type',
+            #                                                                 'Sales Order number', 'Sales Order entry', 'Sales Branch',
+            #                                                                 'Draft order entry', 'Order Number', 'Creation Date',
+            #                                                                 'Creatn Time - Incl. Secs', 'Picker Name', 'Branch', 'Type', 'Max',
+            #                                                                 'Warehouse Name', 'Address', 'BRS Cut', 'Lens Store Cut',
+            #                                                                 'Designer Store Cut', 'Main Store Cut', 'Control Cut', 'Packaging Cut',
+            #                                                                 'Region', 'BRS CUT OFF', 'DEPARTMENT', 'DEPARTMENT 2']]
+            # if not table6.empty:  
+            #     table6heading = "cut off delays"
+            #     table6html = table6.to_html(index=False)    
         elif department == "Packaging":
             table1heading = "Order Efficiency"
             table1 = order_efficiency_dfs[12].iloc[:4, :].rename(columns = {'Unnamed: 0':''})
@@ -347,7 +356,8 @@ def order_efficiency_smtp():
                 table10heading = """<p style="color:blue">Second Damage Supply Time</p>
                             <p style="font_weight:italic">Rejected frame sent to frame to reissued frame for order</p>"""
                 table10html = table10.to_html(index=False) 
-
+            table11heading = "Sent to LensStore to Received by LensStore"
+            table11html = receiving_lenstore.to_html(index=False)
         elif department == "Designer":
             table1heading = "Order Efficiency"
             table1 = order_efficiency_dfs[3].iloc[:4, :].rename(columns = {'Unnamed: 0':''})
@@ -449,7 +459,6 @@ def order_efficiency_smtp():
                 <body>
                     <p>Dear {departmemt},</p>
                         <p>View your performance report for the stated date.</p>
-                        <br>
                         <p>Kindly comment on your performance. </p>
                         <p><u><b>{table1heading}</b></u></p>
                         <table>{table1html}</table>
@@ -459,6 +468,9 @@ def order_efficiency_smtp():
                         <br>
                         <p><u><b>{table3heading}</b></u></p>
                         <table>{table3html}</table>
+                        <br>
+                        <p><u><b>{table11heading}</b></u></p>
+                        <table>{table11html}</table>
                         <br>
                         <p><u><b>{table4heading}</b></u></p>
                         <table>{table4html}</table>
@@ -488,7 +500,7 @@ def order_efficiency_smtp():
                 table4html=table4html,table4heading = table4heading,table5html=table5html,table5heading = table5heading,
                 table6html=table6html,table6heading = table6heading,table7html=table7html,table7heading = table7heading,
                 table8html=table8html,table8heading = table8heading,table9html=table9html,table9heading = table9heading,
-                table10html = table10html,table10heading = table10heading)
+                table10html = table10html,table10heading = table10heading, table11heading=table11heading,table11html=table11html)
 
             # Define a function to attach files as MIMEApplication to the email
             ##############################################################
@@ -512,15 +524,17 @@ def order_efficiency_smtp():
         password = yourpassword
 
         # receiver_email = ['tstbranch@gmail.com']
-        if department == "BRS":
-            receiver_email = ['tstbranch@gmail.com']
-            receiver_email = [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','shyam@optica.africa','stock@optica.africa','wanjiru.kinyara@optica.africa','nicholas.muthui@optica.africa ']
+        # receiver_email = ['ian.gathumbi@optica.africa']
 
+        if department == "BRS":
+            # receiver_email = ['tstbranch@gmail.com']
+            receiver_email = [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','shyam@optica.africa','stock@optica.africa','wanjiru.kinyara@optica.africa','nicholas.muthui@optica.africa ']
         else:    
             if pd.to_numeric((table1['Total'].iloc[-1]).replace("%","")) < 95:
+                # receiver_email = ['tstbranch@gmail.com']
                 receiver_email = [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','shyam@optica.africa','yuri@optica.africa','wanjiru.kinyara@optica.africa','nicholas.muthui@optica.africa ']
-
             else:
+                # receiver_email = ['tstbranch@gmail.com']
                 receiver_email = [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','shyam@optica.africa','wanjiru.kinyara@optica.africa','nicholas.muthui@optica.africa ']
 
 

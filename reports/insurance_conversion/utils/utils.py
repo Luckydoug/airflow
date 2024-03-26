@@ -236,3 +236,45 @@ def create_branch_report(
     """
 
     return branches_final
+
+
+
+"""
+We have some accomplishments here from the Data Team;
+Finally we are able to highlight a multi index.
+See how:
+"""
+
+def highlight_multindex(val):
+    if isinstance(val, str):
+        if 'f' in val and '-' not in val:
+            target = 100
+            if float(val.split("%")[0]) >= target:
+                return 'background-color: green'
+            return 'background-color: red'
+        elif 'p' in val and '-' not in val:
+            target = 95
+            if float(val.split("%")[0]) >= target:
+                return  'background-color: green'
+            return 'background-color: red'
+        elif 'u' in val and '-' not in val:
+            target = 100
+            if float(val.split("%")[0]) >= target:
+                return 'background-color: green'
+            return 'background-color: red'
+        elif 'd' in val and '-' not in val:
+            target = 20
+            if float(val.split("%")[0]) >= target:
+                return 'background-color: green'
+            return 'background-color: red'
+    return '' 
+
+
+def clean_final_dataframe(val):
+    if str(val).startswith("-"):
+        return ""
+    if any(char in str(val) for char in ['p', 'f', 'd', 'u']):
+        value = str(val).split("%")[0] + "%"
+        return value[:-3] + "%"
+    return val
+

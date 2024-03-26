@@ -78,6 +78,7 @@ branch_data = fetch_branch_data(
 def push_uganda_efficiency_data():
     working_hours = fetch_gsheet_data()["ug_working_hours"]
     date = return_report_daterange(selection="Daily")
+    date = '2024-02-01'
     date = pd.to_datetime(date, format="%Y-%m-%d").date()
     push_insurance_efficiency_data(
         engine=engine,
@@ -144,3 +145,4 @@ def trigger_efficiency_smtp():
 def clean_uganda_folder():
     clean_folders(path=uganda_path)
 
+push_uganda_efficiency_data()

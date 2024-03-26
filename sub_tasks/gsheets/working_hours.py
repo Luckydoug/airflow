@@ -37,6 +37,7 @@ def fetch_kenya_working_hours():
            create_table=False
     )
 
+
 def fetch_uganda_working_hours():
     uganda_engine = create_unganda_engine()
     gc = pygsheets.authorize(

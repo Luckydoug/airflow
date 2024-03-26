@@ -40,7 +40,7 @@ from reports.draft_to_upload.utils.utils import get_report_frequency
 
 # PG Execute(Query)
 from sub_tasks.data.connect import (pg_execute, engine) 
-from sub_tasks.api_login.api_login import(login)
+# from sub_tasks.api_login.api_login import(login)
 conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", password="@Akb@rp@$$w0rtf31n")
 
 
@@ -57,8 +57,8 @@ start_date = return_report_daterange(selection)
 print(datetime.datetime.today())
 print(end_date)
 
-# start_date = '2023-11-13'
-# end_date = '2023-11-19'
+# start_date = '2024-02-05'
+# end_date = '2024-02-11'
 
 def rejections():
     branch_data = fetch_gsheet_data()["branch_data"]
@@ -260,12 +260,15 @@ def rejections():
 
     to_date = get_todate()
 
-    # to_date = '2023-11-13'
-    # till_date = '2023-11-19'
+    # to_date = '2024-02-05'
+    # till_date = '2024-02-11'
 
     sender_email = os.getenv("wairimu_email")
     # receiver_email = ['wairimu@optica.africa']
-    receiver_email = ['wairimu@optica.africa','christopher@optica.africa','andrew@optica.africa']
+    receiver_email = ['wairimu@optica.africa'
+                    #   'christopher@optica.africa',
+                    #   'andrew@optica.africa'
+                      ]
     email_message = MIMEMultipart()
     email_message["From"] = sender_email
     email_message["To"] = r','.join(receiver_email)

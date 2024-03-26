@@ -1,44 +1,23 @@
 import sys
-
-from numpy import nan
 sys.path.append(".")
-
-#import libraries
-import json
 import psycopg2
 import requests
-import datetime
 import pandas as pd
-from io import StringIO
 from airflow.models import Variable 
-from sqlalchemy import create_engine
 from datetime import date, timedelta
-from pangres import upsert, DocsExampleTable
-from sqlalchemy import create_engine, text, VARCHAR
-from pandas.io.json._normalize import nested_to_record 
-
+from pangres import upsert
 from sub_tasks.data.connect import (pg_execute, engine) 
-from sub_tasks.api_login.api_login import(login)
-
+from sub_tasks.libraries.utils import return_session_id
 conn = psycopg2.connect(host="10.40.16.19",database="mawingu", user="postgres", password="@Akb@rp@$$w0rtf31n")
+from sub_tasks.libraries.utils import FromDate, ToDate
 
-SessionId = login()
-
-# FromDate = '2023/06/01'
-# ToDate = '2020/12/31'
-
-today = date.today()
-pastdate = today - timedelta(days=1)
-FromDate = pastdate.strftime('%Y/%m/%d')
-ToDate = date.today().strftime('%Y/%m/%d')
-
-# api details
-
-pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetOrders&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
-pagecount_payload={}
-pagecount_headers = {}
 
 def fetch_sap_orders():
+    # SessionId = login()
+    SessionId = return_session_id(country = "Kenya")
+    pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetOrders&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+    pagecount_payload={}
+    pagecount_headers = {}
 
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     data = pagecount_response.json()
@@ -198,7 +177,6 @@ def update_source_orders_line():
 
 
 def update_mviews_salesorders_with_item_whse():
-
     query = """
     truncate mabawa_mviews.salesorders_with_item_whse;
     insert into mabawa_mviews.salesorders_with_item_whse
@@ -244,7 +222,6 @@ def create_mviews_salesorders_line_cl_and_acc():
     print('create_mviews_salesorders_line_cl_and_acc done')
 
 def create_order_live(): 
-
     query = """
     truncate mabawa_dw.fact_orders_header;
     insert into mabawa_dw.fact_orders_header
@@ -277,7 +254,7 @@ def create_fact_orders_header_with_categories():
     truncate mabawa_dw.fact_orders_header_with_categories;
     insert into mabawa_dw.fact_orders_header_with_categories
     SELECT 
-        internal_number, document_number, order_canceled, document_status, warehouse_status, posting_date, 
+        internal_number, document_number, order_canceled, document_status, warehouse_status, posting_date,  
         cust_vendor_code, total_tax, order_document_discount, order_total_discount, doc_total, generation_time, 
         sales_employee, tax_amt_sc, doc_total_sc, user_signature, creation_date, creation_time_int, creation_time, 
         creation_datetime, presc_spec, advanced_payment, remaining_payment, orderscreen, order_branch, presc_no, 
@@ -289,7 +266,8 @@ def create_fact_orders_header_with_categories():
 
     print("create_fact_orders_header_with_categories")
 
-fetch_sap_orders()
+
+# fetch_sap_orders()
 # source_orders_header_with_prescriptions()
 # update_source_orders_line()
 # update_mviews_salesorders_with_item_whse()

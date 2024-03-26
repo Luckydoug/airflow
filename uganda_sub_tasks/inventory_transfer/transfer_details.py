@@ -23,24 +23,23 @@ from pandas.io.json._normalize import nested_to_record
 
 from sub_tasks.data.connect_mawingu import (pg_execute, pg_fetch_all, engine, pg_bulk_insert) 
 from sub_tasks.api_login.api_login import(login_uganda)
-
-SessionId = login_uganda()
+from sub_tasks.libraries.utils import return_session_id
 
 # FromDate = '2022/01/01'
 # # ToDate = '2022/04/30'
 
 today = date.today()
-pastdate = today - timedelta(days=2)
+pastdate = today - timedelta(days=7)
 FromDate = pastdate.strftime('%Y/%m/%d')
 ToDate = date.today().strftime('%Y/%m/%d')
 
-
-# api details
-pagecount_url = f"https://10.40.16.9:4300/UGANDA_BI/XSJS/BI_API.xsjs?pageType=GetInventoryTransferDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
-pagecount_payload={}
-pagecount_headers = {}
-
 def fetch_sap_inventory_transfer():
+    SessionId = return_session_id(country="Uganda")
+    #SessionId = login_uganda()
+
+    pagecount_url = f"https://10.40.16.9:4300/UGANDA_BI/XSJS/BI_API.xsjs?pageType=GetInventoryTransferDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+    pagecount_payload={}
+    pagecount_headers = {}
 
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     data = pagecount_response.json()

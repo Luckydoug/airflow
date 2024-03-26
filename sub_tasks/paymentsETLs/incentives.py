@@ -1,26 +1,8 @@
 import sys
-
-from numpy import nan
 sys.path.append(".")
-
-#import libraries
-from io import StringIO
-import json
 import psycopg2
-import requests
-import pandas as pd
-from pandas.io.json._normalize import nested_to_record 
-from sqlalchemy import create_engine
 from airflow.models import Variable
-from pandas.io.json._normalize import nested_to_record 
-from pangres import upsert, DocsExampleTable
-from sqlalchemy import create_engine, text, VARCHAR
-from datetime import date, timedelta
-import datetime
-
-
-from sub_tasks.data.connect import (pg_execute, engine) 
-from sub_tasks.api_login.api_login import(login)
+from sub_tasks.data.connect import pg_execute
 conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", password="@Akb@rp@$$w0rtf31n")
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -42,6 +24,9 @@ def create_incentive_cash():
 def create_incentive_insurance():
     
     query = """
+    update mabawa_staging.source_orders_header
+    set creation_date = '2024-02-29'
+    where draft_orderno = '245502222';
     refresh materialized view mabawa_mviews.incentive_insurance2;
     insert into mabawa_dw.update_log(table_name, update_time) values('incentives', default);
     """
@@ -50,5 +35,3 @@ def create_incentive_insurance():
     print('insurance incentive done')
     
    
-# create_incentive_cash()
-# create_incentive_insurance()

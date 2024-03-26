@@ -7,12 +7,11 @@ from airflow.utils.task_group import TaskGroup
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python_operator import PythonOperator
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
-
 from kenya_automation.delayed_and_pending_ITRs.delayed_and_pending_ITRs import (manipulate_delayed_and_pending_ITRs,smtp)
 from sub_tasks.inventory_transfer.itr_logs import (fetch_sap_itr_logs)
 from sub_tasks.inventory_transfer.transfer_request import (fetch_sap_invt_transfer_request)
 from sub_tasks.inventory_transfer.transfer_details import (fetch_sap_inventory_transfer)
-# from tmp.python_test
+
 DAG_ID = 'Delayed_And_Pending_ITRs_ETL_V1'
 
 default_args = {

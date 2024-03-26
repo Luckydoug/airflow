@@ -1,37 +1,29 @@
 import sys
 sys.path.append(".")
-
-#import libraries
-import json
-import psycopg2
 import requests
-import datetime
 import pandas as pd
 from datetime import date
-from pangres import upsert, DocsExampleTable
-from sqlalchemy import create_engine
+from pangres import upsert
 from airflow.models import Variable
-from pandas.io.json._normalize import nested_to_record 
+from sub_tasks.libraries.utils import createe_engine
 
-
-from sub_tasks.data.connect import (pg_execute, pg_fetch_all, engine, pg_bulk_insert) 
+from sub_tasks.data.connect import engine
 from sub_tasks.api_login.api_login import(login)
+from sub_tasks.libraries.utils import return_session_id
 
-
-# get session id
-SessionId = login()
-FromDate = '2018/01/01'
+# FromDate = '2018/01/01'
 # ToDate = date.today().strftime('%Y/%m/%d')
-
-# FromDate = date.today().strftime('%Y/%m/%d')
+FromDate = '2023/12/01'
 ToDate = date.today().strftime('%Y/%m/%d')
 
-# api details
-pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetBranchTargetCalculation&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
-pagecount_payload={}
-pagecount_headers = {}
 
 def fetch_sap_branch_targets():
+
+    # SessionId = login()
+    SessionId = return_session_id(country = "Kenya")
+    pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetBranchTargetCalculation&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+    pagecount_payload={}
+    pagecount_headers = {}
 
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     data = pagecount_response.json()
@@ -51,9 +43,6 @@ def fetch_sap_branch_targets():
         stripped_targets_df = pd.DataFrame.from_dict(stripped_targets)
         targets_df = targets_df.append(stripped_targets_df, ignore_index=True) 
     
-
-    
-    # This will check if there was no fetched data to prevent error
 
     if targets_df.empty:
         print('INFO! Targets dataframe is empty!')
@@ -90,8 +79,6 @@ def fetch_sap_branch_targets():
         table_name='source_targets',
         if_row_exists='update',
         create_table=False)
-    
-        # targets_details.to_sql('source_targets', con = engine, schema='mabawa_staging', if_exists = 'append', index=False)
 
 
         '''
@@ -110,7 +97,6 @@ def fetch_sap_branch_targets():
 
         print('INFO! %d rows' %(len(itemdetails_df)))
         
-        # Convert to integer and ensure that default is 0. this is because there are nulls
         itemdetails_df['Staff_Code'] = pd.to_numeric(itemdetails_df['Staff_Code'], errors='coerce').fillna(0)
 
         itemdetails_df.rename (columns = {
@@ -137,9 +123,6 @@ def fetch_sap_branch_targets():
         if_row_exists='update',
         create_table=False)
 
-        # itemdetails_df.to_sql('source_targets_details', con = engine, schema='mabawa_staging', if_exists = 'append', index=False)
-
     return "insert targets successfull"
 
-
-fetch_sap_branch_targets()
+# fetch_sap_branch_targets()

@@ -110,3 +110,12 @@ def refresh_nps_summary():
 
     query = pg_execute(query)
     print('refresh_nps_summary done')
+
+
+def refresh_all_activity():
+    query = """
+    refresh materialized view mawingu_mviews.all_activity; 
+    """
+
+    query = pg_execute(query)
+    print('refresh_all_activity done')

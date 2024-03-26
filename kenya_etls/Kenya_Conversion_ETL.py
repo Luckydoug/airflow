@@ -12,7 +12,6 @@ DAG_ID = 'Kenya_Conversion_ETL'
 
 default_args = {
     'owner': 'Data Team',
-    # 'depends_on_past': False,
     'retries': 3,
     'retry_delay': timedelta(seconds=15),
     'start_date': datetime(2021, 12, 13),

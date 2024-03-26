@@ -91,7 +91,7 @@ with DAG(
             provide_context = True
         )
 
-        fetch_sap_orderscreendetails >> update_to_source_orderscreen    
+        fetch_sap_orderscreendetailsc1 >> update_to_source_orderscreenc1    
 
     with TaskGroup('payments') as payments:
 

@@ -35,16 +35,15 @@ from sub_tasks.libraries.utils import get_todate,send_report,assert_date_modifie
 
 # PG Execute(Query)
 from sub_tasks.data.connect import (pg_execute, engine) 
-from sub_tasks.api_login.api_login import(login)
+# from sub_tasks.api_login.api_login import(login)
 conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", password="@Akb@rp@$$w0rtf31n")
 
 
 #Define the days that is yesterday
 today = datetime.date.today()
+# today = datetime.date(2024,1,25)
 yesterday = today - datetime.timedelta(days=1)
 formatted_date = yesterday.strftime('%Y-%m-%d')
-
-
 
 
 def awaiting_feedback():
@@ -128,9 +127,32 @@ def awaiting_feedback():
         final = pd.DataFrame(columns=columns) 
 
 
+    df_q = """      
+    select 
+        case when rcvng_to_lnsstr::date = rcvd_lnsstr::date then extract('hour' from rcvng_to_lnsstr) else 0 end as hr,
+        case
+            when tm_to_rcv between 0 and 10 then '0 - 10 Mins'
+            when tm_to_rcv between 11 and 20 then '11 - 20 Mins'
+            when tm_to_rcv between 21 and 30 then '21 - 30 Mins'
+            else '+30 Mins'
+        end as queue_time_category,
+        count(*) as "Total Orders"
+    from mabawa_mviews.lensstore_efficiency_from_receiving
+    where rcvd_lnsstr::date = %(From)s
+    group by hr, queue_time_category
+    """
+
+    df = pd.read_sql(df_q,con=conn,params={'From':yesterday})
+
+    pvt = pd.pivot_table(df,values='Total Orders',index='hr',columns='queue_time_category',aggfunc='sum',margins=True)
+    pvt1 = pd.pivot_table(df,values='Total Orders',index='hr',aggfunc='sum',margins=True)
+
+    df = pd.merge(pvt1,(pvt.add_suffix(' %').div(pvt1.iloc[:, 0],axis=0) * 100).round(0),left_index=True,right_index=True).fillna(0).drop('All %',axis=1)
+    df = df[['Total Orders', '0 - 10 Mins %', '11 - 20 Mins %', '21 - 30 Mins %', '+30 Mins %']]
+
     with pd.ExcelWriter("/home/opticabi/Documents/optica_reports/order_efficiency/lensstoreawaiting.xlsx", engine='xlsxwriter') as writer:
         final.to_excel(writer, sheet_name='Awaiting feedback', index=False)
-
+        df.to_excel(writer, sheet_name='From Receiving',index=True)
     writer.save()    
 
     def save_xls(list_dfs, xls_path):
@@ -138,7 +160,5 @@ def awaiting_feedback():
             for n, df in enumerate(list_dfs):
                 df.to_excel(writer,'sheet%s' % n)
             writer.save()
-
-
   
 # awaiting_feedback()

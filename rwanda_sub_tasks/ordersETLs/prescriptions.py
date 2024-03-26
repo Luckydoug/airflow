@@ -1,49 +1,22 @@
 import sys
-
-from numpy import nan
 sys.path.append(".")
-
-#import libraries
-from io import StringIO
-import json
-import psycopg2
 import requests
 import pandas as pd
-from pandas.io.json._normalize import nested_to_record 
-from sqlalchemy import create_engine
 from airflow.models import Variable
-from pandas.io.json._normalize import nested_to_record 
-from pangres import upsert, DocsExampleTable
-from sqlalchemy import create_engine, text, VARCHAR
+from pangres import upsert
 from datetime import date, timedelta
-import datetime
+from sub_tasks.data.connect_voler import engine
+from sub_tasks.libraries.utils import return_session_id
+from sub_tasks.libraries.utils import FromDate, ToDate
 
-
-from sub_tasks.data.connect_voler import (pg_execute, pg_fetch_all, engine)  
-from sub_tasks.api_login.api_login import(login_rwanda)
-
-
-SessionId = login_rwanda()
-
-FromDate = '2023/08/01'
-# ToDate = '2023/05/04'
-
-today = date.today()
-# pastdate = today - timedelta(days=1)
-# FromDate = pastdate.strftime('%Y/%m/%d')
-ToDate = date.today().strftime('%Y/%m/%d')
-
-print(FromDate)
-print(ToDate)
-
-#api details
-pagecount_url = f"https://10.40.16.9:4300/RWANDA_BI/XSJS/BI_API.xsjs?pageType=GetPrescriptionDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
-pagecount_payload={}
-pagecount_headers = {}
-
-# fetch order checking details
 def fetch_prescriptions ():
-    
+    SessionId = return_session_id(country = "Rwanda")    
+
+    # api details
+    pagecount_url = f"https://10.40.16.9:4300/RWANDA_BI/XSJS/BI_API.xsjs?pageType=GetPrescriptionDetails&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+    pagecount_payload={}
+    pagecount_headers = {}
+
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     data = pagecount_response.json()
     pages = data['result']['body']['recs']['PagesCount']

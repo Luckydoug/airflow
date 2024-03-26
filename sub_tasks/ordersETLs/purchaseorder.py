@@ -1,43 +1,21 @@
 import sys
-
-from numpy import nan
 sys.path.append(".")
-
-#import libraries
-import json
-import psycopg2
 import requests
-import datetime
 import pandas as pd
-from io import StringIO
 from airflow.models import Variable 
-from sqlalchemy import create_engine
 from datetime import date, timedelta
-from pangres import upsert, DocsExampleTable
-from sqlalchemy import create_engine, text, VARCHAR
-from pandas.io.json._normalize import nested_to_record 
-
-from sub_tasks.data.connect import (pg_execute, engine) 
-from sub_tasks.api_login.api_login import(login)
-
-
-SessionId = login()
-
-# FromDate = '2023/05/01'
-# ToDate = '2023/03/31'
-
-today = date.today()
-pastdate = today - timedelta(days=1)
-FromDate = pastdate.strftime('%Y/%m/%d')
-ToDate = date.today().strftime('%Y/%m/%d')
-
-# api details
-
-pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetPurchaseOrders&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
-pagecount_payload={}
-pagecount_headers = {}
+from pangres import upsert
+from sub_tasks.data.connect import engine
+from sub_tasks.libraries.utils import return_session_id
+from sub_tasks.libraries.utils import FromDate, ToDate
 
 def fetch_purchase_orders():
+    
+    # SessionId = login()
+    SessionId = return_session_id(country = "Kenya")
+    pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetPurchaseOrders&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+    pagecount_payload={}
+    pagecount_headers = {}
 
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     data = pagecount_response.json()
@@ -107,34 +85,4 @@ def fetch_purchase_orders():
     ORDERS LINE
     '''
 
-    # orders_line.rename (columns = {
-    #     'Document_Internal_ID':'doc_internal_id',
-    #     'Target_Document_Type':'target_document_type',
-    #     'Target_Document_Internal_ID':'target_doc_internal_id',
-    #     'Row_Status':'row_status',
-    #     'Item_No':'item_no',
-    #     'Quantity':'qty',
-    #     'Warehouse_Code':'warehouse_code',
-    #     'Posting_Date':'posting_date',
-    #     'BaseBPCode':'base_bp_code',
-    #     }
-    #     ,inplace=True)
 
-    # print("Line Columns Renamed")
-
-    # # print(orders_line.duplicated(keep=False).sum())
-
-    # orders_line.set_index(['id','doc_internal_id','target_doc_internal_id','item_no'],inplace=True)
-
-    # orders_line['posting_date'] = pd.to_datetime(orders_line['posting_date'],yearfirst=True)
-
-    # upsert(engine=engine,
-    #    df=orders_line,
-    #    schema='mabawa_staging',
-    #    table_name='source_purchase_orders_line',
-    #    if_row_exists='update',
-    #    create_table=True)
-
-    # print("Inserted Orders Lines")
-    
-# fetch_purchase_orders()

@@ -1,29 +1,14 @@
 import sys
-
-from numpy import nan
 sys.path.append(".")
-
-#import libraries
-import json
 import psycopg2
-import requests
 import datetime
 import pandas as pd
-from io import StringIO
-from datetime import date
 from airflow.models import Variable
-from sqlalchemy import create_engine
-from pangres import upsert, DocsExampleTable
-from sqlalchemy import create_engine, text, VARCHAR
-from pandas.io.json._normalize import nested_to_record 
-
-import pytz
 import datetime
 import pandas as pd
 import businesstimedelta
 import holidays as pyholidays
 from workalendar.africa import Kenya
-
 from sub_tasks.data.connect import (pg_execute, engine) 
 
 conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", password="@Akb@rp@$$w0rtf31n")
@@ -61,7 +46,7 @@ def create_source_orderscreenc1_overseas():
     return "something"
     print(query)
     
-# create_source_orderscreenc1_overseas()
+
 def update_source_orderscreenc1_overseas():
 
     query = """
@@ -111,7 +96,7 @@ def transpose_overseas():
 
     return "Data Transposed"
     print(data)
-# transpose_overseas()
+
 def create_fact_orderscreenc1_overseas():
 
     data = pd.read_sql("""
@@ -123,7 +108,10 @@ def create_fact_orderscreenc1_overseas():
     SELECT *
     FROM mabawa_staging.source_orderscreenc1_overseas_trans;
     """, con=engine)
+
     print(df.columns)
+
+
     workday = businesstimedelta.WorkDayRule(
         start_time=datetime.time(9),
         end_time=datetime.time(18),
@@ -158,11 +146,14 @@ def create_fact_orderscreenc1_overseas():
     df["odsc_datetime_PF Sent to Overseas Desk"] = pd.to_datetime(df["odsc_datetime_PF Sent to Overseas Desk"])
     df["odsc_datetime_Order Printed"] = pd.to_datetime(df["odsc_datetime_Order Printed"])
     df["odsc_datetime_Sent to Control Room"] = pd.to_datetime(df["odsc_datetime_Sent to Control Room"])
+    df["odsc_datetime_Product Return Received at Overseas"] = pd.to_datetime(df["odsc_datetime_Product Return Received at Overseas"])
+    
     
     df["order_date_Frame Sent to Overseas Desk"] = pd.to_datetime(df["order_date_Frame Sent to Overseas Desk"])
     df["order_date_Branch Frame Sent to Overseas Desk"] = pd.to_datetime(df["order_date_Branch Frame Sent to Overseas Desk"])
     df["order_date_PF Sent to Overseas Desk"] = pd.to_datetime(df["order_date_PF Sent to Overseas Desk"])
     df["order_date_Order Printed"] = pd.to_datetime(df["order_date_Order Printed"])
+    
 
     df["check_datetime_Frame Sent to Overseas Desk"] = pd.to_datetime(df["check_datetime_Frame Sent to Overseas Desk"])
     df["check_datetime_Branch Frame Sent to Overseas Desk"] = pd.to_datetime(df["check_datetime_Branch Frame Sent to Overseas Desk"])
@@ -179,18 +170,38 @@ def create_fact_orderscreenc1_overseas():
     df['odsc_datetime_Generated PO'] = pd.to_datetime(df['odsc_datetime_Generated PO'])
     
     print("Identified Dates")
-    print(df)
+
     # overseas novax 
     df['op_po_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["order_date_Order Printed"]), axis=1)
     df['fsod_po_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Frame Sent to Overseas Desk"], row["order_date_Frame Sent to Overseas Desk"]), axis=1)
     df['bfsod_po_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Branch Frame Sent to Overseas Desk"], row["order_date_Branch Frame Sent to Overseas Desk"]), axis=1)
     df['pfsod_po_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_PF Sent to Overseas Desk"], row["order_date_PF Sent to Overseas Desk"]), axis=1)
-   
+
+
+    """Rejected Jobs - Product Return Received at Overseas """
+    df['op_prrod_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Product Return Received at Overseas"], row["order_date_Order Printed"]), axis=1)
+    df['f_prrod_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Product Return Received at Overseas"], row["order_date_Frame Sent to Overseas Desk"]), axis=1)
+    df['bf_prrod_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Product Return Received at Overseas"], row["order_date_Branch Frame Sent to Overseas Desk"]), axis=1)
+    df['pf_prrod_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Product Return Received at Overseas"], row["order_date_PF Sent to Overseas Desk"]), axis=1)
+    df['prrod_diff'] = df['op_prrod_diff'].combine_first(df['f_prrod_diff']).combine_first(df['bf_prrod_diff']).combine_first(df['pf_prrod_diff'])
+
+
+ 
     df['check_op_po_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["order_date_Order Printed"]), axis=1)
     df['check_fsod_po_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Frame Sent to Overseas Desk"], row["order_date_Frame Sent to Overseas Desk"]), axis=1)
     df['check_bfsod_po_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Branch Frame Sent to Overseas Desk"], row["order_date_Branch Frame Sent to Overseas Desk"]), axis=1)
     df['check_pfsod_po_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_PF Sent to Overseas Desk"], row["order_date_PF Sent to Overseas Desk"]), axis=1)
-    
+
+
+
+    """Rejected Jobs - Product Return Received at Overseas """
+    df['check_op_prrod_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Product Return Received at Overseas"], row["order_date_Order Printed"]), axis=1)
+    df['check_fprrod_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Product Return Received at Overseas"], row["order_date_Frame Sent to Overseas Desk"]), axis=1)
+    df['check_bfprrod_bfdiff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Product Return Received at Overseas"], row["order_date_Branch Frame Sent to Overseas Desk"]), axis=1)
+    df['check_pfsod_prrod_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Product Return Received at Overseas"], row["order_date_PF Sent to Overseas Desk"]), axis=1)
+    df['check_prrod_po_diff'] = df['check_op_po_diff'].combine_first(df['check_fsod_po_diff']).combine_first(df['check_bfsod_po_diff']).combine_first(df['check_pfsod_po_diff'])
+
+    print("Time Calculation Completed - Novax")
 
     ##Replace odsc_datetime_Sent to Control Room with "odsc_datetime_PF to Follow Sent to Overseas Desk" since PF to follow takes time 
     df["delivery_date_Sent to Control Room"] = df.apply(lambda row: row['odsc_datetime_PF to Follow Sent to Overseas Desk'] 
@@ -206,18 +217,28 @@ def create_fact_orderscreenc1_overseas():
     # dhl to sent to control room
     df['dhl_sc']=df.apply(lambda row: BusHrs(row["delivery_date_Sent to Control Room"], row["odsc_datetime_Sent to Control Room"]), axis=1)
     
-    print ("Time Difference")
+    print ("Time Difference - DHL")
 
     # overseas novax
     df['op_po_diff'] = pd.to_numeric(df['op_po_diff'])
     df['fsod_po_diff'] = pd.to_numeric(df['fsod_po_diff'])
     df['bfsod_po_diff'] = pd.to_numeric(df['bfsod_po_diff'])
     df['pfsod_po_diff'] = pd.to_numeric(df['pfsod_po_diff'])
+    df['op_prrod_diff']=pd.to_numeric(df['op_prrod_diff'])
+    df['f_prrod_diff']=pd.to_numeric(df['f_prrod_diff'])
+    df['bf_prrod_diff']=pd.to_numeric(df['bf_prrod_diff'])
+    df['pf_prrod_diff']=pd.to_numeric(df['pf_prrod_diff'])
+    df['prrod_diff'] = pd.to_numeric(df['prrod_diff'])
 
     df['check_op_po_diff'] = pd.to_numeric(df['check_op_po_diff'])
     df['check_fsod_po_diff'] = pd.to_numeric(df['check_fsod_po_diff'])
     df['check_bfsod_po_diff'] = pd.to_numeric(df['check_bfsod_po_diff'])
     df['check_pfsod_po_diff'] = pd.to_numeric(df['check_pfsod_po_diff'])
+    df['check_op_prrod_diff']=pd.to_numeric(df['check_op_prrod_diff'])
+    df['check_fprrod_diff']=pd.to_numeric(df['check_fprrod_diff'])
+    df['check_bfprrod_bfdiff']=pd.to_numeric(df['check_bfprrod_bfdiff'])
+    df['check_pfsod_prrod_diff']=pd.to_numeric(df['check_pfsod_prrod_diff'])
+    df['check_prrod_po_diff'] = pd.to_numeric(df['check_prrod_po_diff'])
 
     # dhl to sent to control room
     df['dhl_sc'] = pd.to_numeric(df['dhl_sc'])
@@ -244,14 +265,12 @@ def create_fact_orderscreenc1_overseas():
     
     return "something"
 
-# create_fact_orderscreenc1_overseas()
+
 def index_fact_orderscreenc1_approvals():
 
     add_key = """alter table mabawa_dw.fact_orderscreenc1_approvals add PRIMARY KEY (doc_entry)"""
     add_key = pg_execute(add_key)
 
-    #add_indexes = """"""
-    #add_indexes = pg_execute(add_indexes)
     return "something"
 
 def oldupdate():
@@ -275,3 +294,4 @@ def oldupdate():
     query2 = pg_execute(query2)
 
     return "something"
+

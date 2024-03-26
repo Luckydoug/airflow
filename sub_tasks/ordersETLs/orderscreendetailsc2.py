@@ -1,43 +1,20 @@
 import sys
 sys.path.append(".")
-
-#import libraries
-import json
-import psycopg2
 import requests
 import pandas as pd
 from airflow.models import Variable
 from datetime import date, timedelta
-from pangres import upsert, fix_psycopg2_bad_cols, DocsExampleTable
-from sqlalchemy import create_engine, text, VARCHAR
-from pandas.io.json._normalize import nested_to_record 
+from sub_tasks.libraries.utils import return_session_id
+from sub_tasks.libraries.utils import FromDate, ToDate
 
 
-from sub_tasks.data.connect import (pg_execute, pg_fetch_all, engine) 
-from sub_tasks.api_login.api_login import(login)
+def fetch_sap_orderscreendetailsc2():
 
-
-SessionId = login()
-
-# FromDate = '2023/03/20'
-# ToDate = '2023/03/20'
-
-today = date.today()
-pastdate = today - timedelta(days=1)
-FromDate = pastdate.strftime('%Y/%m/%d')
-ToDate = date.today().strftime('%Y/%m/%d')
-
-print(FromDate)
-print(ToDate)
-
-# api details
-#orderscreen_url = 'https://41.72.211.10:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetOrderDetails&pageNo=1'
-pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetOrderDetailsC2&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
-pagecount_payload={}
-pagecount_headers = {}
-
-
-def fetch_sap_orderscreendetailsc2 ():
+    # SessionId = login()
+    SessionId = return_session_id(country = "Kenya")
+    pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetOrderDetailsC2&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+    pagecount_payload={}
+    pagecount_headers = {}
 
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     data = pagecount_response.json()
@@ -64,5 +41,3 @@ def fetch_sap_orderscreendetailsc2 ():
         # orderscreendf = orderscreendf.append(response, ignore_index=True)
         print(orderscreendf[orderscreendf.duplicated(keep=False).any()==True])
         break
-
-# fetch_sap_orderscreendetailsc2 ()

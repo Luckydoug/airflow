@@ -19,7 +19,8 @@ def fetch_eyetests_conversion(engine, start_date, end_date, users, users_table):
         and a.create_date::date >=  %(From)s
         and a.create_date::date <= %(To)s
         and a.branch_code not in ('0MA','null', 'HOM')
-        and a.cust_code not in ('U10000002', 'U10002522', 'U10002693', 'R10000888', 'R10000429');
+        and a.cust_code not in ('U10000002', 'U10002522', 'U10002693', 'R10000888', 'R10000429', 'U10004417')
+        and a.optom_name not in ('ERICK','Raghav M','BENTA OGOLLA','manager');
         """
 
     data = pd.read_sql_query(
@@ -54,7 +55,7 @@ def fetch_registrations_conversion(engine, database, start_date, end_date, users
     conv.cust_createdon::date >=  %(From)s
     and conv.cust_createdon::date <= %(To)s
     and conv.cust_outlet not in ('0MA','null', 'HOM')
-    and conv.cust_code not in ('U10000825', 'U10000002', 'R10000888')
+    and conv.cust_code not in ('U10000825', 'U10000002', 'R10000888','U10004417')
     and conv.cust_campaign_master <> 'GMC'
     """
 
@@ -131,6 +132,18 @@ def fetch_branch_data(engine, database):
 def fetch_ewc_conversion(engine):
     query = """
     select * from report_views.ewc_conversion
+    """
+
+    data = pd.read_sql_query(query, con=engine)
+    return data
+
+
+def fetch_submitted_insurance(engine, start_date, end_date):
+    query = f"""
+    select cust_code::text,
+    odsc_status as request
+    from report_views.pending_insurance 
+    where odsc_date::date between '{start_date}' and '{end_date}'
     """
 
     data = pd.read_sql_query(query, con=engine)

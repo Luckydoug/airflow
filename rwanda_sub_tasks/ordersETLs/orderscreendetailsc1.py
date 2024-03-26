@@ -1,45 +1,20 @@
 import sys
-
-from numpy import nan
 sys.path.append(".")
-
-#import libraries
-from io import StringIO
-import json
-import psycopg2
 import requests
 import pandas as pd
-from pandas.io.json._normalize import nested_to_record 
-from sqlalchemy import create_engine
 from airflow.models import Variable
-from pandas.io.json._normalize import nested_to_record 
-from pangres import upsert, DocsExampleTable
-from sqlalchemy import create_engine, text, VARCHAR
-from datetime import date, timedelta
-import datetime
-
-
-from sub_tasks.data.connect_voler import (pg_execute, pg_fetch_all, engine)  
-from sub_tasks.api_login.api_login import(login_rwanda)
-
-
-SessionId = login_rwanda()
-
-FromDate = '2023/08/01'
-# ToDate = '2023/05/18'
-
-today = date.today()
-# pastdate = today - timedelta(days=3)
-# FromDate = pastdate.strftime('%Y/%m/%d')
-ToDate = date.today().strftime('%Y/%m/%d')
-
-pagecount_url = f"https://10.40.16.9:4300/RWANDA_BI/XSJS/BI_API.xsjs?pageType=GetOrderDetailsC1&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
-
-pagecount_payload={}
-pagecount_headers = {}
+from pangres import upsert
+from sub_tasks.data.connect_voler import (pg_execute, engine)  
+from sub_tasks.libraries.utils import return_session_id
+from sub_tasks.libraries.utils import FromDate, ToDate
 
 def fetch_sap_orderscreendetailsc1():
-    
+    SessionId = return_session_id(country = "Rwanda")
+
+    pagecount_url = f"https://10.40.16.9:4300/RWANDA_BI/XSJS/BI_API.xsjs?pageType=GetOrderDetailsC1&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
+    pagecount_payload={}
+    pagecount_headers = {}
+
     pagecount_response = requests.request("GET", pagecount_url, headers=pagecount_headers, data=pagecount_payload, verify=False)
     data = pagecount_response.json()
     
@@ -77,7 +52,6 @@ def fetch_sap_orderscreendetailsc1():
 
     orderscreenc1.to_sql('landing_orderscreenc1', con = engine, schema='voler_staging', if_exists = 'append', index=False)
 
-# fetch_sap_orderscreendetailsc1()
 
 def update_to_source_orderscreenc1():
 
@@ -98,4 +72,3 @@ def update_to_source_orderscreenc1():
     
     print('source_orderscreenc1')
 
-# update_to_source_orderscreenc1()

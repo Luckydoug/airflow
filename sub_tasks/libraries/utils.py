@@ -2,7 +2,9 @@ from airflow.models import variable
 import datetime
 import numpy as np
 from dotenv import load_dotenv
-from datetime import timedelta
+import datetime
+from datetime import date, timedelta, time, datetime
+from dateutil.relativedelta import relativedelta
 from email.mime.application import MIMEApplication
 import os
 import pathlib
@@ -14,9 +16,17 @@ import pandas as pd
 from colorama import Fore
 import calendar
 import pygsheets
+import base64
+import requests
 
-def check_status():
-    pass
+
+
+
+today = date.today()
+pastdate = today - timedelta(days=2)
+FromDate = pastdate.strftime('%Y/%m/%d')
+ToDate = date.today().strftime('%Y/%m/%d')
+
 
 from sqlalchemy import create_engine
 
@@ -74,7 +84,7 @@ def fetch_gsheet_data() -> dict:
     orders_drop = pd.DataFrame(orders_to_drop.worksheet_by_title("Kenya").get_all_records())["Order Number"].to_list()
     rwanda_opening = pd.DataFrame(sheet.worksheet_by_title("Rwanda Opening Time").get_all_records())
     rejections = service_key.open_by_key("16oFwly1sKlX48xL3LXLZKfHv7ClI-84o7DZzmlxCZeE")
-    rejections_drop = pd.DataFrame(rejections.worksheet_by_title("Sheet1").get_all_records())["Order Number"].to_list()
+    rejections_drop = pd.DataFrame(rejections.worksheet_by_title("KE").get_all_records())["Order Number"].to_list()
 
     
     return {
@@ -101,7 +111,7 @@ def fetch_gsheet_data() -> dict:
 
 
 def return_sunday_truth() -> bool:
-    today = datetime.date.today()
+    today = date.today()
     if today.weekday() == 6:
         return True
     return False
@@ -112,32 +122,32 @@ def get_yesterday_date(truth = False):
     """
     This function returns the dates of yesterday.
     """
-    today = datetime.date.today()
+    today = date.today()
     if truth and today.weekday() == 0:
         days_to_subtract = 2
     else:
         days_to_subtract = 1
-    return today - datetime.timedelta(days=days_to_subtract)
+    return today - timedelta(days=days_to_subtract)
 
 
 def get_month_first_day():
-    today = datetime.date.today()
+    today = date.today()
     if today.day == 1:
-        return datetime.date(today.year, today.month - 1, 1)
+        return date(today.year, today.month - 1, 1)
     else:
-        return datetime.date(today.year, today.month, 1)
+        return date(today.year, today.month, 1)
 
 
 def get_day_name_days_ago(days_ago):
-    today = datetime.datetime.today()
-    delta = datetime.timedelta(days=days_ago)
+    today = datetime.today()
+    delta = timedelta(days=days_ago)
     target_date = today - delta
     day_name = target_date.strftime("%A")
     return day_name
 
 
 def get_previous_week_dates():
-    today = datetime.datetime.now().date()
+    today = datetime.now().date()
     start_date = today - timedelta(days=today.weekday() + 7)
     end_date = start_date + timedelta(days=6)
     return start_date, end_date
@@ -146,7 +156,7 @@ def get_previous_week_dates():
 
 
 def get_todate(truth = False):
-    today = datetime.date.today()
+    today = date.today()
     if truth and today.weekday() == 0:
         days_substract = 2
     else:
@@ -156,6 +166,7 @@ def get_todate(truth = False):
 
 
 def assert_date_modified(files) -> bool:
+    import datetime
     condition = True
     name = ""
     for file in files:
@@ -169,12 +180,15 @@ def assert_date_modified(files) -> bool:
             return condition
         else:
             last_modified = datetime.datetime.fromtimestamp(
-                win_file.stat().st_mtime, tz=datetime.timezone.utc)
+                os.stat(win_file).st_mtime, tz=datetime.timezone.utc)
             date_modified = last_modified.date()
-            today = datetime.date.today()
+            today = date.today()
             if date_modified != today:
                 print(
-                    f"The file you are trying to send was last modified on {date_modified}. Ensure that the Notebook has run successfully so you don't send the same report twice. Check this file: {name}.xlsx")
+                    f"""The file you are trying to send was last modified on {date_modified}. 
+                    Ensure that the Notebook has run successfully so you don't send the same report twice. 
+                    Check this file: {name}.xlsx"""
+                )
                 condition = False
                 return condition
             else:
@@ -236,7 +250,7 @@ def create_initial_file(filename):
     if not os.path.exists(filename):
         with open(filename, "w") as file:
             file.write(
-                f"initialrecord@gmail.com {datetime.date.today()} Sent" + "\n")
+                f"initialrecord@gmail.com {date.today()} Sent" + "\n")
             file.close()
     else:
         return
@@ -245,7 +259,7 @@ def create_initial_file(filename):
 def record_sent_branch(branch_email, filename):
     with open(filename, 'a') as sent:
         sent.write(
-            branch_email + " " +str(datetime.date.today()) + " " + "Sent" + '\n'
+            branch_email + " " + str(date.today()) + " " + "Sent" + '\n'
         )
         print(Fore.YELLOW + f"{branch_email} saved.")
         sent.close()
@@ -259,7 +273,7 @@ def return_sent_emails(filename):
     del lists[-1]
     if len(lists):
         for email in lists:
-            if email.split(" ")[0] != "Test" and email.split(" ")[1] == str(datetime.date.today()):
+            if email.split(" ")[0] != "Test" and email.split(" ")[1] == str(date.today()):
                 emails.append(email.split(" ")[0])
     else:
         emails = []
@@ -268,14 +282,14 @@ def return_sent_emails(filename):
 
 
 def get_four_weeks_date_range():
-    today = datetime.datetime.now().date()
-    end_date = (today - datetime.timedelta(days=1))  - datetime.timedelta(days=28)
+    today = datetime.now().date()
+    end_date = today   - timedelta(days=28)
     start_date = end_date
     date_range = []
     for i in range(4):
-        end_date = start_date + datetime.timedelta(days=6)
+        end_date = start_date + timedelta(days=6)
         date_range.append((start_date, end_date))
-        start_date = end_date + datetime.timedelta(days=1)
+        start_date = end_date + timedelta(days=1)
     return date_range
 
 
@@ -314,7 +328,7 @@ def save_file(email_message, reports, branch_name, file_name, path):
 
 
 def get_comparison_months():
-    today = datetime.datetime.now().date()
+    today = datetime.now().date()
     prev_month = today.month - 1
     prev_year = today.year
     if prev_month < 1:
@@ -403,7 +417,17 @@ def get_rm_srm_total(dataframe, x=None, y=None, z=None, has_perc=False, avg_cols
     return df
 
 
-def get_rm_srm_total_multiindex(dataframe, x=None, y=None, z=None, week_month=None, a=None, b=None, c=None, report=None):
+def get_rm_srm_total_multiindex(
+        dataframe, 
+        x=None, 
+        y=None, 
+        z=None, 
+        week_month=None,
+        a=None, 
+        b=None, 
+        c=None, 
+        report=None
+    ):
     first_month, second_month = get_comparison_months()
     df = dataframe.copy()
     df = df.sort_values(by=["SRM", "RM"])
@@ -544,11 +568,11 @@ def manipulate_multiindex(dataframe, name, col1, col2, rename):
 def return_incentives_daterange():
     start_date = ''
     end_date = ''
-    today = datetime.date.today()
+    today = date.today()
     if today.day == 1:
-        start_date = (datetime.date(today.year, today.month - 1, 1))
+        start_date = (date(today.year, today.month - 1, 1))
     else:
-        start_date = (datetime.date(today.year, today.month, 1))
+        start_date = (date(today.year, today.month, 1))
 
     if today.weekday() == 0:
         days_substract = 1
@@ -702,3 +726,154 @@ def style_dataframe(dataframe, styles, properties):
         styles).set_properties(**properties)
     dataframe_html = dataframe.to_html(doctype_html=True)
     return dataframe_html
+
+
+def return_session_id(country: str) -> str:
+    engine = createe_engine()
+    query = """
+    select * from mabawa_staging.api_login
+    """
+
+    data = pd.read_sql_query(query, con=engine)
+    data = data.set_index("country")
+    session_id = data.loc[country, "session_id"]
+    return session_id
+
+
+def return_evn_credentials(name):
+    email = os.getenv(f"{name}_email")
+    password = os.getenv(f"{name}_password")
+
+    return email, password
+
+
+def assert_integrity(engine, database):
+    today = date.today()
+    yesterday = get_yesterday_date()
+
+    table_columns = {
+        'source_orderscreen': 'ods_createdon',
+        'source_orders_header': 'creation_date',
+        'source_orderscreenc1': 'odsc_date'
+    }
+
+    max_dates = [
+        pd.read_sql_query(f"SELECT MAX({column}::date) FROM {database}.{table}", con=engine).iloc[0, 0]
+        for table, column in table_columns.items()
+    ]
+   
+    return all(date == today or date == yesterday for date in max_dates)
+
+
+def dag_run(DAG_ID):
+    username = "douglas"
+    password = "kathurima"
+
+    date = get_yesterday_date()
+    url = f"http://10.40.16.19:8081/api/v1/dags/{DAG_ID}/dagRuns"
+    credentials = f"{username}:{password}"
+    encoded_credentials = base64.b64encode(credentials.encode('utf-8')).decode('utf-8')
+
+    headers = {
+        'Authorization': f'Basic {encoded_credentials}'
+    }
+
+    params = {
+        'end_date_gte': str(date)
+        
+    }
+
+    response = requests.get(url, headers=headers, params=params).json()["dag_runs"]
+
+    if not len(response):
+        return False
+    else:
+        if response[-1]["state"] == 'success':
+            return True 
+        else:
+            return False
+
+
+
+def calculate_time_taken(start_time, stop_time, working_hours, holidays):
+    
+    # If either start time or stop time is empty then return 'N/A'
+    if start_time is pd.NaT or stop_time is pd.NaT:
+
+        time_taken = None
+
+    else:
+        # # Convert the start and end times to datetime objects
+        # start_time = datetime.strptime(start_time, '%Y-%m-%d %H:%M:%S')
+        # stop_time = datetime.strptime(stop_time, '%Y-%m-%d %H:%M:%S')
+        start_time = start_time
+        stop_time = stop_time
+
+        # Initialize a variable to store the time taken
+        time_taken = timedelta(0)
+        
+        if (start_time.date() == stop_time.date()) and (start_time.time() > working_hours[start_time.strftime('%A')][1]) and (stop_time.time() > working_hours[stop_time.strftime('%A')][1]):
+            time_taken += stop_time - start_time
+
+        # elif (start_time.date() == stop_time.date()) and (start_time.time() < working_hours[start_time.strftime('%A')][0]) and (stop_time.time() < working_hours[stop_time.strftime('%A')][0]):
+        #     time_taken += stop_time - start_time
+        
+        else:
+            # If the start time is between working hours then the current time is the same as the start time
+            if working_hours[start_time.strftime('%A')][0] <= start_time.time() <= working_hours[start_time.strftime('%A')][1]:
+                current_time = start_time
+            else:
+                # If the start time is before the opening time then the current time is the opening time of that start time day
+                if start_time.time() < working_hours[start_time.strftime('%A')][0]:
+                    current_time = datetime.combine(start_time.date(),working_hours[start_time.strftime('%A')][0])
+                else:
+                # If the start time is after the closing time then the current time is the opening time of the next day
+                    current_time = datetime.combine(start_time.date() + relativedelta(days=1),working_hours[(start_time.date() + relativedelta(days=1)).strftime('%A')][0])
+            # print('current time is',current_time)
+
+            if working_hours[stop_time.strftime('%A')][0] <= stop_time.time() <= working_hours[stop_time.strftime('%A')][1]:
+
+                end_time = stop_time
+            else:
+                if stop_time.time() > working_hours[stop_time.strftime('%A')][1]:
+                    end_time = datetime.combine(stop_time.date(),working_hours[stop_time.strftime('%A')][1])
+
+                else:
+                    end_time = datetime.combine(stop_time.date() - relativedelta(days=1),working_hours[(stop_time.date() - relativedelta(days=1)).strftime('%A')][1])
+      
+            if current_time.date() == end_time.date():
+                time_taken += end_time - current_time
+
+            else:
+                while current_time.date() < end_time.date():
+                    # Check if the current date is a holiday
+                    if current_time.date() not in holidays:
+                        time_taken += datetime.combine(current_time.date(),working_hours[current_time.strftime('%A')][1]) - current_time
+                        current_time = datetime.combine(current_time.date() + timedelta(days=1), working_hours[(current_time + timedelta(days=1)).strftime('%A')][0])
+                    else:
+                        # If the current date is a holiday, move the current time to the start of the next working day
+                        current_time = datetime.combine(current_time.date() + timedelta(days=1),working_hours[(current_time + timedelta(days=1)).strftime('%A')][0])
+
+                time_taken += end_time - current_time
+
+        time_taken = time_taken.total_seconds() // 60  
+        
+    return time_taken
+
+
+
+def calculate_time_taken_for_row(row, branch_column, start_time_column, end_time_column, branch_data, holidays):
+    # Get the start and end times of the task, as well as the branch
+    start_time = row[start_time_column]
+    end_time = row[end_time_column]
+    branch = row[branch_column]
+ 
+    # Get the working hours and holidays for the branch
+    working_hours = branch_data[branch]['working_hours']
+    holidays = holidays
+
+    # Call the calculate_time_taken function for the branch, passing in the start and end times of the task, as well as the working hours and holidays for the branch
+    return calculate_time_taken(start_time, end_time, working_hours, holidays)
+
+
+

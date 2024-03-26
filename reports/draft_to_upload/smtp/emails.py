@@ -10,51 +10,64 @@ their email from this list.
 
 test = [
     "tstbranch@gmail.com"
+    # ,"ian.gathumbi@optica.africa","wazeem@optica.africa","yuri@optica.africa"
 ]
 
 kenya_daily = [
-    'wazeem@optica.africa',
+    # 'wazeem@optica.africa',
+    'retailteam@optica.africa',
     'john.gitonga@optica.africa',
-    'maxwell@optica.africa',
     'cavin@optica.africa',
     'joseph.oluoch@optica.africa',
     'kimstone@optica.africa',
-    'larry.larsen@optica.africa',
-    'doris.kinoti@optica.africa',
     'wairimu@optica.africa',
-    'faithtesy.leo@optica.africa'
+    'faithtesy.leo@optica.africa',
+    'elizabeth.ndonye@optica.africa',
+    'emmaculate.adhiambo@optica.africa',
+    'doris.kinoti@optica.africa',
+    'nancy.wanjiru@optica.africa',
+    'diana.atieno@optica.africa',
+    'terresia.mureithi@optica.africa',
+    'ian.kiprono@optica.africa',
+    'james.mwangi@optica.africa'
 ]
     
 kenya_weekly = [
     'kush@optica.africa',
     'wazeem@optica.africa',
     'yuri@optica.africa',
+    'retailteam@optica.africa',
     'john.gitonga@optica.africa',
-    'maxwell@optica.africa',
     'cavin@optica.africa',
     'joseph.oluoch@optica.africa',
     'kimstone@optica.africa',
-    'larry.larsen@optica.africa',
     'doris.kinoti@optica.africa',
     'john@optica.africa',
     'wairimu@optica.africa',
-    'faithtesy.leo@optica.africa'
+    'faithtesy.leo@optica.africa',
+    'emmaculate.adhiambo@optica.africa',
+    'diana.atieno@optica.africa',
+    'ian.kiprono@optica.africa',
+    'james.mwangi@optica.africa'
 ]
     
 kenya_monthly = [
     'kush@optica.africa',
     'wazeem@optica.africa',
     'yuri@optica.africa',
+    'retailteam@optica.africa',
     'john.gitonga@optica.africa',
-    'maxwell@optica.africa',
     'cavin@optica.africa',
     'joseph.oluoch@optica.africa',
     'kimstone@optica.africa',
-    'larry.larsen@optica.africa',
     'doris.kinoti@optica.africa',
     'john@optica.africa',
     'wairimu@optica.africa',
-    'faithtesy.leo@optica.africa'
+    'faithtesy.leo@optica.africa',
+    'emmaculate.adhiambo@optica.africa',
+    'diana.atieno@optica.africa',
+    'ian.kiprono@optica.africa',
+    'james.mwangi@optica.africa'
 ]
     
 
