@@ -33,7 +33,7 @@ def return_report_daterange(selection):
     if selection == "Daily":
         today = datetime.date.today()
         if today.weekday() == 0:
-            days_to_subtract = 2
+            days_to_subtract = 1
         else:
             days_to_subtract = 1
         start_date = (
@@ -267,8 +267,6 @@ def create_monthly_draft(dataframe, first_month, second_month):
 
 
 
-
-
 def create_monthly_rejections(
     insurance: pd.DataFrame, 
     first_month: str, 
@@ -457,11 +455,10 @@ def create_no_views_report(
     return no_views[all_columns].sort_values(by = "No Views NoN", ascending=False)
 
 planos_cols = [
-    "Code",
-    "Plano RX",
     "Customer Code",
+    "Plano RX",
     "Insurance Company",
-    "Opthom Name",
+    "Optom Name",
     "EWC Handover",
     "Who Viewed RX"
 ]
@@ -500,19 +497,17 @@ def generate_html_and_subject(branch, branch_manager, dataframe_dict, date, styl
         branch_data = df[df["Outlet"] == branch]
         branch_data = branch_data.drop(columns = ["Outlet"])
 
-        if df_key =="Time From Eyetest to Order":
+        if df_key =="Time from Eye Test Completed to Draft Order Created":
             branch_data = branch_data[[
-                "visit_id",
-                "customer_code",
-                "order_number",
-                "order_creator",
-                "order_type",
-                "et_completed_time",
-                "order_date",
-                "time_taken",
-            ]].rename(columns = {"time_taken": "time_taken(target = 30mins)"})
+                "Customer Code",
+                "Order Creator",
+                "Order Type",
+                "ET Completed Time",
+                "Order Date",
+                "Time Taken",
+            ]].rename(columns = {"Time Taken": "TAT (Target = 45mins)"})
 
-        elif df_key == "Non Submitted Insurance Clients":
+        elif df_key == "Insurance Clients not Submitted":
             branch_data = branch_data[planos_cols]
 
         elif df_key == "Insurance Orders With No Feedback":
@@ -530,13 +525,32 @@ def generate_html_and_subject(branch, branch_manager, dataframe_dict, date, styl
                 "Created User",
                 "Remarks"
             ]]
+
+            branch_data["Who Made the Error?"] = ""
+
+        branch_data["Branch Remark"] = ""
         
         if not branch_data.empty:
             subject_parts.append(df_key)
             html_content += f"<b>{counter}. {df_key}</b>"
             html_content += "<br>"
             html_content += "<br>"
-            html_content += f"<table>{branch_data.style.hide_index().set_table_styles(styles).to_html(doctype_html=True)}</table>"
+            html_content += f"<table>{branch_data.style.hide_index().set_table_styles(styles).to_html()}</table>"
+            html_content = html_content.replace('<table ', '<table style="border-collapse: collapse; border: 1px solid black; padding: .4em; font-size: 8.5; text-align: center;" ')
+            html_content = html_content.replace('<td ', '<td style="font-size: 8.5pt; text-align: left; padding: .4em; border: 1px solid black;" ')
+            html_content = html_content.replace('<th ', '<th style = "font-size: 9.2pt; background-color: #87CEEB; text-align: center; padding: .6em; border: 1px solid black;"')
+    
+            search_text = "Not Contacted"
+            style = 'style="background-color: red; color: black; text-align: left"'
+
+            indices = [pos for pos, char in enumerate(html_content) if html_content[pos:pos + len(search_text)] == search_text]
+
+            for index in indices:
+                start_td = html_content.rfind("<td", 0, index)
+                end_td = html_content.find("</td>", index) + len("</td>")
+
+                html_content = html_content[:start_td] + f'<td {style} ' + html_content[start_td + len("<td"):end_td] + html_content[end_td:]
+            
             html_content += "<br>"
             html_content += "<br>"
             counter += 1
@@ -544,7 +558,7 @@ def generate_html_and_subject(branch, branch_manager, dataframe_dict, date, styl
     if not subject_parts:
         return None, None
     
-    subject = branch + " Response Required - Daily Insurance Checks for " + str(date) + "."
+    subject = f"{branch} Response Required: Daily Insurance Checks for {pd.to_datetime(date).strftime('%B %d, %Y')}"
     # subject = branch + " Response Required - " + ", ".join(subject_parts[:-1]) + " and " + subject_parts[-1] + " for " + str(date)  if len(subject_parts) > 1 else branch + " Response Required - " + subject_parts[0] + " for " + str(date)
     return html_start_template + html_content + html_end_template, subject
 

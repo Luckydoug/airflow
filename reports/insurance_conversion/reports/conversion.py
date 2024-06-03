@@ -12,6 +12,7 @@ from reports.insurance_conversion.utils.utils import(
 )
 from reports.draft_to_upload.utils.utils import today, get_start_end_dates
 from sub_tasks.libraries.time_diff import calculate_time_difference
+from sub_tasks.libraries.time_diff import working_hours_dictionary
 from sub_tasks.libraries.utils import (
     fourth_week_start,
     fourth_week_end,
@@ -31,7 +32,9 @@ def create_insurance_conversion(
     date,
     working_hours: pd.DataFrame,
     no_feedbacks: pd.DataFrame,
-    country: str
+    country: str,
+    holidays: dict,
+    contact_time: pd.DataFrame = pd.DataFrame()
 ) -> None:
     if not len(all_orders) or not len(orderscreen) or not len(insurance_companies) or not len(sales_orders):
         return
@@ -165,13 +168,18 @@ def create_insurance_conversion(
         (daily_data["Feedback"] != "Declined by Insurance Company")
     ]
 
+    work_hours = working_hours_dictionary(
+        working_hours=working_hours
+    )
+
     if len(feedback_non):
         feedback_non["Time Taken"] = feedback_non.apply(
             lambda row: calculate_time_difference(
                 row=row,
                 x="Full Request Date",
                 y="Feedback Time",
-                working_hours=working_hours
+                working_hours=work_hours,
+                holiday_dict=holidays
             ),
             axis=1
         )
@@ -181,20 +189,28 @@ def create_insurance_conversion(
             insurance_tat,
             on = "Insurance Company",
             how = "left"
-        ).fillna("-")
+        ).rename(columns = {"Turnaround Time": "TAT"})
+
+        def convert_to_int_or_dash(value):
+            if value == "-":
+                return value
+            else:
+                return str(int(value))
+
+        feedback_non["TAT"] = feedback_non["TAT"].fillna("-").apply(convert_to_int_or_dash)
+
 
         cols = [
             "Outlet",
             "Order Number",
             "Current Status",
             "Order Creator",
-            "Feedback",
             "Insurance Company",
+            "TAT",
             "% Approved",
             "Full Request Date",
             "Feedback Time",
-            "Time Taken",
-            "Turnaround Time",
+            "Time Taken"
         ]
 
 
@@ -224,10 +240,16 @@ def create_insurance_conversion(
         ]
 
 
-        feedback_non[["Full Request Date", "Feedback Time"]] = feedback_non[["Full Request Date", "Feedback Time"]]
+        feedback_non["Full Request Date"] = pd.to_datetime(feedback_non["Full Request Date"]).dt.strftime('%Y-%m-%d %H:%M')
+        feedback_non["Feedback Time"] = pd.to_datetime(feedback_non["Feedback Time"]).dt.strftime('%Y-%m-%d %H:%M')
+
+
         with pd.ExcelWriter(f"{path}draft_upload/insurance_daily.xlsx", engine='xlsxwriter') as writer:
             creator_summary.to_excel(writer, sheet_name="daily_summary", index=False)
-            feedback_non[cols].to_excel(writer, sheet_name = "daily_data", index = False)
+            feedback_non = feedback_non[cols]
+            feedback_non = pd.merge(feedback_non, contact_time, on ="Order Number", how = "left")
+            feedback_non = feedback_non.drop_duplicates(subset="Order Number")
+            feedback_non.to_excel(writer, sheet_name = "daily_data", index = False)
 
         not_received["Request Date"] = pd.to_datetime(not_received["Request Date"]).dt.strftime('%Y-%m-%d %H:%M')
         with pd.ExcelWriter(f"{path}draft_upload/no_feedbacks.xlsx", engine='xlsxwriter') as writer:
@@ -264,7 +286,15 @@ def create_insurance_conversion(
             aggfunc="sum").reset_index().rename(columns={"Conversion": "Converted"}
         )
 
-        final_branch = insurance_feedback_pivot[["Outlet", "Feedback", "Requests", "Converted"]]
+        final_branch = insurance_feedback_pivot[
+            [
+                "Outlet", 
+                "Feedback", 
+                "Requests", 
+                "Converted"
+            ]
+        ]
+
         final_branch["Target Conversion"] = np.where(
             final_branch["Feedback"] == "Declined by Insurance Company", "20%", 
             np.where(

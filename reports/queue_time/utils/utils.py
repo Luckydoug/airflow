@@ -188,7 +188,7 @@ def transform_multindex(
 
 def get_two_weeks_date_range():
     today = datetime.datetime.now().date()
-    end_date = (today - datetime.timedelta(days=1)) - datetime.timedelta(days=14)
+    end_date = today - datetime.timedelta(days=14)
     start_date = end_date
     date_range = []
     for i in range(2):

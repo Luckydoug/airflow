@@ -18,9 +18,7 @@ import calendar
 import pygsheets
 import base64
 import requests
-
-
-
+import holidays
 
 today = date.today()
 pastdate = today - timedelta(days=2)
@@ -36,8 +34,12 @@ service_file = r"/home/opticabi/airflow/dags/sub_tasks/gsheets/keys2.json"
 uganda_path = r"/home/opticabi/Documents/uganda_reports/"
 rwanda_path = r"/home/opticabi/Documents/rwanda_reports/"
 path = r"/home/opticabi/Documents/optica_reports/"
+oauth_credentials = r"/home/opticabi/airflow/dags/sub_tasks/gsheets/oauth_credentials.json"
 # This line sets the target(in minutes) for the draft to upload report
 target = 8
+
+ke_holidays = holidays.KE()
+ke_holidays.append(date(2024, 5, 10))
 
 """
 Acess the Data Team Repo Gsheet and pull all the necessary data
@@ -283,7 +285,7 @@ def return_sent_emails(filename):
 
 def get_four_weeks_date_range():
     today = datetime.now().date()
-    end_date = today   - timedelta(days=28)
+    end_date = today - timedelta(days=28)
     start_date = end_date
     date_range = []
     for i in range(4):
@@ -840,7 +842,10 @@ def calculate_time_taken(start_time, stop_time, working_hours, holidays):
 
                 else:
                     end_time = datetime.combine(stop_time.date() - relativedelta(days=1),working_hours[(stop_time.date() - relativedelta(days=1)).strftime('%A')][1])
-      
+
+            if current_time > end_time:
+                current_time = end_time
+
             if current_time.date() == end_time.date():
                 time_taken += end_time - current_time
 
@@ -874,6 +879,28 @@ def calculate_time_taken_for_row(row, branch_column, start_time_column, end_time
 
     # Call the calculate_time_taken function for the branch, passing in the start and end times of the task, as well as the working hours and holidays for the branch
     return calculate_time_taken(start_time, end_time, working_hours, holidays)
+
+
+
+def flatten_dict(d, parent_key='', sep='_'):
+    """
+    Recursively flatten a nested dictionary.
+Parameters:
+    - d: The input dictionary
+    - parent_key: The key of the parent dictionary (used for recursion)
+    - sep: Separator to use when joining keys
+    Returns:
+    - A flattened dictionary
+    """
+    items = []
+    for k, v in d.items():
+        # new_key = f"{parent_key}{sep}{k}" if parent_key else k
+        new_key = f"{k}" if parent_key else k
+        if isinstance(v, dict):
+            items.extend(flatten_dict(v, new_key, sep=sep).items())
+        else:
+            items.append((new_key, v))
+    return dict(items)
 
 
 

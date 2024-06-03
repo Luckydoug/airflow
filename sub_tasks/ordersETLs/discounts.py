@@ -12,6 +12,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from sub_tasks.libraries.utils import return_session_id
 from sub_tasks.libraries.utils import FromDate, ToDate
 
+# FromDate = '2024/05/16'
+# ToDate = '2024/05/16'
 
 def fetch_sap_discounts():
     SessionId = return_session_id(country = "Kenya")
@@ -100,3 +102,4 @@ def fetch_sap_discounts():
 
         print('Update successful')
 
+# fetch_sap_discounts()

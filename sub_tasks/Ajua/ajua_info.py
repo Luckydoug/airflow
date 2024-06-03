@@ -14,6 +14,9 @@ from sub_tasks.data.connect import (pg_execute, engine)
 from sub_tasks.libraries.utils import return_session_id
 from sub_tasks.libraries.utils import FromDate, ToDate
 
+# FromDate = '2024-05-01'
+# ToDate = '2024-05-27'
+
 def fetch_ajua_info ():
     SessionId = return_session_id(country = "Kenya")
    #SessionId = login()
@@ -141,3 +144,4 @@ def update_log_nps():
     query = pg_execute(query)
 
 # fetch_ajua_info ()
+# update_log_nps()

@@ -12,6 +12,7 @@ from sub_tasks.libraries.styles import ug_styles, properties
 from sub_tasks.libraries.utils import (save_file,return_sent_emails)
 from reports.draft_to_upload.utils.utils import return_report_daterange
 from reports.draft_to_upload.utils.utils import get_report_frequency
+from dags.env import (wairimu_password,wairimu_email)
 from sub_tasks.libraries.utils import get_todate,send_report,assert_date_modified, create_initial_file, return_sent_emails, record_sent_branch, fetch_gsheet_data, fourth_week_start, fourth_week_end
 
 

@@ -147,8 +147,8 @@ def fetch_rwanda_opening_time():
             "Date": "date",
             "Day of the week": "day",
             "Branch": "branch",
-            "Reporting Time": "reporting_time",
-            "Opening Time": "opening_time",
+            "ReportingTime": "reporting_time",
+            "OpeningTime": "opening_time",
             "Time Opened": "time_opened"
         },
         database="voler_staging",

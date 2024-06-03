@@ -63,16 +63,17 @@ def fetch_rider_times():
                        'CBD2 time from Hq':'cbd2_time_from_hq',
                        'CBD2 time back at Hq':'cbd2_time_back_at_hq',
                        'Rider 5 - Thika Town from HQ':'rider5_thikatown_from_hq',
-                       'Rider 5 - Thika Town at HQ':'rider5_thikatown_at_hq'
+                       'Rider 5 - Thika Town time back at Hq':'rider5_thikatown_time_back_at_hq'
                        },inplace=True)
 
      print('The columns have been renamed successfully')
 
      # Truncate the existing table before appending the new table
-     truncate_table = """drop table mabawa_staging.source_riders;"""
+     truncate_table = """truncate mabawa_staging.source_riders;"""
      truncate_table = pg_execute(truncate_table)
 
      riders.to_sql('source_riders', con = engine, schema='mabawa_staging', if_exists = 'append', index=False)   
      
      print('Riders information has been successfully appended')
-fetch_rider_times()
+
+# fetch_rider_times()

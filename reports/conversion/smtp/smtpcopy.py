@@ -511,7 +511,7 @@ def send_branches_report(path, branch_data, selection):
                 email_message = MIMEMultipart("alternative")
                 email_message["From"] = your_email
                 email_message["To"] = r','.join(receiver_email)
-                email_message["Subject"] = f"{branch_name} Registrations, and Eye Tests Report from {fourth_week_start} to {fourth_week_end}"
+                email_message["Subject"] = f"{branch_name} Weekly Registrations, and Eye Tests Report from {fourth_week_start} to {fourth_week_end}"
                 email_message.attach(MIMEText(html, "html"))
 
                 if branch in eyetests_non_conversions.sheet_names:

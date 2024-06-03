@@ -102,3 +102,6 @@ def create_source_google_reviews():
     query = pg_execute(query)
 
     return "Table Created"
+
+
+create_source_google_reviews()

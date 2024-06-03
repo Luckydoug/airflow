@@ -33,7 +33,7 @@ drafts_html = """
 
             <div class = "detractors">
                 <h4>4) Detractors </h4>
-                <table>{detractors_html}<table>
+                <table>{detractors_html}</table>
             </div>
 
             <div class = "sops">

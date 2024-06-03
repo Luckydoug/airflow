@@ -8,10 +8,15 @@ import holidays as pyholidays
 from airflow.models import Variable
 from workalendar.africa import Kenya
 from pangres import upsert
+from datetime import date, timedelta, time, datetime
 from sub_tasks.data.connect import (pg_execute, engine) 
 from sub_tasks.libraries.utils import return_session_id
-from sub_tasks.libraries.utils import FromDate, ToDate
+# from sub_tasks.libraries.utils import FromDate, ToDate
 
+today = date.today()
+pastdate = today - timedelta(days=14)
+FromDate = pastdate.strftime('%Y/%m/%d')
+ToDate = date.today().strftime('%Y/%m/%d')
 
 def fetch_sap_invt_transfer_request ():
     SessionId = return_session_id(country = "Kenya")
@@ -30,6 +35,7 @@ def fetch_sap_invt_transfer_request ():
     print("Retrived No of Pages", pages)
 
     for i in range(1, pages+1):
+        print(i)
         page = i
         url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetITRDetails&pageNo={page}&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
         response = requests.request("GET", url, headers=headers, data=payload, verify=False)
@@ -76,6 +82,7 @@ def fetch_sap_invt_transfer_request ():
 
     print("Renamed Columns")
 
+    transfer_request_details.drop_duplicates(subset='internal_no',inplace=True)
     transfer_request_details = transfer_request_details.set_index('internal_no')
 
     print("Indexes set")
@@ -126,6 +133,7 @@ def fetch_sap_invt_transfer_request ():
 
     print("Renamed Detailed Columns")
 
+    itemdetails_df.drop_duplicates(subset=['doc_internal_id','row_no'],inplace=True)
     itemdetails_df = itemdetails_df.set_index(['doc_internal_id','row_no'])
 
     upsert(engine=engine,
@@ -140,9 +148,9 @@ def fetch_sap_invt_transfer_request ():
     #itemdetails_df.to_sql('source_itr_details', con = engine, schema='mabawa_staging', if_exists = 'append', index=False)
     
 
-    return 'something' 
+    return 
 
-# fetch_sap_invt_transfer_request ()
+# fetch_sap_invt_transfer_request()
 
 
 def create_fact_itr_details ():

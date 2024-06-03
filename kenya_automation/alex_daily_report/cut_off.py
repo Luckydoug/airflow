@@ -136,16 +136,47 @@ def cutoff():
     NormalRepRegion=NormalRep.copy()
 
     ###Separating First and Second cut offs then finding the max value per [Branch,Day & Cut off]
-    NormalRepRegion["Type"]=np.where(NormalRepRegion['Creatn Time - Incl. Secs']>=datetime.time(12, 0, 0),"Second","First")
+    # NormalRepRegion["Type"]=np.where(NormalRepRegion['Creatn Time - Incl. Secs']>=datetime.time(12, 0, 0),"Second","First")
+    NormalRepRegion = pd.merge(NormalRepRegion,Branches2[["Branch","Address"]],on='Branch', how='left')    
+    def cut_off(x):
+        try:
+            if 'YOR' in x['Address']:
+                type_ = np.where(x['Creatn Time - Incl. Secs']>datetime.time(9, 20, 0),"Second","First")
+                
+                if (x['Branch']=="OHO")& (x['Creatn Time - Incl. Secs']>datetime.time(11, 15, 0) ) :
+                    type_ = "Third"
+            
+            elif "CBD" in  x['Address'] :
+                type_ = np.where(x['Creatn Time - Incl. Secs']>datetime.time(10, 30, 0),"Second","First")
+
+            elif 'Rider' in x['Address']:
+                type_ = np.where(x['Creatn Time - Incl. Secs']>datetime.time(10, 30, 0),"Second","First")  
+            
+            else:
+                type_ = "First"
+            
+        except :
+            type_ = np.where(x['Creatn Time - Incl. Secs']>datetime.time(10, 30, 0), "Second", "First")
+        return str(type_)  
+
+    NormalRepRegion["Type"] = NormalRepRegion.apply( lambda y: cut_off(y) , axis=1) 
+
+
     Brs_Pivot=pd.pivot_table(NormalRepRegion,index=["Branch",'Creation Date',"Type"],values='Creatn Time - Incl. Secs',aggfunc=np.max)
     Brs_Pivot = Brs_Pivot.reset_index()
     Brs_Pivot=Brs_Pivot.rename(columns={'Creatn Time - Incl. Secs':"Max"})
 
     ###Calculating the cut off
     NormalRepRegion=pd.merge(NormalRepRegion,Brs_Pivot,on=["Branch","Creation Date","Type"],how="left")
-    NormalRepRegion = pd.merge(NormalRepRegion,Branches2,  on = ['Branch',"Type"], how = 'left')
-    NormalRepRegion['Region'] = ['YOR/OHO' if x=='YOR OHO' else "CBD" if x=='CBD Messenger' else 'Nairobi' if x=='Rider 2 Karen' or x=='Rider 3 Eastlands' or x=='Rider 4 Thika Rd' or x=='Rider 1 Westlands'
-                        else 'Uganda/Rwanda' if x== 'Rider' else 'G4S' if x=='Rider G4S' else 'Upcountry'  for x in NormalRepRegion['Address']]
+    NormalRepRegion = pd.merge(NormalRepRegion,Branches2.drop(columns=["Address"]),  on = ['Branch',"Type"], how = 'left')
+    NormalRepRegion['Region'] = ['YOR/OHO' if x=='YOR OHO' 
+                                else "CBD" if x=='CBD Messenger' 
+                                else 'Thika' if x == 'Rider 5 Thika Town'
+                                else 'Nairobi' if x=='Rider 2 Karen' 
+                                or x=='Rider 3 Eastlands' or x=='Rider 4 Thika Rd' or x=='Rider 1 Westlands'                                
+                                else 'Uganda/Rwanda' if x== 'Rider' 
+                                else 'G4S' if x=='Rider G4S' 
+                                else 'Upcountry'  for x in NormalRepRegion['Address']]
 
     NormalRepRegion['Creatn Time - Incl. Secs'] = NormalRepRegion['Creatn Time - Incl. Secs'].astype(str)
     NormalRepRegion['BRS CUT OFF'] = np.where(NormalRepRegion['Creatn Time - Incl. Secs'] > NormalRepRegion["BRS Cut"],0, 1)
@@ -178,6 +209,7 @@ def cutoff():
 
     branchesfilter=['JUN','HUB','YOR','OHO',"CAP","GAR","TMA","TRM","VMA","WGT","MEG","COR","KAU","WES","TWO"]
     NormalRep["Type"]=np.where((NormalRep["Type"]=="Second") & ~(NormalRep["Branch"].isin(branchesfilter)),"First",NormalRep["Type"])
+
      
 
     filterBRS=['BRS','ALL']
@@ -335,7 +367,9 @@ def cutoff():
         format_dict = { '%_ge Efficiency': '{:.2%}'}
         Summary_BRS_rw.style.format(format_dict)
         Summary_BRS_rw.reset_index()
-
+    else:
+        Summary_BRS_rw = pd.DataFrame({'Type': [],'Region': [],'%_ge Efficiency': [],'ITR Number': []})
+        NormalRepRegion_rw = pd.DataFrame({'BRS CUT OFF':[]})
 
     """ 2. Main Store Cut Off """
     MainStore_data=pd.concat([main1,main2])
@@ -574,7 +608,7 @@ def cutoff():
     with pd.ExcelWriter(r"/home/opticabi/Documents/optica_reports/order_efficiency/Cutoff_Summary.xlsx", engine='xlsxwriter') as writer:      
         Summary_BRS.to_excel(writer, sheet_name='BRS',startrow=0 , startcol=0)
         Summary_BRS_ug.to_excel(writer, sheet_name='BRS_UG',startrow=0 , startcol=0,index = False)
-        # Summary_BRS_rw.to_excel(writer, sheet_name='BRS_RW',startrow=0 , startcol=0,index = False)
+        Summary_BRS_rw.to_excel(writer, sheet_name='BRS_RW',startrow=0 , startcol=0,index = False)
         Summary_MainStore.to_excel(writer, sheet_name='Main',startrow=0 , startcol=0)
         Summary_designerStore.to_excel(writer, sheet_name='Designer',startrow=0, startcol=0)
         Summary_LensStore.to_excel(writer, sheet_name='Lens',startrow=0, startcol=0)
@@ -613,16 +647,14 @@ def cutoff():
         Summary_packaging.to_excel(writer, sheet_name='Summary Cut Off',startrow=2, startcol=25)
         NormalRepRegion.to_excel(writer, sheet_name='BRS Data')
         NormalRepRegion_ug.to_excel(writer, sheet_name='BRS Data UG')
-        # NormalRepRegion_rw.to_excel(writer, sheet_name='BRS Data RW')
+        NormalRepRegion_rw.to_excel(writer, sheet_name='BRS Data RW')
         MainStore_data.to_excel(writer, sheet_name='MainStore Data')
         DesinerStore_data.to_excel(writer, sheet_name='DesignerStore Data')
         ControlRoom_data.to_excel(writer, sheet_name='ControlRoom Data')
         Packaging_data.to_excel(writer, sheet_name='Packaging Data')
-        LensStore_data.to_excel(writer, sheet_name='Lens Data')
-   
+        LensStore_data.to_excel(writer, sheet_name='Lens Data')  
         
     writer.save()
-
     def save_xls(list_dfs, xls_path):
         with ExcelWriter(xls_path) as writer:
             for n, df in enumerate(list_dfs):

@@ -16,7 +16,6 @@ from reports.draft_to_upload.utils.utils import (
 from sub_tasks.libraries.utils import check_date_range
 first_month, second_month = get_comparison_months()
 
-
 def create_rejection_report(
     orderscreen,
     all_orders,
@@ -254,10 +253,14 @@ def create_rejection_report(
         )
 
         rejections_orders["Date"] = pd.to_datetime(rejections_orders["Date"])
+        
+        
+        
         raw_rejections_data = rejections_orders[
             (rejections_orders["Date"] >= pd.to_datetime(start_date)) &
             (rejections_orders["Date"] <= pd.to_datetime(today))
         ].copy()
+
 
         raw_rejections_data["Week Range"] = raw_rejections_data.apply(
             lambda row: check_date_range(row, "Date"), axis=1)
@@ -382,7 +385,8 @@ def create_rejection_report(
             branch_data=branch_data
         )
 
-        weekly_rejections_data["Date"] = weekly_rejections_data["Date"].astype(str)
+        weekly_rejections_data["Date"] = weekly_rejections_data["Date"].astype(str)        
+        
 
         with pd.ExcelWriter(f"{path}draft_upload/rejections_report.xlsx") as writer:
             final_weekly_rejections_report.to_excel(

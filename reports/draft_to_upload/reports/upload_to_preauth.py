@@ -1,6 +1,6 @@
 import pandas as pd
 
-def uploadToSentPreauth(data, path, selection):
+def uploadToSentPreauth(data, path, selection) -> None:
     if selection != "Daily":
         return 
     
@@ -13,6 +13,15 @@ def uploadToSentPreauth(data, path, selection):
     data["Time Taken (Target = 5)"] = data["Time Taken (Target = 5)"].astype(int).astype(str)
 
     with pd.ExcelWriter(f"{path}draft_upload/upload_sent_preauth.xlsx") as writer:
+        data.to_excel(writer, sheet_name = "Data", index = False)
+
+
+
+def sap_update_efficieny(selection, data, path) -> None:
+    if selection != "Daily":
+        return
+    
+    with pd.ExcelWriter(f"{path}draft_upload/approval_update.xlsx") as writer:
         data.to_excel(writer, sheet_name = "Data", index = False)
 
 

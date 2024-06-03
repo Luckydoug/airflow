@@ -10,7 +10,7 @@ from reports.draft_to_upload.utils.utils import(
     create_daily_submission_pivot, 
     plano_submission_multindex
 )
-
+from reports.queue_time.utils.utils import check_date_range as check_range
 first_month, second_month = get_comparison_months()
 
 def get_customer_type(row):
@@ -61,7 +61,7 @@ columns_order = [
     "Customer Code",
     "Insurance Company",
     "Scheme Name",
-    "Opthom Name",
+    "Optom Name",
     "EWC Handover",
     "Who Viewed RX",
     "Feedback",
@@ -77,8 +77,9 @@ def create_plano_report(branch_data, path, registrations, payments, all_planos, 
     planos_payments = pd.merge(all_planos, payments, on = "Customer Code", how = "left")
     planos_payments_registrations = pd.merge(planos_payments, enrollment, on = "Customer Code", how = "left")
     plano_data = planos_payments_registrations.copy()
-
+    print(plano_data)
     plano_data["Final Customer Type"] = plano_data.apply(lambda row: get_customer_type(row), axis=1)
+    
     plano_data = plano_data.drop_duplicates(subset=["Code"])
     plano_data = plano_data[plano_data["Code"] != '4134']
 
@@ -93,7 +94,7 @@ def create_plano_report(branch_data, path, registrations, payments, all_planos, 
     insurance_plano_requests = pd.merge(insurance_planos, unique_orderscreen, on = "Code", how="left")
     insurance_plano_requests["Code"] = insurance_plano_requests["Code"].astype(int)
     plano_insurance_orders = pd.merge(insurance_plano_requests, plano_orders, on = "Code", how="left")
-    print(plano_insurance_orders[plano_insurance_orders["Order Number"] == '24105335'])
+    
 
     plano_insurance_orders["Submission"] = plano_insurance_orders.apply(lambda row: check_plano_submission(row), axis=1)
     plano_insurance_orders["Month"] = pd.to_datetime(plano_insurance_orders["Create Date"], format="%Y-%m-%d").dt.month_name()
@@ -109,12 +110,12 @@ def create_plano_report(branch_data, path, registrations, payments, all_planos, 
         how = "left"
     )
 
-    final_plano_data = final_plano_data[
-        final_plano_data["Insurance Company"] != "NHIF- COMPREHENSIVE MEDICAL INSURANCE"
-    ]
+    # final_plano_data = final_plano_data[
+    #     final_plano_data["Insurance Company"] != "NHIF- COMPREHENSIVE MEDICAL INSURANCE"
+    # ]
 
     if selection == "Daily":
-        daily_plano_data = final_plano_data[final_plano_data["Create Date"] == get_yesterday_date(truth=True)]
+        daily_plano_data = final_plano_data[final_plano_data["Create Date"] == get_yesterday_date(truth=False)]
         if not len(daily_plano_data):
             return
         
@@ -140,6 +141,8 @@ def create_plano_report(branch_data, path, registrations, payments, all_planos, 
         )
 
         daily_plano_data["Create Date"] = daily_plano_data["Create Date"].astype(str)
+        daily_plano_data = daily_plano_data.rename(columns = {"Opthom Name": "Optom Name"})
+
         with pd.ExcelWriter(f"{path}draft_upload/planorx_not_submitted.xlsx") as writer:
             daily_submission_branch.to_excel(writer, sheet_name="daily_submission_branch", index=False)
             daily_submission_optom.to_excel(writer, sheet_name="daily_submission_optom", index=False)
@@ -148,6 +151,7 @@ def create_plano_report(branch_data, path, registrations, payments, all_planos, 
 
     if selection == "Weekly":
         weekly_plano_data = final_plano_data.copy()
+        weekly_plano_data = weekly_plano_data.rename(columns={"Opthom Name": "Optom Name"})
         weekly_plano_data["Week Range"] = weekly_plano_data.apply(lambda row: check_date_range(row, "Create Date"), axis=1)
         weekly_plano_data = weekly_plano_data[
             (weekly_plano_data["Week Range"] != "None") & 
@@ -165,8 +169,8 @@ def create_plano_report(branch_data, path, registrations, payments, all_planos, 
         weekly_submission_optom = plano_submission_multindex(
             plano_data=weekly_plano_data,
             columns = ["Week Range"],
-            index=["SRM", "RM", "Branch","Opthom Name"],
-            set_index=["SRM", "RM", "Branch","Opthom Name"],
+            index=["SRM", "RM", "Branch","Optom Name"],
+            set_index=["SRM", "RM", "Branch","Optom Name"],
             month=False
         )
 
@@ -198,9 +202,69 @@ def create_plano_report(branch_data, path, registrations, payments, all_planos, 
             cols_order=["SRM", "RM", "Branch", "Plano Eye Tests", "Submitted", "Not Submitted", "Converted"]
         )
 
+        branch_checks = weekly_plano_data.copy()
+        branch_checks = branch_checks[branch_checks["Submission"] == "Not Submitted"]
+
         weekly_plano_data = weekly_plano_data[
             weekly_plano_data["Week Range"] == weekly_submission_ewc.columns.get_level_values(0)[-1]
         ]
+
+        branch_checks = branch_checks.rename(columns = {"Branch": "Outlet"})
+
+        branch_checks["Week Range"] = branch_checks.apply(lambda row: check_range(row, "Create Date"), axis = 1)
+        branch_checks = branch_checks[branch_checks["Week Range"] != "None"]
+        
+        plano_branch_checks = pd.pivot_table(
+            branch_checks,
+            index = ["Outlet", "EWC Handover"],
+            values = [
+                "Code",
+            ],
+            aggfunc={
+                "Code": "count",
+                },
+            columns=["Week Range"]
+        )
+
+        plano_branch_checks =  plano_branch_checks.reindex(
+            ["Code"], 
+            level = 0, 
+            axis = 1
+        )
+
+
+        columns = plano_branch_checks.columns.get_level_values(1)
+        dates = []
+
+        for date in columns:
+            stat_date = pd.to_datetime(date.split(" to ")[0], format="%b-%d")
+            dates.append(stat_date)
+        unique_dates = list(set(dates))
+        sorted_dates = sorted(unique_dates)
+        sorted_dates
+
+        sorted_columns = []
+
+        for date in sorted_dates:
+            date_range = f"{date.strftime('%b-%d')} to " + f"{(date + pd.Timedelta(6, unit='d')).strftime('%b-%d')}"
+            sorted_columns.append(date_range)
+
+        
+
+        plano_branch_checks = plano_branch_checks.reindex(sorted_columns, axis = 1, level=1)
+
+        plano_branch_checks = plano_branch_checks.rename(
+            columns = {
+                "Code": "Non Submitted Insurance Clients",
+            },
+            level = 0).round(0).fillna("-")
+
+        plano_branch_checks =  plano_branch_checks.reset_index()
+
+
+        with pd.ExcelWriter(f"{path}draft_upload/insurance_not_submitted.xlsx") as writer:
+            plano_branch_checks.to_excel(writer, sheet_name="weekly_submission_branch")
+
 
         with pd.ExcelWriter(f"{path}draft_upload/planorx_not_submitted.xlsx") as writer:
             # weekly_submission_branch.to_excel(writer, sheet_name="weekly_submission_branch")
@@ -255,7 +319,7 @@ def create_plano_report(branch_data, path, registrations, payments, all_planos, 
             monthly_submission_branch.to_excel(writer, sheet_name = "monthly_submission_branch")
             monthly_submission_optom.to_excel(writer, sheet_name = "monthly_submission_optom")
             monthly_submission_ewc.to_excel(writer, sheet_name = "monthly_submission_ewc")
-            monthly_plano_data[columns_order].sort_values(by="Submission").to_excel(writer, sheet_name="monthly_data", index=False)
+            final_plano_data.sort_values(by="Submission").to_excel(writer, sheet_name="monthly_data", index=False)
         
 
 

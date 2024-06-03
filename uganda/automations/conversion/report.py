@@ -171,6 +171,7 @@ def trigger_uganda_management_smtp():
 
 
 def trigger_uganda_branches_smtp():
+
     if not assert_integrity(engine=engine,database="mawingu_staging"):
         print("We run into an error. Ensure all the tables are updated in data warehouse and try again.")
         return
@@ -204,12 +205,4 @@ Optica Data Team
 Let's keep it flowing
 
 """
-
-
-# Written and Curated by Douglas
-# We shall remember.
-# build_uganda_et_conversion()
-# build_uganda_reg_conversion()
-# build_uganda_viewrx_conversion()
-# trigger_uganda_branches_smtp()
 

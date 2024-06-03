@@ -1,10 +1,10 @@
 import pandas as pd
 from airflow.models import variable
-from sub_tasks.libraries.time_diff import calculate_time_difference
+from sub_tasks.libraries.time_diff import calculate_time_difference, working_hours_dictionary
 from pangres import upsert
 from reports.draft_to_upload.utils.utils import return_slade, today
 
-def push_insurance_efficiency_data(database, engine, orderscreen, all_orders, start_date, branch_data,working_hours):
+def push_insurance_efficiency_data(database, engine, orderscreen, all_orders, start_date, branch_data,working_hours, holidays):
     if not len(all_orders) or not len(orderscreen):
         return
     draft = ["Draft Order Created"]
@@ -96,13 +96,18 @@ def push_insurance_efficiency_data(database, engine, orderscreen, all_orders, st
 
     if not len(final_data_orders):
         return
+    
+
+    
+    work_hours = working_hours_dictionary(working_hours=working_hours)
 
     final_data_orders["Draft to Preauth"] = final_data_orders.apply(
         lambda row: calculate_time_difference(
             row=row,
             x="Draft Time",
             y="Preauth Time",
-            working_hours=working_hours
+            working_hours=work_hours,
+            holiday_dict = holidays
         ),
         axis=1
     )
@@ -112,7 +117,8 @@ def push_insurance_efficiency_data(database, engine, orderscreen, all_orders, st
             row=row,
             x="Preauth Time",
             y="Upload Time",
-            working_hours=working_hours
+            working_hours=work_hours,
+            holiday_dict = holidays
         ),
         axis=1
     )
@@ -122,7 +128,8 @@ def push_insurance_efficiency_data(database, engine, orderscreen, all_orders, st
             row=row,
             x="Draft Time",
             y="Upload Time",
-            working_hours=working_hours
+            working_hours=work_hours,
+            holiday_dict = holidays
         ),
         axis=1
     )

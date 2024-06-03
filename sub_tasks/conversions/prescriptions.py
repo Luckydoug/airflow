@@ -458,6 +458,11 @@ def create_et_conv ():
     query = """
     refresh materialized view mabawa_mviews.et_conv;
     insert into mabawa_dw.update_log(table_name, update_time) values('et_conv', default);
+    refresh materialized view mabawa_mviews.order_contents;
+    refresh materialized view mabawa_mviews.old_eyetest_viewed_conversion;
+    refresh materialized view mabawa_mviews.optoms_older_than_30days_eyetest_viewed_conversion;
+    refresh materialized view mabawa_mviews.salespersons_older_than_30days_eyetest_viewed_conversion;  
+
     """
     query = pg_execute(query)
 

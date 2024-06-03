@@ -8,12 +8,13 @@ import datetime
 import pandas as pd
 
 conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", password="@Akb@rp@$$w0rtf31n")
+
 today = datetime.date.today()
 yesterday = today - datetime.timedelta(days=1)
 start_month = datetime.date(today.year,today.month,1)
 
 # today = datetime.date.today()
-# yesterday = today - datetime.timedelta(days=8)
+# yesterday = today - datetime.timedelta(days=3)
 # start_month = datetime.date(yesterday.year,yesterday.month,1)
 
 

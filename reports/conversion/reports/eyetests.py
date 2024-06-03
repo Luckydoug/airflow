@@ -549,6 +549,9 @@ def create_eyetests_conversion(data, country, path, selection, insurances = pd.D
 
         high_rx_data = monthly_data[monthly_data["RX"] == "High Rx"]
 
+        high_rx_cash = high_rx_data[high_rx_data["mode_of_pay"] == "Cash"]
+        high_rx_insurance = high_rx_data[high_rx_data["mode_of_pay"] == "Insurance"]
+
         high_rx_conversion = create_monthly_summary(
             data=high_rx_data,
             values=["code", "conversion"],
@@ -561,6 +564,29 @@ def create_eyetests_conversion(data, country, path, selection, insurances = pd.D
 
         branch_highrx_conversion = create_monthly_conversion(
             data=high_rx_data,
+            index="branch_code",
+            values=["code", "conversion"],
+            rename={
+                "code": "ETs",
+                "conversion": "Converted"
+            }
+        )
+
+
+
+        branch_highrx_insurance_conversion = create_monthly_conversion(
+            data=high_rx_insurance,
+            index="branch_code",
+            values=["code", "conversion"],
+            rename={
+                "code": "ETs",
+                "conversion": "Converted"
+            }
+        )
+
+
+        branch_highrx_cash_conversion = create_monthly_conversion(
+            data=high_rx_cash,
             index="branch_code",
             values=["code", "conversion"],
             rename={
@@ -642,15 +668,14 @@ def create_eyetests_conversion(data, country, path, selection, insurances = pd.D
         ]]
 
         with pd.ExcelWriter(f"{path}conversion/eyetests/overall.xlsx") as writer:
-            country_conversion.to_excel(
-                writer, sheet_name="Monthly_Conversion")
-            branch_conversion.to_excel(
-                writer, sheet_name="Branches_Conversion")
+            country_conversion.to_excel(writer, sheet_name="Monthly_Conversion")
+            branch_conversion.to_excel(writer, sheet_name="Branches_Conversion")
             high_rx_conversion.to_excel(writer, sheet_name="Highrx_Conversion")
-            branch_highrx_conversion.to_excel(
-                writer, sheet_name="branch_highrx")
+            branch_highrx_conversion.to_excel(writer, sheet_name="branch_highrx")
             optom_highrx_conversion.reset_index().to_excel(writer, sheet_name="Optom High RX")
             ewc_highrx_conversion.reset_index().to_excel(writer, sheet_name="EWC High RX")
+            branch_highrx_cash_conversion.to_excel(writer, sheet_name = "Highrx_Cash_Conversion")
+            branch_highrx_insurance_conversion.to_excel(writer, sheet_name = "Highrx_Insurance_Conversion")
             non_conversions_data.sort_values(by="Branch").to_excel(
                 writer,
                 sheet_name="Non Conversions",

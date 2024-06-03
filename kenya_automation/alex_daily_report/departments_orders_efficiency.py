@@ -47,36 +47,82 @@ conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", p
 #Define the days that is yesterday
 today = datetime.date.today()
 # today = datetime.date(2024,1,25)
-yesterday = today - datetime.timedelta(days= 1)
+yesterday = today - datetime.timedelta(days=1)
 print(yesterday)
 formatted_date = yesterday.strftime('%Y-%m-%d')
 
 
 def update_calculated_field():
     OrdersWithIssues = fetch_gsheet_data()["orders_with_issues"]
-    # print(OrdersWithIssues.head())
     orders_cutoff = fetch_gsheet_data()["orders_cutoff"]
-    # print(orders_cutoff.head())
 
-    departments = """
+    departments = f"""
 	with dept as 
     (SELECT dept, status, "Order Criteria", "Doc Entry", "Doc No", "start", finish, "Time Min",CAST(finish AS DATE) as "Finish_Date"
     FROM mabawa_mviews.v_orderefficiencydata) 
     select * from dept 
     where "Finish_Date"::date = '{yesterday}'
     """.format(yesterday=yesterday)
+    departments = pd.read_sql_query(departments,con=conn)  
 
-    departments = pd.read_sql_query(departments,con=conn)   
-    print(departments)
+    mainstore_designer_steps = f""" 
+    select *, 
+    case 
+        when sale_order_to_order_printed >= 0 and sale_order_to_order_printed <= 5 then '0 - 5 Mins'
+        when sale_order_to_order_printed >= 6 and sale_order_to_order_printed <= 10 then '6 - 10 Mins'
+        when sale_order_to_order_printed >= 11 and sale_order_to_order_printed <= 15 then '11 - 15 Mins'
+        else '+15 Mins'
+    end as tt,
+    case 
+        when order_printed_to_frame_to_lenstore >= 0 and order_printed_to_frame_to_lenstore <= 5 then '0 - 5 Mins'
+        when order_printed_to_frame_to_lenstore >= 6 and order_printed_to_frame_to_lenstore <= 10 then '6 - 10 Mins'
+        when order_printed_to_frame_to_lenstore >= 11 and order_printed_to_frame_to_lenstore <= 15 then '11 - 15 Mins'
+        else '+15 Mins'
+    end as tt1,
+    TO_CHAR(DATE_TRUNC('hour', frame_to_lenstore), 'HH24:00') || ' - ' || TO_CHAR(DATE_TRUNC('hour', frame_to_lenstore) + INTERVAL '1 hour', 'HH24:00') AS Hour
+    from mabawa_mviews.salesorder_to_senttolensstore
+    where doc_no in (select "Doc No" from mabawa_mviews.v_orderefficiencydata
+    where dept in ('Main Store','Designer'))
+    and frame_to_lenstore::date = '{yesterday}'
+    """
+    mainstoredesigner =pd.read_sql_query(mainstore_designer_steps,con=conn)    
+
+    mainstore = mainstoredesigner[mainstoredesigner['ods_outlet'] == '0MA']
+    designer = mainstoredesigner[mainstoredesigner['ods_outlet'] == '0DS']
+
+    saleorder_to_orderprinted_main = mainstore[mainstore['sale_order_to_order_printed'].notna()]
+    orderprinted_to_lenstore_main = mainstore[mainstore['order_printed_to_frame_to_lenstore'].notna()]
+    required_columns = ['Hour','Orders','0 - 5 Mins', '6 - 10 Mins', '11 - 15 Mins', '+15 Mins']
+
+    saleorder_to_orderprinted_main = saleorder_to_orderprinted_main.pivot_table(index = 'hour',columns = 'tt',values = 'doc_entry',aggfunc = {'doc_entry':np.count_nonzero},margins = True,margins_name = 'Orders').reset_index().rename(columns = {'hour':'Hour'}).fillna(' ')
+    orderprinted_to_lenstore_main = orderprinted_to_lenstore_main.pivot_table(index = 'hour',columns = 'tt1',values = 'doc_entry',aggfunc = {'doc_entry':np.count_nonzero},margins = True,margins_name = 'Orders').reset_index().rename(columns = {'hour':'Hour'}).fillna(' ')
+
+    saleorder_to_orderprinted_designer = designer[designer['sale_order_to_order_printed'].notna()]
+    orderprinted_to_lenstore_designer = designer[designer['order_printed_to_frame_to_lenstore'].notna()]
+
+    saleorder_to_orderprinted_designer = saleorder_to_orderprinted_designer.pivot_table(index = 'hour',columns = 'tt',values = 'doc_entry',aggfunc = {'doc_entry':np.count_nonzero},margins = True,margins_name = 'Orders').reset_index().rename(columns = {'hour':'Hour'}).fillna(' ')
+    orderprinted_to_lenstore_designer = orderprinted_to_lenstore_designer.pivot_table(index = 'hour',columns = 'tt1',values = 'doc_entry',aggfunc = {'doc_entry':np.count_nonzero},margins = True,margins_name = 'Orders').reset_index().rename(columns = {'hour':'Hour'}).fillna(' ')
+
+    dataframes = [saleorder_to_orderprinted_main, orderprinted_to_lenstore_main, saleorder_to_orderprinted_designer, orderprinted_to_lenstore_designer]
+    for df in dataframes:
+        required_columns = ['Hour', 'Orders', '0 - 5 Mins', '6 - 10 Mins', '11 - 15 Mins', '+15 Mins']
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        if missing_columns:
+            for col in missing_columns:
+                df[col] = np.nan
+
+    required_columns = ['Hour','Orders','0 - 5 Mins', '6 - 10 Mins', '11 - 15 Mins', '+15 Mins']
+    saleorder_to_orderprinted_main = saleorder_to_orderprinted_main[required_columns]
+    orderprinted_to_lenstore_main = orderprinted_to_lenstore_main[required_columns]
+    saleorder_to_orderprinted_designer = saleorder_to_orderprinted_designer[required_columns]
+    orderprinted_to_lenstore_designer = orderprinted_to_lenstore_designer[required_columns]
 
     OrdersWithIssues["DATE"] = pd.to_datetime(OrdersWithIssues.DATE, dayfirst=True, errors="coerce")
     print(OrdersWithIssues.dtypes)
     OrdersWithIssues = OrdersWithIssues[(OrdersWithIssues.DATE >= formatted_date) & (OrdersWithIssues.DATE <= formatted_date)]   
-
     
     dept_orders = departments[departments['dept'].isin(['Control', 'Designer', 'Main Store', 'Packaging', 'Lens Store'])]
     print(dept_orders)
-    # dept_orders['finish'] = dept_orders['finish'].astype(str)
     dept_orders['finish'] = dept_orders['finish'].fillna('')
     dept_orders[['Day', 'Time']] = dept_orders['finish'].str.split(' ', expand=True)    
     dept_orders['Time'] = pd.to_datetime(dept_orders['Time'], format='%H:%M:%S')
@@ -89,14 +135,27 @@ def update_calculated_field():
                                                                               (np.where(orders['dept'] == 'Packaging', orders['Packaging'], 10)))))))))
     
     orders['Delay'] = np.where(orders['Time Min'] > orders['cut off'], 1, 0)
-    print(orders)
+
+
     """   CONTROL ORDER EFFICIENCY   """
+    branchrejected = f"""
+    select sd.doc_entry,so.doc_no,sd.odsc_date,sd.odsc_status,so.ods_status  from mabawa_staging.source_orderscreenc1 sd
+    left join mabawa_staging.source_orderscreen so on so.doc_entry = sd.doc_entry  
+    where odsc_date::date between '2024-04-01' and '{yesterday}'
+    and odsc_status = 'Branch Reject Received at Receiver'
+    """
+    branchrejected_df = pd.read_sql_query(branchrejected, con=engine)
+    branchrejected_df_list = branchrejected_df['doc_no'].to_list()
+
     controlIssues = OrdersWithIssues[OrdersWithIssues["DEPARTMENT"] == "CONTROL ROOM"]
     controlIssuesOrders = controlIssues["ORDER NUMBER"].tolist()
 
     control = orders[orders['dept'] == 'Control']
+    control = control[~control['Doc No'].isin(branchrejected_df_list)]
+    control = control.drop_duplicates(subset = ['Doc No','start'],keep = 'first')
     control = control[~control["Doc No"].isin(controlIssuesOrders)]
-    print(control)
+
+
     controlpivot1 = pd.pivot_table(control, index=['Hour'], values=[
                                 'Doc No'], aggfunc='count', fill_value=0, margins=True, margins_name='Total')
     controlpivot2 = pd.pivot_table(control, index=['Hour'], values=[
@@ -122,7 +181,7 @@ def update_calculated_field():
         columns = ['Hour', 'Doc No', 'Time Min']
         controldelay = pd.DataFrame(columns=columns)     
     print('Let us print controldelay')
-    print(controldelay)
+
 
     """Cut Off"""
     control['Time Taken'] = control.apply 
@@ -142,7 +201,7 @@ def update_calculated_field():
     cutcontrol = pd.merge(cuttoff1, cuttoff2, on='dept')
     cutcontrol = pd.merge(cutcontrol, cuttoff3, on='dept')
     cutcontrol = pd.merge(cutcontrol, cuttoff4, on='dept')
-    print(cutcontrol)
+
     print('Control Room Calculated')
 
     """   DESIGNER ORDER EFFICIENCY   """        
@@ -250,12 +309,25 @@ def update_calculated_field():
     print(cutmainstore)
     print('Main Store Calculated')
 
-    """ PACKAGING ORDER EFFICIENCY   """        
+    """ PACKAGING ORDER EFFICIENCY   """ 
+    ibc_query = f"""
+        select doc_no::int,odsc_date::date, odsc_time,odsc_status
+        from mabawa_staging.source_orderscreenc1 os
+        left join mabawa_staging.source_orderscreen so 
+        on os.doc_entry = so.doc_entry 
+        where odsc_status in ('IBC Received at Packaging')
+        and odsc_date::date between '2024-01-01' and '{yesterday}'
+        """
+    ibc = pd.read_sql_query(ibc_query, con=engine)     
+    ibc_to_drop = ibc["doc_no"].tolist()
+
     packagingIssues = OrdersWithIssues[OrdersWithIssues["DEPARTMENT"] == "PACKAGING"]
     packagingIssuesOrders = packagingIssues["ORDER NUMBER"].tolist()
 
     packaging = orders[orders['dept'] == 'Packaging']
     packaging = packaging[~packaging["Doc No"].isin(packagingIssuesOrders)]
+    packaging = packaging[~packaging["Doc No"].isin(ibc_to_drop)]
+    
     packagingpivot1 = pd.pivot_table(packaging, index=['Hour'], values=[
                                 'Doc No'], aggfunc='count', fill_value=0, margins=True, margins_name='Total')
     packagingpivot2 = pd.pivot_table(packaging, index=['Hour'], values=[
@@ -374,12 +446,19 @@ def update_calculated_field():
         lensstorepivot.to_excel(writer, sheet_name='Lens store', index=True)
         lensstoredelay.to_excel(writer, sheet_name='Lens store', index=True, startrow=15)
         cutt.to_excel(writer, sheet_name='Lens store', index=True, startrow=9)
+        controlpivot.to_excel(writer, sheet_name='Control', index=True)
 
+    with pd.ExcelWriter("/home/opticabi/Documents/optica_reports/order_efficiency/maindesignerbreakdown.xlsx", engine='xlsxwriter') as writer:    
+        saleorder_to_orderprinted_main.to_excel(writer, sheet_name='so_to_op_main', index=False)
+        orderprinted_to_lenstore_main.to_excel(writer, sheet_name='op_to_lenstore_main', index=False)   
+        saleorder_to_orderprinted_designer.to_excel(writer, sheet_name='so_to_op_designer', index=False)
+        orderprinted_to_lenstore_designer.to_excel(writer, sheet_name='op_to_lenstore_designer', index=False) 
+    writer.save()
 
     def save_xls(list_dfs, xls_path):
         with ExcelWriter(xls_path) as writer:
             for n, df in enumerate(list_dfs):
                 df.to_excel(writer, 'sheet%s' % n)
             writer.save()
-            
-# update_calculated_field()    
+
+# update_calculated_field()   

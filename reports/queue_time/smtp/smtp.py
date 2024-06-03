@@ -8,7 +8,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import pandas as pd
 from reports.queue_time.html.html import branch_queue_time_html, management_html, queue_time_weekly
-from reports.queue_time.utils.utils import transform_multindex
+from reports.queue_time.utils.utils import transform_multindex, second_week_start, second_week_end
 from sub_tasks.libraries.utils import (
     attach_file,
     save_file,
@@ -18,9 +18,7 @@ from sub_tasks.libraries.utils import (
     return_sent_emails,
     create_initial_file,
     get_four_weeks_date_range,
-    get_comparison_months,
-    fourth_week_start,
-    fourth_week_end
+    get_comparison_months
 )
 from sub_tasks.libraries.styles import (properties, ug_styles)
 from reports.queue_time.smtp.emails import kenya, uganda, rwanda, test
@@ -29,8 +27,6 @@ load_dotenv()
 your_email = os.getenv("douglas_email")
 password = os.getenv("douglas_password")
 date_ranges = get_four_weeks_date_range()
-start_date = date_ranges[3][0].strftime('%Y-%b-%d')
-end_date = date_ranges[3][1].strftime('%Y-%b-%d')
 todate = get_yesterday_date(truth=True)
 first_month, second_month = get_comparison_months()
 
@@ -42,7 +38,7 @@ def send_to_management(path,country, selection) -> None:
     
     queue_report = pd.ExcelFile(road)
     if selection == "Weekly":
-        subject = f"{country} {selection} Average Queue from {fourth_week_start} to {fourth_week_end}"
+        subject = f"{country} {selection} Average Queue from {second_week_start} to {second_week_end}"
     elif selection == "Monthly":
         subject = f"{country} Average Queue for {first_month} and  {second_month}."
     else:
@@ -266,7 +262,7 @@ def send_branches_queue_time(path, branch_data, log_file, selection, country):
             if selection == "Daily":
                 subject = f"{branch_name} Queue Time Report for {todate}"
             elif selection == "Weekly":
-                subject = f"{branch_name} Queue Time  Report from {start_date} to {end_date}."
+                subject = f"{branch_name} Queue Time  Report from {second_week_start} to {second_week_end}."
 
             elif selection == "Monthly":
                 subject = f"{branch_name} Queue Time  Report for {second_month}"

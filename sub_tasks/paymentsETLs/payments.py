@@ -15,11 +15,10 @@ from sub_tasks.libraries.utils import return_session_id
 from sub_tasks.libraries.utils import FromDate, ToDate
 
 
+
     
 def fetch_sap_payments():
     SessionId = return_session_id(country = "Kenya") 
-    print(FromDate)  
-    print(ToDate) 
     
     pagecount_url = f"https://10.40.16.9:4300/OpticaBI/XSJS/BI_API.xsjs?pageType=GetPaymentMeans&pageNo=1&FromDate={FromDate}&ToDate={ToDate}&SessionId={SessionId}"
     pagecount_payload={}

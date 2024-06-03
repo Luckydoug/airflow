@@ -1,20 +1,46 @@
 from airflow.models import variable
 import pandas as pd
-import datetime
 import requests
 import re 
-from sqlalchemy import create_engine
-import urllib
+import datetime
 from sub_tasks.libraries.utils import createe_engine
 from pangres import upsert
 from sub_tasks.libraries.utils import return_session_id
+from reports.draft_to_upload.utils.utils import today
+from sub_tasks.libraries.utils import first_week_start
+
+
+"""
+Non-Converted Insurance Approved orders, i.e.,
+i) Insurance Fully Approved,
+ii) Insurance Partially Approved, and
+iii) Use Available Amount on SMART,
+are uploaded manually to Zoho Desk as tickets. 
+Of course, if it's a ticket, then it must be closed. 
+Customer Service agents have to manually look on the web app to see if the order has converted before they follow up. 
+This process takes much time.
+
+To solve this problem, 
+Douglas created this script that will help update tickets automatically only if they have converted using Zoho Desk API.
+The script begins by fetching the token from Zoho Desk API. After obtaining the token, we fetch all tickets from 4 weeks ago. 
+We extract the order number from the subject using regex. After getting the order number, 
+we fetch data from the data warehouse and return only those orders that have converted. 
+After this, we update the tickets and make a record of the updated tickets in the data warehouse for future reference.
+
+
+DOCUMENTATION V 0.01
+
+Written and Curated by D.O.U.G.L.A.S
+"""
+
+
 
 
 def get_token():
     engine = createe_engine()
     refresh_token_url = "https://accounts.zoho.com/oauth/v2/token"
     params = {
-        "refresh_token": "1000.8edfc26f1b4520b12f59020e70ab0e38.bb0876fa1d26651f4283d281f406016d",
+        "refresh_token": "1000.0a5036d9ddf7e4e243c3651161b830e6.3b809495570a1d9a53398a0179381a73",
         "client_id": "1000.QRT7VH36RSOKKPZOCDHJTTYB169WBF",
         "client_secret": "fad2d176b51219feb9a0eb2d144fca2e6348c07a13",
         "redirect_uri": "https://support.optica.africa/agent/opticalimited/optica-kenya",
@@ -28,22 +54,22 @@ def get_token():
     df = pd.DataFrame({"country": 'Zoho', "session_id": token}, index=[0])
     df = df.set_index("country")
 
-    upsert(engine=engine,
-            df=df,
-            schema='mabawa_staging',
-            table_name='api_login',
-            if_row_exists='update',
-            create_table=False)
+    upsert(
+        engine=engine, 
+        df=df,
+        schema='mabawa_staging',
+        table_name='api_login',
+        if_row_exists='update',
+        create_table=False
+    )
     
 
 def get_ticket_count():
     url = "https://desk.zoho.com/api/v1/ticketsCountByFieldValues"
-    yesterday_date = "2024-03-01"
-    today = "2024-03-15"
     token = return_session_id(country="Zoho")
     params = {
         "field": "status",
-        "modifiedTimeRange": f"{yesterday_date}T00:00:00.000Z,{today}T23:59:00.000Z"
+        "modifiedTimeRange": f"{first_week_start}T00:00:00.000Z,{today}T23:59:00.000Z"
     }
 
     headers = {
@@ -68,10 +94,7 @@ def get_ticket_count():
 
 def fetch_tickets(status, total_count, token):
     tickets = []
-    yesterday_date = "2024-03-01"
-    today = "2024-03-15"
     lists = list(range(0, total_count, 100))
-    print(lists)
 
     for number in lists:
         limit = min(99, total_count - number)
@@ -80,7 +103,7 @@ def fetch_tickets(status, total_count, token):
             "from": number,
             "limit": limit,
             "status": status,
-            "modifiedTimeRange": f"{yesterday_date}T00:00:00.000Z,{today}T23:59:00.000Z"
+            "modifiedTimeRange": f"{first_week_start}T00:00:00.000Z,{today}T23:59:00.000Z"
         }
         headers = {
             'Authorization': f"Bearer {token}"
@@ -97,6 +120,7 @@ def fetch_tickets(status, total_count, token):
     
     all_tickets = pd.DataFrame(tickets)
     all_tickets = all_tickets[all_tickets["classification"] == "Insurance Tracking"]
+    all_tickets = all_tickets[all_tickets["layoutId"] == '563504000000074011']
     return all_tickets[[
         "id",
         "modifiedTime",
@@ -113,7 +137,7 @@ def extract_numeric(text):
     else:
         return None
 
-def update_tickets():
+def get_tickets_to_update():
     engine = createe_engine()
     token = return_session_id("Zoho")
     tracking_count, noreply_count = get_ticket_count()
@@ -129,6 +153,7 @@ def update_tickets():
         total_count=tracking_count,
         token=token
     )
+
 
     insurance_tracking_tickets = pd.concat([noreply_tickets, tracking_tickets], ignore_index=True)
     insurance_tracking_tickets["order number"] = insurance_tracking_tickets['subject'].apply(extract_numeric)
@@ -151,7 +176,224 @@ def update_tickets():
     insurance_tracking = pd.merge(insurance_tracking_tickets, orders, on = "order number", how = "left")
     converted_tickets = insurance_tracking[insurance_tracking["converted"] == 1]
 
-    return converted_tickets
+    converted_tickets = converted_tickets.rename(
+        columns={
+            "modifiedTime": "modified_time",
+            "statusType": "status_type",
+            "order number": "order_number",
+        }
+    )
+
+    converted_tickets = converted_tickets.drop(columns=["converted"])
+    converted_tickets = converted_tickets.set_index("id")
+
+    upsert(
+        engine=engine, 
+        df=converted_tickets,
+        schema='reports_tables',
+        table_name='zoho_tickets_updates',
+        if_row_exists='update',
+        create_table=False
+    )
+
+def update_zoho_tickets():
+    engine = createe_engine()
+
+    query = """
+    select id, modified_time as "modifiedTime",
+    status_type as "statusType", subject,
+    classification, status, order_number,
+    converted_order,
+    updated_timestamp
+    from reports_tables.zoho_tickets_updates
+    where ticket_url is null;
+    """
+
+    zoho_updates = pd.read_sql_query(query, con=engine)
+    new_updates = pd.DataFrame()
+    
+
+    if zoho_updates.empty:
+        return
+
+    for index, row in zoho_updates.iterrows():
+        activities_count = 0
+        update_url = f"https://desk.zoho.com/api/v1/tickets/{row['id']}"
+        activities_url = f"https://desk.zoho.com/api/v1/tickets/{row['id']}/activities"
+
+        token = return_session_id("Zoho")
+
+        headers = {
+            'Authorization': f"Bearer {token}"
+        }
+
+        try:
+            activities_ids = []
+            activities_response = requests.get(activities_url, headers=headers)
+            if activities_response.status_code == 204:
+                reason = "Converted before follow up"
+            else:
+                activities_response.raise_for_status()
+                activities_data = activities_response.json()
+                if activities_data.get("data"): 
+                    reason = "Converted After Follow up"
+                    for activity in activities_data.get("data"):
+                        activities_ids.append(activity["id"])
+
+                else:
+                    reason = "Converted before follow up"
+
+        except requests.exceptions.RequestException as e:
+            print(f"Encounted error when trying to fetch activities for ticket {row['id']}")
+            return
+
+        updates = {
+            "status": "Closed",
+            "customFields": {
+                "Reason For Not Converting": reason,
+                "Converted Order Number": row['converted_order'],
+                "Insurance Converted": "Yes"
+            }
+        }
+
+        try:
+            response = requests.patch(update_url, headers=headers, json=updates)
+            response.raise_for_status()
+            result = response.json()
+
+            if len(activities_ids):
+                activities_count = len(activities_ids)
+                update_tasks_url = "https://desk.zoho.com/api/v1/tasks/updateMany"
+
+                tasks_updates = {
+                    "ids": activities_ids,
+                    "fieldName": "status",
+                    "fieldValue": "Completed",
+                    "isCustomField": False,
+                }
+
+                task_update = requests.post(update_tasks_url, headers=headers, json=tasks_updates)
+                task_update.raise_for_status()
+                reslt = task_update.json()
+          
+            new_url = f"https://support.optica.africa/agent/opticalimited/optica-kenya/tickets/details/{row['id']}"
+            
+            updated_row = row.copy()
+            updated_row['ticket_url'] = new_url
+            updated_row['activities_count'] = activities_count
+            updated_row = updated_row.rename(
+                {
+                    "modifiedTime": "modified_time",
+                    "statusType": "status_type"
+                },
+                axis='columns'
+            )
+        
+            current_time = datetime.datetime.now()
+            updated_timestamp = current_time + datetime.timedelta(hours=3)
+            updated_row['updated_timestamp'] = updated_timestamp
+            new_updates = new_updates.append(updated_row)
+
+            print("Updated")
+        
+        except requests.exceptions.RequestException as e:
+            print("Error updating ticket: ", e)
+
+    
+    upsert(
+        engine=engine, 
+        df=new_updates.set_index("id"),
+        schema='reports_tables',
+        table_name='zoho_tickets_updates',
+        if_row_exists='update',
+        create_table=False
+    )
+
+
+      
+            
+def truncate_zoho_updates():
+    pass
+
+# get_token()
+# update_zoho_tickets()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -35,18 +35,29 @@ with DAG(
 
     with TaskGroup('report') as report:
         with TaskGroup('build') as build:
-            from kenya_automation.insurance_conversion.report import (
-            build_kenya_insurance_conversion
-        )
-
-
+            from kenya_automation.insurance_conversion.report import build_eyetest_order
+            from kenya_automation.insurance_conversion.report import build_rejections
+            from kenya_automation.insurance_conversion.report import build_kenya_insurance_conversion
+    
         build_kenya_insurance_conversion = PythonOperator(
             task_id = 'build_kenya_insurance_conversion',
             python_callable= build_kenya_insurance_conversion,
             provide_context=True
         )
+
+        build_rejections = PythonOperator(
+            task_id='build_rejections',
+            python_callable=build_rejections,
+            provide_context=True
+        )
+
+        build_eyetest_order = PythonOperator(
+            task_id='build_eyetest_order',
+            python_callable=build_eyetest_order,
+            provide_context=True
+        )
         
-        build_kenya_insurance_conversion
+        build_kenya_insurance_conversion >> build_rejections >> build_eyetest_order
     
 
 
@@ -57,6 +68,8 @@ with DAG(
             send_to_kenya_branches,
             clean_kenya_folder
         )
+            
+  
 
         send_to_kenya_management= PythonOperator(
             task_id = 'send_to_kenya_management',
@@ -69,6 +82,7 @@ with DAG(
             python_callable= send_to_kenya_branches,
             provide_context=True
         )
+
 
         clean_kenya_folder = PythonOperator(
             task_id = 'clean_kenya_folder',

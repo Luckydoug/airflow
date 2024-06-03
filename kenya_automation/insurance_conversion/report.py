@@ -1,18 +1,20 @@
+import pandas as pd
 from airflow.models import variable
 from reports.insurance_conversion.reports.conversion import create_insurance_conversion
 from reports.insurance_conversion.data.fetch_data import FetchData
 from sub_tasks.libraries.utils import assert_integrity
-from reports.insurance_conversion.smtp.smtp import (
-    send_to_management, 
-    mop_folder, 
-    send_to_branches
-)
-from sub_tasks.libraries.utils import (
-    createe_engine,
-    path
-)
+from reports.insurance_conversion.smtp.smtp import send_to_management 
+from reports.insurance_conversion.smtp.smtp import mop_folder 
+from reports.insurance_conversion.smtp.smtp import send_to_branches
+from sub_tasks.libraries.utils import createe_engine
+from sub_tasks.libraries.utils import path
 from reports.draft_to_upload.utils.utils import return_report_daterange
-from reports.conversion.utils.utils import (get_conversion_frequency)
+from reports.conversion.utils.utils import get_conversion_frequency
+from reports.draft_to_upload.data.fetch_data import fetch_eyetest_order
+from reports.draft_to_upload.reports.et_to_order import eyetest_order_time
+from reports.insurance_conversion.reports.rejections import create_rejections_report
+
+
 engine = createe_engine()
 selection = get_conversion_frequency(
     report="Insurance Conversion"
@@ -100,6 +102,14 @@ def working_hours():
 """
 CREATE INSURANCE CONVERSION REPORT 
 """
+
+
+def holidays() -> pd.DataFrame:
+    holidays = data_fetcher.fetch_holidays()
+
+    return holidays
+
+
 def build_kenya_insurance_conversion() -> None:
     create_insurance_conversion(
         path=path,
@@ -112,8 +122,48 @@ def build_kenya_insurance_conversion() -> None:
         insurance_companies=insurance_companies(),
         no_feedbacks=no_feedbacks(),
         date = start_date,
-        country="Kenya"
+        country="Kenya",
+        holidays=holidays()
     )
+
+
+def eyetest_order():
+    eyetest_order = fetch_eyetest_order(
+        engine=engine,
+        start_date=start_date
+    )
+
+    return eyetest_order
+
+"""
+BUILD EYE TEST ORDER REPORT
+"""
+def build_eyetest_order() -> None:
+    eyetest_order_time(
+        data=eyetest_order(),
+        path=path,
+        selection=selection
+    )
+
+
+def rejections() -> pd.DataFrame:
+    rejections = data_fetcher.fetch_rejections(
+        start_date=start_date
+    )
+
+    return rejections
+
+
+
+
+
+def build_rejections() -> pd.DataFrame:
+    create_rejections_report(
+        data_rejections=rejections(),
+        selection=selection,
+        path=path
+    )
+
 
 """
 SEND REPORT TO THE MANAGEMENT
@@ -121,6 +171,7 @@ WHEN YOU WANT TO SEND A TEST EMAIL
 PASS "Test" AS AN ARGUMENT TO THE country PARAMETER
 """
 def send_to_kenya_management() -> None:
+    return
     if not assert_integrity(engine=engine,database="mabawa_staging"):
         print("We run into an error. Ensure all the tables are updated in data warehouse and try again.")
         return
@@ -150,6 +201,7 @@ def send_to_kenya_branches() -> None:
 REMOVE ALL THE .xlsx FILES AFTER SENDING THE REPORTS.
 """
 def clean_kenya_folder():
+    return
     mop_folder(path=path)
 
 
@@ -164,4 +216,5 @@ EPHASIZING ON BEST PRACTICES TO
 REDUCE LOAD ON THE SERVER
 AS ACHIEVED BY OPTIMIZATION
 """
+
 

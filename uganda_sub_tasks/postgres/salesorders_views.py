@@ -62,5 +62,22 @@ def refresh_order_contents():
     query = pg_execute(query)
 
 
+def refresh_eyetest_queue_time():
+
+    query = """
+    refresh materialized view mawingu_mviews.eyetest_queue_time;
+    """
+
+    query = pg_execute(query)
+
+def refresh_optom_queue_no_et():
+
+    query = """
+    refresh materialized view mawingu_mviews.optom_queue_no_et;
+    """
+
+    query = pg_execute(query)    
+    
+
 
 

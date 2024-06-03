@@ -11,6 +11,7 @@ from reports.draft_to_upload.utils.utils import return_report_daterange, get_rep
 from reports.draft_to_upload.smtp.branches import send_branches_efficiency
 from reports.draft_to_upload.smtp.smtp import clean_folders
 from reports.draft_to_upload.reports.et_to_order import eyetest_order_time
+from reports.draft_to_upload.reports.rejections import create_rejection_report
 from reports.draft_to_upload.data.fetch_data import (
     fetch_orders,
     fetch_orderscreen,
@@ -27,7 +28,7 @@ from reports.draft_to_upload.data.fetch_data import (
 
 engine = createe_engine()
 database = "mabawa_staging"
-selection = get_report_frequency()
+selection = "Weekly"
 start_date = return_report_daterange(selection=selection)
 start_date = pd.to_datetime(start_date, format="%Y-%m-%d").date()
 
@@ -190,6 +191,7 @@ def trigger_efficiency_smtp():
 
 
 def clean_kenya_folder():
+    return
     clean_folders(path=path)
 
 

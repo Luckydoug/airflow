@@ -66,6 +66,13 @@ def order_efficiency_smtp():
     controle = order_efficiency_dfs[9].iloc[:4, :].rename(columns = {'Unnamed: 0':''})
     controlefficiency = pd.to_numeric((controle['Total'].iloc[-1]).replace("%",""))
 
+    #saleorder_to_orderprinted
+    path_maindesignerbreakdown = r"/home/opticabi/Documents/optica_reports/order_efficiency/maindesignerbreakdown.xlsx"
+    so_to_op_main = pd.read_excel(path_maindesignerbreakdown,sheet_name='so_to_op_main')
+    op_to_lenstore_main = pd.read_excel(path_maindesignerbreakdown,sheet_name='op_to_lenstore_main')
+    so_to_op_designer = pd.read_excel(path_maindesignerbreakdown,sheet_name='so_to_op_designer')
+    op_to_lenstore_designer = pd.read_excel(path_maindesignerbreakdown,sheet_name='op_to_lenstore_designer')
+
     #damage supply efficiency
     damage_supply_efficiency = r"/home/opticabi/Documents/optica_reports/order_efficiency\newdamagesupplytime.xlsx"
     damage_supply_sheet_names =  ["mainstore","designer","lensstore","mainstoresec","lensstoresec"]
@@ -79,8 +86,7 @@ def order_efficiency_smtp():
     #control_damge_supply
     control_to_store_damge_supply = pd.read_excel(damage_supply_efficiency, sheet_name="control to store")
     store_to_control_damge_supply = pd.read_excel(damage_supply_efficiency, sheet_name="store to control")
-    # departments = ["Main store","Designer","Lens store","Control","Packaging","BRS","BRS_UG","BRS_RW"]
-    departments = ["Main store","Designer","Lens store","Control","Packaging","BRS","BRS_UG"]
+    departments = ["Main store","Designer","Lens store","Control","Packaging","BRS","BRS_UG","BRS_RW"]
 
     #lensstore awaiting efficiency
     lensstore_awaiting_efficiency = r"/home/opticabi/Documents/optica_reports/order_efficiency/lensstoreawaiting.xlsx"
@@ -92,11 +98,9 @@ def order_efficiency_smtp():
 
     #cutoff efficiency
     cutoff_efficiency_summary = r"/home/opticabi/Documents/optica_reports/order_efficiency/Cutoff_Summary.xlsx"
-    print(cutoff_efficiency_summary)
     cutoff_efficiency_full= r"/home/opticabi/Documents/optica_reports/order_efficiency/cutoff_Full_Report.xlsx"
     
-    # cutoff_efficiency_summary_sheet_names =  ["Main","Designer","Lens","Control","Packaging","BRS","BRS_UG","BRS_RW"]
-    cutoff_efficiency_summary_sheet_names =  ["Main","Designer","Lens","Control","Packaging","BRS","BRS_UG"]
+    cutoff_efficiency_summary_sheet_names =  ["Main","Designer","Lens","Control","Packaging","BRS","BRS_UG","BRS_RW"]
     cutoff_efficiency_summary_dfs = []
     for sheet_name in cutoff_efficiency_summary_sheet_names:
         print(sheet_name)
@@ -105,8 +109,7 @@ def order_efficiency_smtp():
         
     cutoff_efficiency_summary1 = cutoff_efficiency_summary_dfs[0]
 
-    # cutoff_efficiency_full_sheet_names =  ["MainStore Data","DesignerStore Data","Lens Data","ControlRoom Data","Packaging Data","BRS Data","BRS Data UG","BRS Data RW"]
-    cutoff_efficiency_full_sheet_names =  ["MainStore Data","DesignerStore Data","Lens Data","ControlRoom Data","Packaging Data","BRS Data","BRS Data UG"]
+    cutoff_efficiency_full_sheet_names =  ["MainStore Data","DesignerStore Data","Lens Data","ControlRoom Data","Packaging Data","BRS Data","BRS Data UG","BRS Data RW"]
     cutoff_efficiency_full_dfs = []
     for sheet_name in cutoff_efficiency_full_sheet_names:
         print(sheet_name)
@@ -129,14 +132,11 @@ def order_efficiency_smtp():
     replacements_efficiency_summary1 = replacements_efficiency_summary_dfs[0]
 
     today = date.today()
-    # today=date(2024,1,25)
-    report_date = today
     if today.weekday() == 0:  # 0 means Monday
         report_date = (today - relativedelta(days=2)).strftime('%d-%m-%Y')
     else:
         report_date = (today - relativedelta(days=1)).strftime('%d-%m-%Y')
 
-    # report_date = '29-12-2023'
 
     i=0
     j=0
@@ -214,24 +214,24 @@ def order_efficiency_smtp():
                 table4heading = "cut off delays"
                 table4html = table4.to_html(index=False)
 
-            # table5heading = "Cut Off Summary - Rwanda"
-            # table5 = cutoff_efficiency_summary_dfs[7].fillna("")
-            # table5html = table5.to_html(index=False,formatters={
-            # # 'var1': '{:,.2f}'.format,
-            #         '%_ge Efficiency': '{:,.2%}'.format
-            #     })
-            # brs_cutoff_full_rw = cutoff_efficiency_full_dfs[7].rename(columns = {'Unnamed: 0':''})
-            # table6 = brs_cutoff_full_rw[brs_cutoff_full_rw["BRS CUT OFF"] == 0][['Item No.', 'Item/Service Description', 'ITR Status',
-            #                                                                 'ITR Number', 'Internal Number', 'ITR Date', 'Exchange Type',
-            #                                                                 'Sales Order number', 'Sales Order entry', 'Sales Branch',
-            #                                                                 'Draft order entry', 'Order Number', 'Creation Date',
-            #                                                                 'Creatn Time - Incl. Secs', 'Picker Name', 'Branch', 'Type', 'Max',
-            #                                                                 'Warehouse Name', 'Address', 'BRS Cut', 'Lens Store Cut',
-            #                                                                 'Designer Store Cut', 'Main Store Cut', 'Control Cut', 'Packaging Cut',
-            #                                                                 'Region', 'BRS CUT OFF', 'DEPARTMENT', 'DEPARTMENT 2']]
-            # if not table6.empty:  
-            #     table6heading = "cut off delays"
-            #     table6html = table6.to_html(index=False)    
+            table5heading = "Cut Off Summary - Rwanda"
+            table5 = cutoff_efficiency_summary_dfs[7].fillna("")
+            table5html = table5.to_html(index=False,formatters={
+            # 'var1': '{:,.2f}'.format,
+                    '%_ge Efficiency': '{:,.2%}'.format
+                })
+            brs_cutoff_full_rw = cutoff_efficiency_full_dfs[7].rename(columns = {'Unnamed: 0':''})
+            table6 = brs_cutoff_full_rw[brs_cutoff_full_rw["BRS CUT OFF"] == 0][['Item No.', 'Item/Service Description', 'ITR Status',
+                                                                            'ITR Number', 'Internal Number', 'ITR Date', 'Exchange Type',
+                                                                            'Sales Order number', 'Sales Order entry', 'Sales Branch',
+                                                                            'Draft order entry', 'Order Number', 'Creation Date',
+                                                                            'Creatn Time - Incl. Secs', 'Picker Name', 'Branch', 'Type', 'Max',
+                                                                            'Warehouse Name', 'Address', 'BRS Cut', 'Lens Store Cut',
+                                                                            'Designer Store Cut', 'Main Store Cut', 'Control Cut', 'Packaging Cut',
+                                                                            'Region', 'BRS CUT OFF', 'DEPARTMENT', 'DEPARTMENT 2']]
+            if not table6.empty:  
+                table6heading = "cut off delays"
+                table6html = table6.to_html(index=False)    
         elif department == "Packaging":
             table1heading = "Order Efficiency"
             table1 = order_efficiency_dfs[12].iloc[:4, :].rename(columns = {'Unnamed: 0':''})
@@ -362,96 +362,101 @@ def order_efficiency_smtp():
             table1heading = "Order Efficiency"
             table1 = order_efficiency_dfs[3].iloc[:4, :].rename(columns = {'Unnamed: 0':''})
             table1html = table1.to_html(index=False)
-            table2heading = "Delays"
-            table2 = order_efficiency_dfs[5].iloc[:, :3].fillna("")
-            table2html = table2.to_html(index=False)
-            table3heading = """
+            table2heading = "Sales Order to Order Printed"
+            table2html = so_to_op_designer.to_html(index=False)
+            table3heading = "Order Printed to Sent to Lens Store"
+            table3html = op_to_lenstore_designer.to_html(index=False)
+            table4heading = "Delays"
+            table4 = order_efficiency_dfs[5].iloc[:, :3].fillna("")
+            table4html = table4.to_html(index=False)
+            table5heading = """
                         <p style="color:blue">Delayed orders with various cut off times</p>
                         <p>Total delayed orders after 15 minutes, 12 minutes, 8 minutes, 6 minutes</p>
                         """
-            table3 = order_efficiency_dfs[4].iloc[:1, :5]
-            table3html = table3.to_html(index=False)
-            table4heading = "Cut Off Summary"
-            table4 = cutoff_efficiency_summary_dfs[1].fillna("")
-            table4html = table4.to_html(index=False,formatters={
-            #  'var1': '{:,.2f}'.format,
+            table5 = order_efficiency_dfs[4].iloc[:1, :5]
+            table5html = table5.to_html(index=False) 
+            table6heading = "Cut Off Summary"
+            table6 = cutoff_efficiency_summary_dfs[1].fillna("")
+            table6html = table6.to_html(index=False,formatters={
                     '%_ge Efficiency': '{:,.2%}'.format
                 })
             control_cutoff_full = cutoff_efficiency_full_dfs[1].rename(columns = {'Unnamed: 0':''})
-            table5 = control_cutoff_full[control_cutoff_full["Designer CUTOFF"] == 0][["Region","Type","Internal Number","ITR Number",
+            table7 = control_cutoff_full[control_cutoff_full["Designer CUTOFF"] == 0][["Region","Type","Internal Number","ITR Number",
                                                                                     "Created User","Status","Address","Warehouse Name",
                                                                                     "Branch","Date_Time","Date","Time",
                                                                                     "Designer Store Cut","Max"]]
             
-            if not table5.empty:  
-                table5heading = "cut off delays"
-                table5html = table5.to_html(index=False)
-            table6heading = """<p>Replacement</p>
+            if not table7.empty:  
+                table7heading = "cut off delays"
+                table7html = table7.to_html(index=False)
+            table8heading = """<p>Replacement</p>
                             <p style="font_weight:italic">BRSCreated_To_PLP Time</p>"""
-            table6 = replacements_efficiency_summary_dfs[1]
-            table6html = table6.to_html(index=False,float_format="{:.2f}".format) 
-            table7heading = """<p style="font_weight:italic">PLP_To_STC Time</p>"""
-            table7 = replacements_efficiency_summary_dfs[4]
-            table7html = table7.to_html(index=False,float_format="{:.2f}".format)
-            table8 = damage_supply_dfs[1]
-            if not table8.empty: 
-                table8heading = """<p style="color:blue">Damage Supply Time</p>
+            table8 = replacements_efficiency_summary_dfs[1]
+            table8html = table8.to_html(index=False,float_format="{:.2f}".format) 
+            table9heading = """<p style="font_weight:italic">PLP_To_STC Time</p>"""
+            table9 = replacements_efficiency_summary_dfs[4]
+            table9html = table9.to_html(index=False,float_format="{:.2f}".format)
+            table10 = damage_supply_dfs[1]
+            if not table10.empty: 
+                table10heading = """<p style="color:blue">Damage Supply Time</p>
                             <p style="font_weight:italic">Rejected frame sent to frame to reissued frame for order</p>"""
-                table8html = table8.to_html(index=False)     
+                table10html = table10.to_html(index=False)     
         elif department == "Main store":
             table1heading = "Order Efficiency"
             table1 = order_efficiency_dfs[0].iloc[:4, :].rename(columns = {'Unnamed: 0':''})
             table1html = table1.to_html(index=False)
-            table2heading = "Delays"
-            table2 = order_efficiency_dfs[2].iloc[:, :3].fillna("")
-            table2html = table2.to_html(index=False)
-            table3heading = """
+            table2heading = "Sales Order to Order Printed"
+            table2html = so_to_op_main.to_html(index=False)
+            table3heading = "Order Printed to Sent to Lens Store"
+            table3html = op_to_lenstore_main.to_html(index=False)
+            table4heading = "Delays"
+            table4 = order_efficiency_dfs[2].iloc[:, :3].fillna("")
+            table4html = table4.to_html(index=False)
+            table5heading = """
                         <p style="color:blue">Delayed orders with various cut off times</p>
                         <p>Total delayed orders after 15 minutes, 12 minutes, 8 minutes, 6 minutes</p>
                         """
-            table3 = order_efficiency_dfs[1].iloc[:1, :5]
-            table3html = table3.to_html(index=False)
-            table4heading = "Cut Off Summary"
-            table4 = cutoff_efficiency_summary_dfs[0].fillna("")
-            table4html = table4.to_html(index=False,formatters={
-            #   'var1': '{:,.2f}'.format,
+            table5 = order_efficiency_dfs[1].iloc[:1, :5]
+            table5html = table5.to_html(index=False)
+            table6heading = "Cut Off Summary"
+            table6 = cutoff_efficiency_summary_dfs[0].fillna("")
+            table6html = table6.to_html(index=False,formatters={
                     '%_ge Efficiency': '{:,.2%}'.format
                 })
             control_cutoff_full = cutoff_efficiency_full_dfs[0].rename(columns = {'Unnamed: 0':''})
-            table5 = control_cutoff_full[control_cutoff_full["Main CUTOFF"] == 0][["Region","Type","Internal Number","ITR Number",
+            table7 = control_cutoff_full[control_cutoff_full["Main CUTOFF"] == 0][["Region","Type","Internal Number","ITR Number",
                                                                                 "Created User","Status","Address","Warehouse Name",
                                                                                 "Branch","Date_Time","Date","Time","Main Store Cut",
                                                                                 "Max"]]
             
-            if not table5.empty:  
-                table5heading = "cut off delays"
-                table5html = table5.to_html(index=False)
-            table6heading = """<p>Replacement</p>
+            if not table7.empty:  
+                table7heading = "cut off delays"
+                table7html = table7.to_html(index=False)
+            table8heading = """<p>Replacement</p>
                             <p style="font_weight:italic">BRSCreated_To_PLP Time</p>"""
-            table6 = replacements_efficiency_summary_dfs[0]
-            table6html = table6.to_html(index=False,float_format="{:.2f}".format) 
-            table7heading = """<p style="font_weight:italic">PLP_To_STC Time</p>"""
-            table7 = replacements_efficiency_summary_dfs[3]
-            table7html = table7.to_html(index=False,float_format="{:.2f}".format)  
-            table8 = damage_supply_dfs[0]
-            if not table8.empty:  
-                table8heading = """<p style="color:blue">First Damage Supply Time</p>
+            table8 = replacements_efficiency_summary_dfs[0]
+            table8html = table8.to_html(index=False,float_format="{:.2f}".format) 
+            table9heading = """<p style="font_weight:italic">PLP_To_STC Time</p>"""
+            table9 = replacements_efficiency_summary_dfs[3]
+            table9html = table9.to_html(index=False,float_format="{:.2f}".format)  
+            table10 = damage_supply_dfs[0]
+            if not table10.empty:  
+                table10heading = """<p style="color:blue">First Damage Supply Time</p>
                             <p style="font_weight:italic">Rejected frame sent to frame to reissued frame for order</p>"""
-                table8html = table8.to_html(index=False)
-            table9 = damage_supply_dfs[3]
-            if not table9.empty:  
-                table9heading = """<p style="color:blue">Second Damage Supply Time</p>
+                table10html = table10.to_html(index=False)
+            table11 = damage_supply_dfs[3]
+            if not table11.empty:  
+                table11heading = """<p style="color:blue">Second Damage Supply Time</p>
                             <p style="font_weight:italic">Rejected frame sent to frame to reissued frame for order</p>"""
-                table9html = table9.to_html(index=False)    
+                table11html = table11.to_html(index=False)    
                 
 
-        # Define the HTML document
         html = '''
             <html>
                 <head>
                     <style>
                         table {{border-collapse: collapse;font-family:Times New Roman; font-size:12; width:auto;}}
-                        th {{background-color:lightsalmon;}}
+                        th {{background-color:lightblue;}}
                         th, td {{text-align: center;font-family:Times New Roman; font-size:12; padding: 8px;}}
                         body, p, h3 {{font-family:Sans Serif}}
                     </style>
@@ -502,55 +507,44 @@ def order_efficiency_smtp():
                 table8html=table8html,table8heading = table8heading,table9html=table9html,table9heading = table9heading,
                 table10html = table10html,table10heading = table10heading, table11heading=table11heading,table11html=table11html)
 
-            # Define a function to attach files as MIMEApplication to the email
-            ##############################################################
+
         def attach_file_to_email(email_message, filename):
-            # Open the attachment file for reading in binary mode, and make it a MIMEApplication class
             with open(filename, "rb") as f:
-                file_attachment = MIMEApplication(f.read())
-            # Add header/name to the attachments    
+                file_attachment = MIMEApplication(f.read())   
             file_attachment.add_header(
                 "Content-Disposition",
                 f"attachment; filename= {filename}",
             )
-            # Attach the file to the message
             email_message.attach(file_attachment)
-        ##############################################################
             
-        # Set up the email addresses and password. Please replace below with your email address and password
-        sender_email = os.getenv("wairimu_email")
-        yourpassword = os.getenv("wairimu_password")
+        sender_email = os.getenv("mulei_email")
+        yourpassword = os.getenv("mulei_password")
         email_from = sender_email
         password = yourpassword
 
         # receiver_email = ['tstbranch@gmail.com']
-        # receiver_email = ['ian.gathumbi@optica.africa']
 
-        if department == "BRS":
-            # receiver_email = ['tstbranch@gmail.com']
-            receiver_email = [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','shyam@optica.africa','stock@optica.africa','wanjiru.kinyara@optica.africa','nicholas.muthui@optica.africa ']
+        if department == "BRS":           
+            receiver_email = [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','shyam@optica.africa','stock@optica.africa','mulei.mutuku@optica.africa','nicholas.muthui@optica.africa ']
+           
         else:    
             if pd.to_numeric((table1['Total'].iloc[-1]).replace("%","")) < 95:
-                # receiver_email = ['tstbranch@gmail.com']
-                receiver_email = [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','shyam@optica.africa','yuri@optica.africa','wanjiru.kinyara@optica.africa','nicholas.muthui@optica.africa ']
+                receiver_email = [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','shyam@optica.africa','mulei.mutuku@optica.africa','nicholas.muthui@optica.africa ']
             else:
-                # receiver_email = ['tstbranch@gmail.com']
-                receiver_email = [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','shyam@optica.africa','wanjiru.kinyara@optica.africa','nicholas.muthui@optica.africa ']
+                receiver_email = [email,'john.kinyanjui@optica.africa','john.mwithiga@optica.africa','kelvin@optica.africa','shyam@optica.africa','mulei.mutuku@optica.africa','nicholas.muthui@optica.africa ']
 
 
-        # Create a MIMEMultipart class, and set up the From, To, Subject fields
         email_message = MIMEMultipart()
         email_message['From'] = sender_email
         email_message['To'] = ','.join(receiver_email)
 
         email_message['Subject'] = "Efficiency Report for {department},{report_date}".format(department = department, report_date = report_date)
 
-        # Attach the html doc defined earlier, as a MIMEText html content type to the MIME message
         email_message.attach(MIMEText(html, "html"))
 
         smtp_server = smtplib.SMTP("smtp.gmail.com", 587)
         smtp_server.starttls()
-        smtp_server.login(sender_email, os.getenv("wairimu_password"))
+        smtp_server.login(sender_email, os.getenv("mulei_password"))
         text = email_message.as_string()
         smtp_server.sendmail(sender_email, receiver_email, text)
         smtp_server.quit()

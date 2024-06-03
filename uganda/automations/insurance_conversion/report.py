@@ -12,11 +12,13 @@ from reports.draft_to_upload.utils.utils import (return_report_daterange)
 from reports.conversion.utils.utils import (get_conversion_frequency)
 
 engine = create_unganda_engine()
+
 selection = get_conversion_frequency(
     report="Insurance Conversion"
 )
 
 start_date = return_report_daterange(selection=selection)
+
 data_fetcher = FetchData(
     engine=engine,
     database="mawingu_staging"

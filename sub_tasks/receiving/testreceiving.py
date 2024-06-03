@@ -8,6 +8,7 @@ import datetime
 import businesstimedelta
 import pandas as pd
 import holidays as pyholidays
+from pangres import upsert
 
 from sub_tasks.data.connect import (pg_execute, engine) 
 conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", password="@Akb@rp@$$w0rtf31n")
@@ -26,7 +27,7 @@ def create_receivingdata():
 
 
 def receiving():
-    fromdate = '2023/10/01'
+    fromdate = '2024/01/01'
     # yesterday = '2023-10-26'
     today = datetime.date.today()
     yesterday = today - datetime.timedelta(days=1)
@@ -55,7 +56,7 @@ def receiving():
     eastlands_time_back_at_hq, thika_time_from_hq, thika_time_back_at_hq, "THINDIGUA  TIME FROM HQ","THINDIGUA  TIME BACK @ HQ",mombasa_time_from_hq, 
     "mombasa_time_back_at_hq", "rongai_time_from_hq", rongai_time_back_at_hq, upcountry, "CBD  time from Hq", 
     cbd_time_back_at_hq, "CBD2  time from Hq", cbd2_time_back_at_hq,rider5_thikatown_from_hq,
-    rider5_thikatown_at_hq            
+    rider5_thikatown_time_back_at_hq            
     FROM mabawa_staging.source_riders
     """,con=engine)
 
@@ -291,7 +292,7 @@ def receiving():
 
     mombasa['region'] = 'Mombasa Road'
 
-    # Thika Route
+    # Westlands Route
     westlands = routes[['Date','Trip','Westlands']]
     westlands['Westlands Branches'] = westlands['Westlands'].str.split(',')
     westlands = westlands.explode('Westlands Branches')
@@ -312,7 +313,7 @@ def receiving():
     westlands['odsc_date'] = pd.to_datetime(westlands['odsc_date']).dt.date
     print(westlands['doc_no'].nunique())
 
-    # Thika Receiving
+    # Westlands Receiving
     westlands = pd.merge(westlands, we, left_on=['odsc_date','ods_outlet'], right_on=['trip_date','Westlands Branches'], how='left')
     print(westlands['doc_no'].nunique())
 
@@ -322,7 +323,7 @@ def receiving():
     # Fill the nulls with the closing time for OHO 
     westlands['westlands_time_back_at_hq2'] = westlands['westlands_time_back_at_hq2'].fillna('19:00:00')
 
-    # thika['odsc_time']= pd.to_datetime(thika['odsc_time']).dt.time
+    # 
     westlands['westlands_time_back_at_hq']= pd.to_datetime(westlands['westlands_time_back_at_hq']).dt.time
     westlands['westlands_time_back_at_hq2']= pd.to_datetime(westlands['westlands_time_back_at_hq2']).dt.time
 
@@ -435,7 +436,7 @@ def receiving():
     thikatown = thikatown.explode('Thika_Town Branches')
 
     # Thika Time back at Hq based on the full/partial trips
-    thikatownroad = riders[['trip_date','trip','rider5_thikatown_at_hq']]
+    thikatownroad = riders[['trip_date','trip','rider5_thikatown_time_back_at_hq']]
     thika_town = thikatown[['Date','Trip','Thika_Town Branches']].rename(columns={'Date':'trip_date','Trip':'trip'})
     thika_trip = pd.merge(thikatownroad, thika_town, on=['trip_date','trip'], how='left')
     thika_trip['trip_date'] = pd.to_datetime(thika_trip['trip_date']).dt.date
@@ -456,22 +457,22 @@ def receiving():
     print(thikatown['doc_no'].nunique())
 
     # Selecting the trip that came with the orders
-    thikatown['rider5_thikatown_at_hq2'] = thikatown.groupby('doc_no', as_index=False)['rider5_thikatown_at_hq'].shift(-1)
+    thikatown['rider5_thikatown_time_back_at_hq2'] = thikatown.groupby('doc_no', as_index=False)['rider5_thikatown_time_back_at_hq'].shift(-1)
 
     # Fill the nulls with the closing time for OHO 
-    thikatown['rider5_thikatown_at_hq2'] = thikatown['rider5_thikatown_at_hq2'].fillna('19:00:00')
+    thikatown['rider5_thikatown_time_back_at_hq2'] = thikatown['rider5_thikatown_time_back_at_hq2'].fillna('19:00:00')
 
     # thika['odsc_time']= pd.to_datetime(thika['odsc_time']).dt.time
-    thikatown['rider5_thikatown_at_hq']= pd.to_datetime(thikatown['rider5_thikatown_at_hq']).dt.time
-    thikatown['rider5_thikatown_at_hq2']= pd.to_datetime(thikatown['rider5_thikatown_at_hq2']).dt.time
+    thikatown['rider5_thikatown_time_back_at_hq']= pd.to_datetime(thikatown['rider5_thikatown_time_back_at_hq']).dt.time
+    thikatown['rider5_thikatown_time_back_at_hq2']= pd.to_datetime(thikatown['rider5_thikatown_time_back_at_hq2']).dt.time
 
     thikatown['trip'] = thikatown['trip'].str.strip()
-    thikatown['rider5_thikatown_at_hq'] = np.where((thikatown['odsc_time'] < thikatown['rider5_thikatown_at_hq']) & (thikatown['trip'] == "Trip 1"),
-                                                      (pd.to_datetime('09:00:00').time()),thikatown['rider5_thikatown_at_hq'])
+    thikatown['rider5_thikatown_time_back_at_hq'] = np.where((thikatown['odsc_time'] < thikatown['rider5_thikatown_time_back_at_hq']) & (thikatown['trip'] == "Trip 1"),
+                                                      (pd.to_datetime('09:00:00').time()),thikatown['rider5_thikatown_time_back_at_hq'])
 
     # Pick the correct trip the orders came with 
     # print(thikatown[thikatown['doc_no'] == 232804874]) 
-    thikatown['CorrectTrip'] = np.where((thikatown['odsc_time'] >= thikatown['rider5_thikatown_at_hq']) & (thikatown['odsc_time'] <= thikatown['rider5_thikatown_at_hq2']) | (thikatown['odsc_time'] >= thikatown['rider5_thikatown_at_hq']) & (thikatown['rider5_thikatown_at_hq2'].isnull()),1,0)
+    thikatown['CorrectTrip'] = np.where((thikatown['odsc_time'] >= thikatown['rider5_thikatown_time_back_at_hq']) & (thikatown['odsc_time'] <= thikatown['rider5_thikatown_time_back_at_hq2']) | (thikatown['odsc_time'] >= thikatown['rider5_thikatown_time_back_at_hq']) & (thikatown['rider5_thikatown_time_back_at_hq2'].isnull()),1,0)
     print(thikatown)    
     thikatown['region'] = 'Rider 5 - Thika Town'
 
@@ -541,7 +542,7 @@ def receiving():
     karen['karen_time'] = pd.to_datetime(karen['trip_date'].astype(str) + ' ' + karen['karen_time_back_at_hq'].astype(str))
     thika['thika_time'] = pd.to_datetime(thika['trip_date'].astype(str) + ' ' + thika['thika_time_back_at_hq'].astype(str))
     cbd['CBD_time'] = pd.to_datetime(cbd['trip_date'].astype(str) + ' ' + cbd['cbd_time_back_at_hq'].astype(str))
-    thikatown['thikatown_time'] = pd.to_datetime(thikatown['trip_date'].astype(str) + ' ' + thikatown['rider5_thikatown_at_hq'].astype(str))
+    thikatown['thikatown_time'] = pd.to_datetime(thikatown['trip_date'].astype(str) + ' ' + thikatown['rider5_thikatown_time_back_at_hq'].astype(str))
     thindingua['thindingua_time'] = pd.to_datetime(thindingua['trip_date'].astype(str) + ' ' + thindingua['thindigua_time_at_hq'].astype(str))
     print('done converting to datetime')
 
@@ -582,7 +583,9 @@ def receiving():
 def create_time_difference():
 
     receiving = pd.read_sql("""
-    select doc_entry, odsc_date::date, odsc_time, odsc_status, odsc_createdby, doc_no, cust_code, ods_outlet, "DateTime", trip_date, receiving_time, order_criteria_status, region from mabawa_dw.dim_receiving_data
+    select 
+    doc_entry, odsc_date::date, odsc_time, odsc_status, odsc_createdby, doc_no, cust_code, ods_outlet, 
+    "DateTime", trip_date, receiving_time, order_criteria_status, region from mabawa_dw.dim_receiving_data
     """,con=engine)
     print(receiving)
     print("Fetched receiving")
@@ -624,7 +627,7 @@ def create_time_difference():
         else:
             return 0
     
-    print(receiving)
+    
 
     # Add a cut-off column (15 mins)
     receiving['cutoff'] = np.where(receiving['region']=='Upcountry',30,15)
@@ -634,12 +637,23 @@ def create_time_difference():
     # Hourly Receiving Data
     receiving['hour'] = receiving['receiving_time'].dt.hour
     print('Print the final receiving table')
-    print(receiving)
+  
+    receiving = receiving.sort_values(by = ['odsc_date','odsc_time'], ascending= True)
+    receiving = receiving.drop_duplicates(subset='doc_entry',keep = 'first')
+    receiving = receiving.set_index('doc_entry')
 
-     # Truncate the existing table before appending the new table
-    truncate_table = """truncate table mabawa_staging.source_receiving_data;"""
-    truncate_table = pg_execute(truncate_table)
-
-    receiving.to_sql('source_receiving_data', con = engine, schema='mabawa_staging', if_exists = 'append', index=False)   
+    upsert(engine=engine,
+        df=receiving,
+        schema='mabawa_staging',
+        table_name='source_receiving_data',
+        if_row_exists='update',
+        create_table=True
+        
+        )
      
     print('Receiving information has been successfully appended')
+
+
+# create_receivingdata()
+# receiving()
+# create_time_difference()

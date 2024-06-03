@@ -22,6 +22,8 @@ from workalendar.africa import Kenya
 import pygsheets
 import mysql.connector as database
 import urllib.parse
+from sub_tasks.libraries.time_diff import (calculate_time_difference,working_hours_dictionary)
+
 
 ##Others
 import os
@@ -30,37 +32,43 @@ from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.image import MIMEImage
 from email.mime.text import MIMEText
+from reports.draft_to_upload.data.fetch_data import fetch_working_hours
+from reports.draft_to_upload.data.fetch_data import fetch_holidays
 from sub_tasks.libraries.utils import get_todate,send_report,assert_date_modified, create_initial_file, return_sent_emails, fetch_gsheet_data, record_sent_branch, fourth_week_start, fourth_week_end
 
 
 # PG Execute(Query)
 from sub_tasks.data.connect import (pg_execute, engine) 
-# from sub_tasks.api_login.api_login import(login)
 conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", password="@Akb@rp@$$w0rtf31n")
 
 
 ##Define the days that is yesterday
 today = datetime.date.today()
-# today = datetime.date(2024,1,25)
 yesterday = today - datetime.timedelta(days=1)
 formatted_date = yesterday.strftime('%Y-%m-%d')
 dateyesterday = pd.to_datetime(yesterday)
 
 def damage_suppy_time():
+    holidays = fetch_holidays(engine=conn, dw = "mabawa_dw")
+
+    working_hours = fetch_working_hours(
+        engine=conn
+    )
+
+    work_hours = working_hours_dictionary(
+        working_hours=working_hours
+    )
     status = """ select odsc_createdby as "Created User",odsc_date as "Date", odsc_time,
                     to_char(odsc_time, 'FM999:09:99'::text)::time without time zone AS "Time",
                     odsc_status as "Status", so.doc_entry as "DocEntry", so.odsc_doc_no,so2.doc_no as "DocNum",so2.ods_ordercriteriastatus as "OrderCriteria Status"
                     from mabawa_staging.source_orderscreenc1 so
                     left join mabawa_staging.source_orderscreen so2 on so2.doc_entry = so.doc_entry 
                     where odsc_date::date >= '2023-08-01'
-                    """
-    
+                    """    
     status = pd.read_sql_query(status,con=conn)   
     status['Date']=pd.to_datetime(status['Date'],dayfirst=True )
     status["Datetime"]=pd.to_datetime(status.Date.astype(str) + ' ' + status.Time.astype(str), format="%Y%m%d %H:%M:%S", errors='coerce')
     
-    ##Define control room rejection status
-    # controlrejectionstatus = ('Rejected Frame sent to Frame Store')
 
     """Designer Store Damage Supply time"""
     designerrejected = status[status['Status']=='Rejected Frame sent to Frame Store']      
@@ -77,58 +85,23 @@ def damage_suppy_time():
 
     reissuedframedes = reissuedframedes.rename(columns={'Datetime':'Datetimeout'})    
     reissueframedes= pd.merge(designerrejected,reissuedframedes[['DocNum','Datetimeout']], on='DocNum', how='right')
-    # reissueframedes = reissueframedes[reissueframedes['Datetimeout'].notna()]
-    print(reissueframedes)
 
-    ##Define a working day
-    ####Days of the week
-    workday = businesstimedelta.WorkDayRule(
-        start_time=datetime.time(9),
-        end_time=datetime.time(18),
-        working_days=[0,1, 2, 3, 4])
+    reissueframedes = reissueframedes[['Created User', 'DocNum','Datetime','Datetimeout','OrderCriteria Status','Status']]
+    reissueframedes['Outlet'] = '0DS'
 
-    cal = Kenya()
-    hl = cal.holidays()
-    vic_holidays = pyholidays.KE() 
-    holidays = businesstimedelta.HolidayRule(vic_holidays)
-    businesshrs = businesstimedelta.Rules([workday, holidays], hl)
-
-    def BusHrs(start, end):
-        if end>=start:
-            return businesshrs.difference(start,end).hours+float(businesshrs.difference(start,end).seconds)/float(3600)
-        else:
-            ""
-        
-    RejectedSentWk_hrs=reissueframedes.apply(lambda row: BusHrs(row['Datetime'], row['Datetimeout']), axis=1)
-
-    # Define a working weekend day(Saturday)
-    Saturday = businesstimedelta.WorkDayRule(start_time=datetime.time(9),end_time=datetime.time(17),working_days=[5])
-
-    vic_holidays = pyholidays.KE()
-    holidays = businesstimedelta.HolidayRule(vic_holidays)
-    businesshrs = businesstimedelta.Rules([Saturday, holidays])
-
-    def SatHrs(start, end):
-        if end>=start:
-            return businesshrs.difference(start,end).hours+float(businesshrs.difference(start,end).seconds)/float(3600)
-        else:
-            ""
-
-    RejectedSentSat_hrs=reissueframedes.apply(lambda row: BusHrs(row['Datetime'], row['Datetimeout']), axis=1)
-
+    """ Calculating Time Difference from Difference Statuses - Designer Store """
     if not reissueframedes.empty:
-        reissueframedes["delay"]=(RejectedSentWk_hrs+RejectedSentSat_hrs)*60
-        print(reissueframedes)
-        # reissueframedes['delayed dept']=reissueframedes['delay'].apply(lambda x: 'Delayed at Designer Store' if x>15 else 'Did not delay at Designer Store' )
-        designerdamage_reissued=reissueframedes.copy()
-        # designerdamage_reissued = designerdamage_reissued.drop(columns={'delayed dept'})
-        designerdamage_reissued = designerdamage_reissued.rename(columns={'delay':'Time taken'})
-        designerdamage_reissued = designerdamage_reissued.sort_values(by='Time taken',ascending=False)
-        designerdamage_reissued = designerdamage_reissued[['Created User', 'Date', 'Time', 'Status','DocNum','OrderCriteria Status','Datetime','Datetimeout','Time taken']]
-        print('Designer Store Printed')
+        reissueframedes['Time taken'] = reissueframedes.apply(lambda row:calculate_time_difference(row = row , x = "Datetime", y= 'Datetimeout', holiday_dict=holidays, working_hours=work_hours), axis=1)
+        reissueframedes.sort_values(by='Time taken',ascending=False,inplace = True)
+        designerdamage_reissued = reissueframedes[['Created User', 'DocNum','Datetime','Datetimeout','OrderCriteria Status','Status','Time taken']]
     else:
-        columns = ['Created User', 'Date', 'Time', 'Status','DocNum','OrderCriteria Status','Datetime','Datetimeout','Time taken'] 
+        columns = ['Created User', 'DocNum','Datetime','Datetimeout','OrderCriteria Status','Status','Time taken']
         designerdamage_reissued = pd.DataFrame(columns=columns) 
+
+    print(reissueframedes)   
+
+
+
 
     """Main Store Damage Supply time"""
     """First Rejection """
@@ -154,57 +127,19 @@ def damage_suppy_time():
     reissueframemain['Datetimeout'] = pd.to_datetime(reissueframemain['Datetimeout'])
     reissueframemain['Datetime'] = pd.to_datetime(reissueframemain['Datetime'],format="%Y%m%d %H:%M:%S",errors = 'coerce')    
     reissueframemain = reissueframemain[reissueframemain['Datetimeout'].notna()]
-    print(reissueframemain.columns)
 
-    ##Define a working day
-    ####Days of the week
-    workday = businesstimedelta.WorkDayRule(
-        start_time=datetime.time(9),
-        end_time=datetime.time(19),
-        working_days=[0,1, 2, 3, 4])
+    reissueframemain = reissueframemain[['Created User', 'DocNum','Datetime','Datetimeout','OrderCriteria Status','Status']]
+    reissueframemain['Outlet'] = '0MA'
 
-    cal = Kenya()
-    hl = cal.holidays()
-    vic_holidays = pyholidays.KE() 
-    holidays = businesstimedelta.HolidayRule(vic_holidays)
-    businesshrs = businesstimedelta.Rules([workday, holidays], hl)
-
-    def BusHrs(start, end):
-        if end>=start:
-            return businesshrs.difference(start,end).hours+float(businesshrs.difference(start,end).seconds)/float(3600)
-        else:
-            ""
-        
-    RejectedSentWk_hrs=reissueframemain.apply(lambda row: BusHrs(row['Datetime'], row['Datetimeout']), axis=1)
-
-    # Define a working weekend day(Saturday)
-    Saturday = businesstimedelta.WorkDayRule(start_time=datetime.time(9),end_time=datetime.time(17),working_days=[5])
-
-    vic_holidays = pyholidays.KE()
-    holidays = businesstimedelta.HolidayRule(vic_holidays)
-    businesshrs = businesstimedelta.Rules([Saturday, holidays])
-
-    def SatHrs(start, end):
-        if end>=start:
-            return businesshrs.difference(start,end).hours+float(businesshrs.difference(start,end).seconds)/float(3600)
-        else:
-            ""
-
-    RejectedSentSat_hrs=reissueframemain.apply(lambda row: BusHrs(row['Datetime'], row['Datetimeout']), axis=1)
-
+    """ Calculating Time Difference from Difference Statuses - Main Store"""
     if not reissueframemain.empty:
-        reissueframemain["delay"]=(RejectedSentWk_hrs+RejectedSentSat_hrs)*60
-        # reissueframemain['delayed dept']=reissueframemain['delay'].apply(lambda x: 'Delayed at Main store' if x>15 else 'Did not delay at Main store' )
-        mainstoredamage_reissued=reissueframemain.copy()
-        # mainstoredamage_reissued= mainstoredamage_reissued.drop(columns={'delayed dept'})
-        mainstoredamage_reissued= mainstoredamage_reissued.rename(columns={'delay':'Time taken'})
-        mainstoredamage_reissued= mainstoredamage_reissued.sort_values(by='Time taken',ascending=False)
-        mainstoredamage_reissued = mainstoredamage_reissued[['Created User', 'Date', 'Time', 'Status','DocNum','OrderCriteria Status','Datetime','Datetimeout','Time taken']]
-        print(mainstoredamage_reissued)
-        print('Main Store Printed')
+        reissueframemain['Time taken'] = reissueframemain.apply(lambda row:calculate_time_difference(row = row , x = "Datetime", y= 'Datetimeout', holiday_dict=holidays, working_hours=work_hours), axis=1)
+        reissueframemain.sort_values(by='Time taken',ascending=False,inplace = True)
+        mainstoredamage_reissued = reissueframemain[['Created User', 'DocNum','Datetime','Datetimeout','OrderCriteria Status','Status','Time taken']]
     else:
-        columns = ['Created User', 'Date', 'Time', 'Status','DocNum','OrderCriteria Status','Datetime','Datetimeout','Time taken']
-        mainstoredamage_reissued = pd.DataFrame(columns=columns)  
+        columns = ['Created User', 'DocNum','Datetime','Datetimeout','OrderCriteria Status','Status','Time taken']
+        mainstoredamage_reissued = pd.DataFrame(columns=columns)
+
 
     """Main Store Second Damage Supply Time"""
     """Second Rejection """
@@ -228,60 +163,25 @@ def damage_suppy_time():
 
     reissueframemainsec= pd.merge(mainrejectedsec,reissuedframemainsec[['DocNum','Datetimeout']], on='DocNum', how='left')
     reissueframemainsec['Datetimeout'] = pd.to_datetime(reissueframemainsec['Datetimeout'])
-    print(reissueframemainsec.columns)
+
     reissueframemainsec['Datetime'] = pd.to_datetime(reissueframemainsec['Datetime'],format="%Y%m%d %H:%M:%S",errors = 'coerce')    
     reissueframemainsec = reissueframemainsec[reissueframemainsec['Datetimeout'].notna()]
     print(reissueframemainsec.columns)
 
-    ##Define a working day
-    ####Days of the week
-    workday = businesstimedelta.WorkDayRule(
-        start_time=datetime.time(9),
-        end_time=datetime.time(19),
-        working_days=[0,1, 2, 3, 4])
+    reissueframemainsec = reissueframemainsec[['Created User', 'DocNum','Datetime','Datetimeout','OrderCriteria Status','Status']]
+    reissueframemainsec['Outlet'] = '0MA'
 
-    cal = Kenya()
-    hl = cal.holidays()
-    vic_holidays = pyholidays.KE() 
-    holidays = businesstimedelta.HolidayRule(vic_holidays)
-    businesshrs = businesstimedelta.Rules([workday, holidays], hl)
-
-    def BusHrs(start, end):
-        if end>=start:
-            return businesshrs.difference(start,end).hours+float(businesshrs.difference(start,end).seconds)/float(3600)
-        else:
-            ""
-        
-    RejectedSentWk_hrs=reissueframemainsec.apply(lambda row: BusHrs(row['Datetime'], row['Datetimeout']), axis=1)
-
-    # Define a working weekend day(Saturday)
-    Saturday = businesstimedelta.WorkDayRule(start_time=datetime.time(9),end_time=datetime.time(17),working_days=[5])
-
-    vic_holidays = pyholidays.KE()
-    holidays = businesstimedelta.HolidayRule(vic_holidays)
-    businesshrs = businesstimedelta.Rules([Saturday, holidays])
-
-    def SatHrs(start, end):
-        if end>=start:
-            return businesshrs.difference(start,end).hours+float(businesshrs.difference(start,end).seconds)/float(3600)
-        else:
-            ""
-
-    RejectedSentSat_hrs=reissueframemainsec.apply(lambda row: BusHrs(row['Datetime'], row['Datetimeout']), axis=1)
-
+    """ Calculating Time Difference from Difference Statuses - Main Store"""
     if not reissueframemainsec.empty:
-        reissueframemainsec["delay"]=(RejectedSentWk_hrs+RejectedSentSat_hrs)*60
-        # reissueframemain['delayed dept']=reissueframemain['delay'].apply(lambda x: 'Delayed at Main store' if x>15 else 'Did not delay at Main store' )
-        mainstoredamage_reissuedsec=reissueframemainsec.copy()
-        # mainstoredamage_reissued= mainstoredamage_reissued.drop(columns={'delayed dept'})
-        mainstoredamage_reissuedsec= mainstoredamage_reissuedsec.rename(columns={'delay':'Time taken'})
-        mainstoredamage_reissuedsec= mainstoredamage_reissuedsec.sort_values(by='Time taken',ascending=False)
-        mainstoredamage_reissuedsec = mainstoredamage_reissuedsec[['Created User', 'Date', 'Time', 'Status','DocNum','OrderCriteria Status','Datetime','Datetimeout','Time taken']]
-        print(mainstoredamage_reissuedsec)
-        print('Main Store Printed')
+        reissueframemainsec['Time taken'] = reissueframemainsec.apply(lambda row:calculate_time_difference(row = row , x = "Datetime", y= 'Datetimeout', holiday_dict=holidays, working_hours=work_hours), axis=1)
+        reissueframemainsec.sort_values(by='Time taken',ascending=False,inplace = True)
+        mainstoredamage_reissuedsec = reissueframemainsec[['Created User', 'DocNum','Datetime','Datetimeout','OrderCriteria Status','Status','Time taken']]
     else:
-        columns = ['Created User', 'Date', 'Time', 'Status','DocNum','OrderCriteria Status','Datetime','Datetimeout','Time taken']
-        mainstoredamage_reissuedsec = pd.DataFrame(columns=columns)    
+        columns = ['Created User', 'DocNum','Datetime','Datetimeout','OrderCriteria Status','Status','Time taken']
+        mainstoredamage_reissuedsec = pd.DataFrame(columns=columns) 
+
+
+
 
     """Lens Store Damage Supply Time"""
     """ First Rejection DST """
@@ -301,57 +201,18 @@ def damage_suppy_time():
     reissuedlens = reissuedlens[reissuedlens["Date"] == dateyesterday]
     reissuedlens.rename(columns={'Datetime':'Datetimeout'}, inplace=True)
     reissuedlens= pd.merge(lensrejected,reissuedlens[['DocNum','Datetimeout']], on='DocNum', how='right')
-    print(reissuedlens)
-    print('printed reissuedlens')
 
-    ##Define a working day
-    ####Days of the week
-    workday = businesstimedelta.WorkDayRule(
-        start_time=datetime.time(9),
-        end_time=datetime.time(19),
-        working_days=[0,1, 2, 3, 4])
+    reissuedlens = reissuedlens[['Created User', 'DocNum','Datetime','Datetimeout','OrderCriteria Status','Status']]
+    reissuedlens['Outlet'] = '0LE'
 
-    cal = Kenya()
-    hl = cal.holidays()
-    vic_holidays = pyholidays.KE() 
-    holidays = businesstimedelta.HolidayRule(vic_holidays)
-    businesshrs = businesstimedelta.Rules([workday, holidays], hl)
-
-    def BusHrs(start, end):
-        if end>=start:
-            return businesshrs.difference(start,end).hours+float(businesshrs.difference(start,end).seconds)/float(3600)
-        else:
-            ""
-        
-    RejectedSentWk_hrs=reissuedlens.apply(lambda row: BusHrs(row['Datetime'], row['Datetimeout']), axis=1)
-
-    # Define a working weekend day(Saturday)
-    Saturday = businesstimedelta.WorkDayRule(start_time=datetime.time(9),end_time=datetime.time(17),working_days=[5])
-
-    vic_holidays = pyholidays.KE()
-    holidays = businesstimedelta.HolidayRule(vic_holidays)
-    businesshrs = businesstimedelta.Rules([Saturday, holidays])
-
-    def SatHrs(start, end):
-        if end>=start:
-            return businesshrs.difference(start,end).hours+float(businesshrs.difference(start,end).seconds)/float(3600)
-        else:
-            ""
-
-    RejectedSentSat_hrs=reissuedlens.apply(lambda row: BusHrs(row['Datetime'], row['Datetimeout']), axis=1)
-
+    """ Calculating Time Difference from Difference Statuses - Lens Store"""
     if not reissuedlens.empty:
-        reissuedlens["delay"]=(RejectedSentWk_hrs+RejectedSentSat_hrs)*60
-        # reissuedlens['delayed dept']=reissuedlens['delay'].apply(lambda x: 'Delayed at Designer Store' if x>15 else 'Did not delay at Designer Store' )
-        lenstoredamage_reissued=reissuedlens.copy()
-        # lenstoredamage_reissued= lenstoredamage_reissued.drop(columns={'delayed dept'})
-        lenstoredamage_reissued= lenstoredamage_reissued.rename(columns={'delay':'Time taken'})
-        lenstoredamage_reissued= lenstoredamage_reissued.sort_values(by='Time taken',ascending=False)
-        lenstoredamage_reissued = lenstoredamage_reissued[['Created User', 'Date', 'Time', 'Status','DocNum','OrderCriteria Status','Datetime','Datetimeout','Time taken']]
+        reissuedlens['Time taken'] = reissuedlens.apply(lambda row:calculate_time_difference(row = row , x = "Datetime", y= 'Datetimeout', holiday_dict=holidays, working_hours=work_hours), axis=1)
+        reissuedlens.sort_values(by='Time taken',ascending=False,inplace = True)
+        lenstoredamage_reissued = reissuedlens[['Created User', 'DocNum','Datetime','Datetimeout','OrderCriteria Status','Status','Time taken']]
     else:
-        columns = ['Created User', 'Date', 'Time', 'Status','DocNum','OrderCriteria Status','Datetime','Datetimeout','Time taken']
-        reissuedlens = pd.DataFrame(columns=columns) 
-        print('Lens Store Printed')
+        columns = ['Created User', 'DocNum','Datetime','Datetimeout','OrderCriteria Status','Status','Time taken']
+        lenstoredamage_reissued = pd.DataFrame(columns=columns) 
 
 
     """ Second Lens Store Damage Supply Time"""
@@ -370,53 +231,18 @@ def damage_suppy_time():
     reissuedlenssec = reissuedlenssec[reissuedlenssec["Date"] == dateyesterday]
     reissuedlenssec.rename(columns={'Datetime':'Datetimeout'}, inplace=True)
     reissuedlenssec= pd.merge(lensrejectedsec,reissuedlenssec[['DocNum','Datetimeout']], on='DocNum', how='right')
-     
-    """ Calculation of Time"""
-    ####Days of the week
-    workday = businesstimedelta.WorkDayRule(
-        start_time=datetime.time(9),
-        end_time=datetime.time(19),
-        working_days=[0,1, 2, 3, 4])
 
-    cal = Kenya()
-    hl = cal.holidays()
-    vic_holidays = pyholidays.KE() 
-    holidays = businesstimedelta.HolidayRule(vic_holidays)
-    businesshrs = businesstimedelta.Rules([workday, holidays], hl)
+    reissuedlenssec = reissuedlenssec[['Created User', 'DocNum','Datetime','Datetimeout','OrderCriteria Status','Status']]
+    reissuedlenssec['Outlet'] = '0LE'     
 
-    def BusHrs(start, end):
-        if end>=start:
-            return businesshrs.difference(start,end).hours+float(businesshrs.difference(start,end).seconds)/float(3600)
-        else:
-            ""
-        
-    RejectedSentWk_hrs=reissuedlenssec.apply(lambda row: BusHrs(row['Datetime'], row['Datetimeout']), axis=1)
-
-    # Define a working weekend day(Saturday)
-    Saturday = businesstimedelta.WorkDayRule(start_time=datetime.time(9),end_time=datetime.time(17),working_days=[5])
-
-    vic_holidays = pyholidays.KE()
-    holidays = businesstimedelta.HolidayRule(vic_holidays)
-    businesshrs = businesstimedelta.Rules([Saturday, holidays])
-
-    def SatHrs(start, end):
-        if end>=start:
-            return businesshrs.difference(start,end).hours+float(businesshrs.difference(start,end).seconds)/float(3600)
-        else:
-            ""
-
-    RejectedSentSat_hrs=reissuedlenssec.apply(lambda row: BusHrs(row['Datetime'], row['Datetimeout']), axis=1)
-
+    """ Calculating Time Difference from Difference Statuses - Lens Store"""
     if not reissuedlenssec.empty:
-        reissuedlenssec["delay"]=(RejectedSentWk_hrs+RejectedSentSat_hrs)*60
-        lenstoredamage_reissuedsec=reissuedlenssec.copy()
-        lenstoredamage_reissuedsec= lenstoredamage_reissuedsec.rename(columns={'delay':'Time taken'})
-        lenstoredamage_reissuedsec= lenstoredamage_reissuedsec.sort_values(by='Time taken',ascending=False)
-        lenstoredamage_reissuedsec = lenstoredamage_reissuedsec[['Created User', 'Date', 'Time', 'Status','DocNum','OrderCriteria Status','Datetime','Datetimeout','Time taken']]
+        reissuedlenssec['Time taken'] = reissuedlenssec.apply(lambda row:calculate_time_difference(row = row , x = "Datetime", y= 'Datetimeout', holiday_dict=holidays, working_hours=work_hours), axis=1)
+        reissuedlenssec.sort_values(by='Time taken',ascending=False,inplace = True)
+        lenstoredamage_reissuedsec = reissuedlenssec[['Created User', 'DocNum','Datetime','Datetimeout','OrderCriteria Status','Status','Time taken']]
     else:
-        columns = ['Created User', 'Date', 'Time', 'Status','DocNum','OrderCriteria Status','Datetime','Datetimeout','Time taken']
+        columns = ['Created User', 'DocNum','Datetime','Datetimeout','OrderCriteria Status','Status','Time taken']
         lenstoredamage_reissuedsec = pd.DataFrame(columns=columns) 
-        print('Lens Store Printed')
 
 
     """"Control Room Damage Supply Time"""
@@ -427,7 +253,6 @@ def damage_suppy_time():
     data['Date time'] = pd.to_datetime(data['Date time'], format='%Y/%m/%d %H:%M:%S',errors='coerce')
 
     lens_data = data   
-    # lens_data=lens_data.drop_duplicates(subset=['DocEntry','Status'], keep="first")
     lens_in = lens_data[(lens_data['Status']=='Rejected Order Sent To Control Room')| (lens_data['Status']=='Surfacing Damage/Reject Sent to Control Room')| (lens_data['Status']=='Rejected Order Sent To Control Room')| (lens_data['Status']=='Branch Rejected Order Sent To Control Room')]
     lens_in["Date"] = pd.to_datetime(lens_in["Date"])   
     lens_in = lens_in.rename(columns={'Date time':'Timein'})
@@ -437,7 +262,6 @@ def damage_suppy_time():
     lens_in = lens_in[lens_in['Control Room'] == 1]  
     lens_in = lens_in.rename(columns={'Date time':'Timein'})
 
-
     lens_out = lens_data[(lens_data['Status']=='Rejected Lenses sent to Lens Store') | (lens_data['Status']=='Rejected Frame sent to Frame Store') | (lens_data['Status']=='Sent to Workshop for Damage/Reject Analysis') | (lens_data['Status']=='Overseas Rejected at Later Stage')]
     lens_out["Date"] = pd.to_datetime(lens_out["Date"])
     lens_out = lens_out[lens_out["Date"] == dateyesterday]    
@@ -445,51 +269,25 @@ def damage_suppy_time():
     lens_out = lens_out.sort_values(by = ['Datetime'],ascending =  True)
     lens_out["Control Room"] = lens_out.groupby('DocNum').cumcount()
     lens_out['Control Room'] += 1
-    lens_out = lens_out[lens_out['Control Room'] == 1]    
+    lens_out = lens_out[lens_out['Control Room'] == 1]
+    lens_out = lens_out[lens_out["Date"] == dateyesterday]    
     lens_out = lens_out.rename(columns={'Date time':'Timeout'})
 
     lens_duration = pd.merge(lens_in,lens_out[['DocEntry','Timeout']], on='DocEntry',how='left')
     lens_duration = lens_duration.dropna(subset=['Timeout'])
 
-    ##Define a working day
-    ####Days of the week
-    workday = businesstimedelta.WorkDayRule(
-        start_time=datetime.time(9),
-        end_time=datetime.time(19),
-        working_days=[0,1, 2, 3, 4])
+    lens_duration = lens_duration[['Created User', 'DocNum','Timein','Timeout','OrderCriteria Status','Status']]
+    lens_duration['Outlet'] = 'HQWS'
 
-    cal = Kenya()
-    hl = cal.holidays()
-    vic_holidays = pyholidays.KE() 
-    holidays = businesstimedelta.HolidayRule(vic_holidays)
-    businesshrs = businesstimedelta.Rules([workday, holidays], hl)
+    """ Calculating Time Difference from Difference Statuses - Control Room"""
+    if not lens_duration.empty:
+        lens_duration['Time taken'] = lens_duration.apply(lambda row:calculate_time_difference(row = row , x = "Timein", y= 'Timeout', holiday_dict=holidays, working_hours=work_hours), axis=1)
+        lens_duration.sort_values(by='Time taken',ascending=False,inplace = True)
+        lens_duration = lens_duration[['Created User', 'DocNum','Timein','Timeout','OrderCriteria Status','Status','Time taken']]
+    else:
+        columns = ['Created User', 'DocNum','Timein','Timeout','OrderCriteria Status','Status','Time taken']
+        lens_duration = pd.DataFrame(columns=columns) 
 
-    def BusHrs(start, end):
-        if end>=start:
-            return businesshrs.difference(start,end).hours+float(businesshrs.difference(start,end).seconds)/float(3600)
-        else:
-            ""        
-        
-    RejectedSentWk_hrs=lens_duration.apply(lambda row: BusHrs(row['Timein'], row['Timeout']), axis=1)
-
-    # Define a working weekend day(Saturday)
-    Saturday = businesstimedelta.WorkDayRule(start_time=datetime.time(9),end_time=datetime.time(17),working_days=[5])
-
-    vic_holidays = pyholidays.KE()
-    holidays = businesstimedelta.HolidayRule(vic_holidays)
-    businesshrs = businesstimedelta.Rules([Saturday, holidays])
-
-    def SatHrs(start, end):
-        if end>=start:
-            return businesshrs.difference(start,end).hours+float(businesshrs.difference(start,end).seconds)/float(3600)
-        else:
-            ""
-
-    RejectedSentSat_hrs=lens_duration.apply(lambda row: BusHrs(row['Timein'], row['Timeout']), axis=1)
-
-    lens_duration["Time Taken"]=(RejectedSentWk_hrs+RejectedSentSat_hrs)*60
-    lens_duration =lens_duration.replace("", np.nan)
-    lens_duration = lens_duration.sort_values(by='Time Taken',ascending=False)
     
     control_data = data
     control_data=control_data.drop_duplicates(subset=['DocEntry','Status'], keep="last")
@@ -501,7 +299,7 @@ def damage_suppy_time():
     control_in = control_in[control_in['Control Room'] == 1]  
 
     control_data2 = data
-    # control_data2 = control_data2[control_data2["Date"] == dateyesterday]
+    control_data2 = control_data2[control_data2["Date"] == dateyesterday]
     control_out = control_data2[(control_data2['Status']=='Sent to Surfacing') & (control_data2['Status']=='Blanks Sent to Control Room')]
     control_out = control_out.sort_values(by = ['Date time'],ascending =  True)
     control_out["Control Room"] = control_out.groupby('DocNum').cumcount()
@@ -511,53 +309,18 @@ def damage_suppy_time():
     control_duration = pd.merge(control_in,control_out[['DocEntry','Timeout']], on='DocEntry',how='right')
     control_duration = control_duration.dropna(subset=['Timeout'])
 
-    ##Define a working day
-    ####Days of the week
-    workday = businesstimedelta.WorkDayRule(
-        start_time=datetime.time(9),
-        end_time=datetime.time(19),
-        working_days=[0,1, 2, 3, 4])
+    control_duration = control_duration[['Created User', 'DocNum','Timein','Timeout','OrderCriteria Status','Status']]
+    control_duration['Outlet'] = 'HQWS'
 
-    cal = Kenya()
-    hl = cal.holidays()
-    vic_holidays = pyholidays.KE() 
-    holidays = businesstimedelta.HolidayRule(vic_holidays)
-    businesshrs = businesstimedelta.Rules([workday, holidays], hl)
-
-    def BusHrs(start, end):
-        if end>=start:
-            return businesshrs.difference(start,end).hours+float(businesshrs.difference(start,end).seconds)/float(3600)
-        else:
-            ""
-
-    RejectedSentWk_hrs=control_duration.apply(lambda row: BusHrs(row['Timein'], row['Timeout']), axis=1)
-
-    # Define a working weekend day(Saturday)
-
-    Saturday = businesstimedelta.WorkDayRule(start_time=datetime.time(9),end_time=datetime.time(17),working_days=[5])
-
-    vic_holidays = pyholidays.KE()
-    holidays = businesstimedelta.HolidayRule(vic_holidays)
-    businesshrs = businesstimedelta.Rules([Saturday, holidays])
-
-    def SatHrs(start, end):
-        if end>=start:
-            return businesshrs.difference(start,end).hours+float(businesshrs.difference(start,end).seconds)/float(3600)
-        else:
-            ""
-    RejectedSentSat_hrs=control_duration.apply(lambda row: BusHrs(row['Timein'], row['Timeout']), axis=1)
-
+    """ Calculating Time Difference from Difference Statuses - Control Room"""
     if not control_duration.empty:
-        control_duration["Time Taken"]=(RejectedSentWk_hrs+RejectedSentSat_hrs)*60
-        control_duration =control_duration.replace("", np.nan)
-        control_duration = control_duration.sort_values(by='Time Taken',ascending=False)
-        # control_duration['delayed dept']=control_duration['delay'].apply(lambda x: 'Delayed at Main store' if x>15 else 'Did not delay at Main store' )
-        control_duration=control_duration.copy()
-        control_duration = control_duration[['Status', 'DocEntry', 'DocNum', 'OrderCriteria Status','Timein','Timeout','Time Taken']]
-        print('Control Room Printed')
+        control_duration['Time taken'] = control_duration.apply(lambda row:calculate_time_difference(row = row , x = "Timein", y= 'Timeout', holiday_dict=holidays, working_hours=work_hours), axis=1)
+        control_duration.sort_values(by='Time taken',ascending=False,inplace = True)
+        control_duration = control_duration[['Created User', 'DocNum','Timein','Timeout','OrderCriteria Status','Status','Time taken']]
     else:
-        columns = ['Status', 'DocEntry', 'DocNum', 'OrderCriteria Status','Timein','Timeout','Time taken']
+        columns = ['Created User', 'DocNum','Timein','Timeout','OrderCriteria Status','Status','Time taken']
         control_duration = pd.DataFrame(columns=columns) 
+
    
     """ Store to Control: Excluding Surfacing """
     control_datapre = data
@@ -570,7 +333,7 @@ def damage_suppy_time():
     control_in_pre = control_in_pre[control_in_pre['Control Room'] == 1]  
 
     control_data2_pre = data
-    # control_data2_pre = control_data2_pre[(control_data2_pre["Date"] >= lastmonday) & (control_data2_pre["Date"] <= dateyesterday)]
+    control_data2_pre = control_data2_pre[control_data2_pre["Date"] == dateyesterday]
     control_out_pre = control_data2_pre[control_data2_pre['Status']=='Sent to Pre Quality']
     surfacing = ('Surfacing Lens from KE with PF to Follow Glazed Other Country','Surfacing Lens with HQ Frame','Surfacing Lens with PF','Surfacing Lens with Branch Frame',
     'Surfacing Lens with PF Glazed at Branch','Surfacing Lens with Branch Frame Glazed at Branch','PF and Surfacing Lens from KE Glazed Other Country',
@@ -583,54 +346,22 @@ def damage_suppy_time():
     control_out_pre = control_out_pre.rename(columns={'Date time':'Timeout'})
     control_duration_pre = pd.merge(control_in_pre,control_out_pre[['DocEntry','Timeout']], on='DocEntry',how='right')
 
-    """ Calculation of Time"""
-    ####Days of the week
-    workday = businesstimedelta.WorkDayRule(
-        start_time=datetime.time(9),
-        end_time=datetime.time(19),
-        working_days=[0,1, 2, 3, 4])
+    control_duration_pre = control_duration_pre[['Created User', 'DocNum','Timein','Timeout','OrderCriteria Status','Status']]
+    control_duration_pre['Outlet'] = 'HQWS'
 
-    cal = Kenya()
-    hl = cal.holidays()
-    vic_holidays = pyholidays.KE() 
-    holidays = businesstimedelta.HolidayRule(vic_holidays)
-    businesshrs = businesstimedelta.Rules([workday, holidays], hl)
-
-    def BusHrs(start, end):
-        if end>=start:
-            return businesshrs.difference(start,end).hours+float(businesshrs.difference(start,end).seconds)/float(3600)
-        else:
-            ""
-
-    RejectedSentWk_hrs=control_duration_pre.apply(lambda row: BusHrs(row['Timein'], row['Timeout']), axis=1)
-
-    # Define a working weekend day(Saturday)
-
-    Saturday = businesstimedelta.WorkDayRule(start_time=datetime.time(9),end_time=datetime.time(17),working_days=[5])
-
-    vic_holidays = pyholidays.KE()
-    holidays = businesstimedelta.HolidayRule(vic_holidays)
-    businesshrs = businesstimedelta.Rules([Saturday, holidays])
-
-    def SatHrs(start, end):
-        if end>=start:
-            return businesshrs.difference(start,end).hours+float(businesshrs.difference(start,end).seconds)/float(3600)
-        else:
-            ""
-    RejectedSentSat_hrs=control_duration_pre.apply(lambda row: BusHrs(row['Timein'], row['Timeout']), axis=1)
-
+    """ Calculating Time Difference from Difference Statuses - Control Room"""
     if not control_duration_pre.empty:
-        control_duration_pre["Time Taken"]=(RejectedSentWk_hrs+RejectedSentSat_hrs)*60
-        control_duration_pre =control_duration_pre.replace("", np.nan)
-        control_duration_pre = control_duration_pre.sort_values(by='Time Taken',ascending=False)
-        control_duration_pre=control_duration_pre.copy()
-        control_duration_pre = control_duration_pre[['Status', 'DocEntry', 'DocNum', 'OrderCriteria Status','Timein','Timeout','Time Taken']]
-        print('Control Room Printed')
+        control_duration_pre['Time taken'] = control_duration_pre.apply(lambda row:calculate_time_difference(row = row , x = "Timein", y= 'Timeout', holiday_dict=holidays, working_hours=work_hours), axis=1)
+        control_duration_pre.sort_values(by='Time taken',ascending=False,inplace = True)
+        control_duration_pre = control_duration_pre[['Created User', 'DocNum','Timein','Timeout','OrderCriteria Status','Status','Time taken']]
     else:
-        columns = ['Status', 'DocEntry', 'DocNum', 'OrderCriteria Status','Timein','Timeout','Time taken']
+        columns = [['Created User', 'DocNum','Timein','Timeout','OrderCriteria Status','Status','Time taken']]
         control_duration_pre = pd.DataFrame(columns=columns) 
 
-    control_duration = pd.concat([control_duration,control_duration_pre])
+    control_duration = pd.concat([control_duration,control_duration_pre])   
+    control_duration = control_duration.dropna(subset=['Created User'])
+
+    print(control_duration)
 
     """"Copy the data to an excel sheet """
     with pd.ExcelWriter(r"/home/opticabi/Documents/optica_reports/order_efficiency\newdamagesupplytime.xlsx", engine='xlsxwriter') as writer:

@@ -33,6 +33,7 @@ from reports.insurance_conversion.smtp.emails import (
 
 from reports.insurance_conversion.utils.utils import highlight_multindex
 from reports.insurance_conversion.utils.utils import clean_final_dataframe
+from reports.insurance_conversion.utils.utils import generate_html_multindex
 
 email = os.getenv("douglas_email")
 password = os.getenv("douglas_password")
@@ -169,6 +170,8 @@ def send_to_management(selection, country, path) -> None:
         receiver_email = rwanda
     else:
         return
+    
+
 
     email_message = MIMEMultipart("alternative")
     email_message["From"] = email
@@ -209,6 +212,9 @@ def send_to_branches(
     staff_conversion = pd.ExcelFile(individual)
     non_converted = f"{path}insurance_conversion/noncoverted.xlsx"
     overall = f"{path}insurance_conversion/overall.xlsx"
+    insurance_errors = f"{path}insurance_conversion/rejections.xlsx"
+    eyetest_to_order = f"{path}draft_upload/et_to_order.xlsx"
+    insurance_non_submission = f"{path}draft_upload/insurance_not_submitted.xlsx"
     branch_conversion = pd.ExcelFile(overall)
     branches_non_conversions = pd.ExcelFile(non_converted)
     files = [individual, non_converted, overall]
@@ -219,6 +225,15 @@ def send_to_branches(
     branch_list = branch_data["Outlet"].tolist()
     branch_data = branch_data.set_index("Outlet")
     random_branch = random.choice(branch_list)
+
+    end_template = """
+    <p>Kindly see on the attachments a list of insurance orders that didn’t convert</p>
+    <br>
+    <b><i>Best Regards</i></b><br>
+    <b><i>Douglas</i></b>
+    </body>
+    </html>
+    """
 
 
     for branch in branch_list:
@@ -243,7 +258,8 @@ def send_to_branches(
 
             individual_feedback[("Insurance Fully Approved", "Conversion")] = individual_feedback[("Insurance Fully Approved", "Conversion")].apply(lambda x: x + 'f')
             individual_feedback[("Insurance Partially Approved", "Conversion")] = individual_feedback[("Insurance Partially Approved", "Conversion")].apply(lambda x: x + 'p')
-            individual_feedback[("Use Available Amount on SMART", "Conversion")] = individual_feedback[("Use Available Amount on SMART", "Conversion")].apply(lambda x: x + 'u')
+            if country == "Kenya":
+                individual_feedback[("Use Available Amount on SMART", "Conversion")] = individual_feedback[("Use Available Amount on SMART", "Conversion")].apply(lambda x: x + 'u')
             individual_feedback[("Declined by Insurance Company", "Conversion")] = individual_feedback[("Declined by Insurance Company", "Conversion")].apply(lambda x: x + 'd')
             
             overall_feedbacks = overall_feedbacks.style.hide_index().set_properties(**properties).set_table_styles(ug_styles)
@@ -258,6 +274,8 @@ def send_to_branches(
             overall_feedbacks_html = overall_feedbacks.to_html(
                 doctype_html=True
             )
+
+
             individual_feedback_html = individual_feedback.to_html(
                 doctype_html=True
             )
@@ -268,12 +286,33 @@ def send_to_branches(
                 individual_feedback_html=individual_feedback_html
             )
 
+
+            if country == "Kenya":
+                eyetest_order = pd.read_excel(eyetest_to_order,header = [0,1], index_col = [0,1])
+                insurance_error = pd.read_excel(insurance_errors, header = [0,1], index_col = [0,1])
+                insurance_submission = pd.read_excel(insurance_non_submission, header = [0,1], index_col = [0,1])
+
+                dictionary = {
+                    "Insurance Errors": insurance_error,
+                    "Delays from eye test completion to draft order": eyetest_order,
+                    "Non Submitted Insurance Clients":  insurance_submission 
+                }
+
+                htmll = generate_html_multindex(
+                    branch=branch,
+                    dataframe_dict=dictionary,
+                    styles=ug_styles
+                )
+
+                html += htmll
+
+                html += end_template
+
             if branch == random_branch and country == "Kenya":
                 receiver_email = [
                     "wazeem@optica.africa",
                     rm_email,
                     "wairimu@optica.africa",
-                    "faithtesy.leo@optica.africa",
                     branch_email
                 ]
 
@@ -283,7 +322,6 @@ def send_to_branches(
                     "duncan.muchai@optica.africa",
                     "susan@optica.africa",
                     "insuranceoh@optica.africa",
-                    "faithtesy.leo@optica.africa",
                     branch_email
                 ]
             
@@ -292,7 +330,6 @@ def send_to_branches(
                     rm_email,
                     "yh.manager@optica.africa",
                     "insurance@optica.africa",
-                    "faithtesy.leo@optica.africa",
                     branch_email
                 ]
             
@@ -307,9 +344,11 @@ def send_to_branches(
             else:
                 receiver_email = [
                   rm_email,
-                  "faithtesy.leo@optica.africa",
                   branch_email
                 ]
+
+            
+
 
             email_message = MIMEMultipart("alternative")
             email_message["From"] = email

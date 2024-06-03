@@ -137,8 +137,7 @@ class FetchData:
         month as "Month",
         feedback as "Feedback"
         from {database}.requests_feedbacks
-        where request_date::date between '{start_date}' and '{today}'
-        and insurance_company not in ('NHIF- COMPREHENSIVE MEDICAL INSURANCE')
+        where due_date::date between '{start_date}' and '{today}';
         """
 
         return self.fetch_data(query)
@@ -157,3 +156,28 @@ class FetchData:
         """
 
         return self.fetch_data(query)
+    
+    def fetch_rejections(self, start_date) -> pd.DataFrame:
+        query = f"""
+        select ods_outlet as "Outlet",
+        doc_no as "Order Number", user_name as "Order Creator",
+        odsc_date::date as "Date", odsc_time as "Time", odsc_remarks as "Remarks"
+        from mabawa_mviews.rejections_view rv
+        where odsc_date::date between '{start_date}' and '{today}'
+        """
+
+        return self.fetch_data(query)
+
+    
+    def fetch_holidays(self):
+        query = """
+        select holiday_date as "Date",
+        holiday_name as "Holiday"
+        from mabawa_dw.dim_holidays;
+        """
+        to_drop =  pd.read_sql_query(query, con=self.engine)
+
+        date_objects = pd.to_datetime(to_drop['Date'], dayfirst=True).dt.date
+        holiday_dict = dict(zip(date_objects, to_drop['Holiday']))
+
+        return holiday_dict 

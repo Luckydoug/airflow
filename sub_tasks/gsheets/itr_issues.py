@@ -70,3 +70,4 @@ def create_dim_itr_issues():
   """
   query = pg_execute(query)
   return "Created"
+

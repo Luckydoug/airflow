@@ -41,8 +41,11 @@ with DAG(
                 build_rw_rejections,
                 build_rw_sops,
                 build_plano_report,
-                build_rwanda_opening_time
-
+                build_rwanda_opening_time,
+                build_direct_conversion,
+                build_eyetest_order,
+                build_efficiency_before_feedback,
+                build_rwanda_insurance_conversion
             )
 
             push_rwanda_efficiency_data = PythonOperator(
@@ -82,11 +85,37 @@ with DAG(
                 provide_context=True
             )
 
+
+            build_rwanda_insurance_conversion = PythonOperator(
+                task_id='build_rwanda_insurance_conversion',
+                python_callable=build_rwanda_insurance_conversion,
+                provide_context=True
+            )
+
+
+            build_direct_conversion = PythonOperator(
+                task_id='build_direct_conversion',
+                python_callable=build_direct_conversion,
+                provide_context=True
+            )
+
+            build_eyetest_order = PythonOperator(
+                task_id='build_eyetest_order',
+                python_callable=build_eyetest_order,
+                provide_context=True
+            )
+
+            build_efficiency_before_feedback = PythonOperator(
+                task_id='build_efficiency_before_feedback',
+                python_callable=build_efficiency_before_feedback,
+                provide_context=True
+            )
+
             
-            push_rwanda_efficiency_data >> build_rw_draft_upload >> build_rw_sops >> build_rw_rejections >> build_plano_report >> build_rwanda_opening_time
+            push_rwanda_efficiency_data >> build_rw_draft_upload >> build_rw_sops >> build_rw_rejections >> build_plano_report >> build_rwanda_opening_time >> build_rwanda_insurance_conversion >> build_direct_conversion >> build_eyetest_order >> build_efficiency_before_feedback
             
 
-    with TaskGroup('smtp') as smtp:
+    with TaskGroup('smtp') as smtp: 
         with TaskGroup('send') as sends:
             from rwanda.automations.draft_upload.report import (
                 trigger_rwanda_smtp,

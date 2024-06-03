@@ -78,17 +78,12 @@ branches_html = """
     <body>
         <p><b>Hi {branch_name},</b></p> </br>
         <b style = "color: green">I Hope this email finds you well.</b> </br>
-        <p>Kindly see insurance conversion per the insurance feedback for the period on the subject.</p>
+        <p>Please see the below branch insurance performance for the past week.</p>
         <br>
+        <b>1. Branch Insurance Conversion </b>
         <table style = "width: 70%;">{overall_feedbacks_html}</table> 
         <br>
-        <p>Also see the the breakdown per the sales person</p>
+        <b>2. Insurance Conversion by Sales Person</b>
         <table style = "empty-cells: hide !important;">{individual_feedback_html}</table>
         <br>
-        <p>Kindly see on the attachments a list of insurance orders that didn’t convert</p>
-        <br>
-        <b><i>Best Regards</i></b><br>
-        <b><i>Douglas</i></b>
-    </body>
-    </html>
     """

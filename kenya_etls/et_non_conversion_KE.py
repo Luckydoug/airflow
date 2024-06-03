@@ -8,7 +8,7 @@ from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python_operator import PythonOperator
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from kenya_automation.non_conversion_remarks.et_non_conversion import (manipulate_et_non_conversions,smtp,clean_folder)
+from kenya_automation.non_conversion_remarks.et_non_conversion import (smtp,clean_folder)
 # from tmp.python_test
 DAG_ID = 'ET_Non_converstions_KE_ETL'
 
@@ -29,7 +29,7 @@ with DAG(
     DAG_ID,
     default_args=default_args,
     tags=['Live'],
-    schedule_interval='30 02 * * 1,2,3,4,5,6',
+    schedule_interval='30 02 * * 1,2,3,4,5,6,7',
     catchup=False
 ) as dag:
 
@@ -40,16 +40,6 @@ with DAG(
     """
     UPDATE
     """
-
-    with TaskGroup('manipulate') as manipulate:
-        
-        manipulate_et_non_conversions = PythonOperator(
-            task_id = 'manipulate_et_non_conversions',
-            python_callable=manipulate_et_non_conversions,
-            provide_context=True
-        )
-        manipulate_et_non_conversions
-
     with TaskGroup('send_smtp') as send_smtp:
         
         smtp = PythonOperator(
@@ -72,4 +62,4 @@ with DAG(
         task_id="finish"
     )
 
-    start >> manipulate >> send_smtp >> clean_excels >> finish
+    start >> send_smtp >> clean_excels >> finish

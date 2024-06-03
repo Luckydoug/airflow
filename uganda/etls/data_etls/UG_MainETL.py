@@ -1,3 +1,6 @@
+import sys, os
+sys.path.insert(0,os.path.abspath(os.path.dirname(__file__)))
+
 from uganda_sub_tasks.ordersETLs.orderscreendetailsc1 import (
     fetch_sap_orderscreendetailsc1, 
     update_to_source_orderscreenc1
@@ -28,6 +31,7 @@ from uganda_sub_tasks.ordersETLs.customers import fetch_sap_customers
 from uganda_sub_tasks.ordersETLs.payments import fetch_sap_payments
 from uganda_sub_tasks.gsheets.sop import (fetch_sop_branch_info,fetch_sop)
 from uganda_sub_tasks.gsheets.ajuatodrop import fetch_npsreviews_with_issues
+from uganda_sub_tasks.postgres.insurance_efficiency import update_approvals_efficiency
 from airflow.operators.python_operator import PythonOperator
 from airflow.contrib.sensors.file_sensor import FileSensor
 from airflow.operators.dummy_operator import DummyOperator
@@ -297,4 +301,10 @@ with DAG(
 
         fetch_sop_branch_info >> fetch_sop
 
-    start >> orders >> orderlog >> payments >> customers >> prescriptions >> view >> salesorders >> discounts >> users >> items >> insurance >> targets >> purchaseorders >> nps_survey >> itrlog >> inventorytransferdetails >> itrdetails >> sop >> finish
+    update_approvals_efficiency = PythonOperator(
+            task_id='update_approvals_efficiency',
+            python_callable=update_approvals_efficiency,
+            provide_context=True
+        )
+
+    start >> orders >> orderlog >> payments >> customers >> prescriptions >> view >> salesorders >> discounts >> users >> items >> insurance >> targets >> purchaseorders >> nps_survey >> itrlog >> inventorytransferdetails >> itrdetails >> sop >> update_approvals_efficiency >> finish

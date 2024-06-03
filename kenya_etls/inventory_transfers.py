@@ -52,7 +52,7 @@ with DAG(
     DAG_ID, 
     default_args=default_args,
     tags=['Live'], 
-    schedule_interval='00 20 * * *',
+    schedule_interval='00 22 * * *',
     catchup=False
     ) as dag:
     

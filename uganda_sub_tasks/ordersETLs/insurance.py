@@ -8,6 +8,8 @@ from sub_tasks.data.connect_mawingu import engine
 from sub_tasks.libraries.utils import return_session_id
 from sub_tasks.libraries.utils import FromDate, ToDate
 
+FromDate = "2023/01/01"
+
 
 def fetch_sap_insurance():
     SessionId = return_session_id(country="Uganda")
@@ -139,6 +141,8 @@ def fetch_sap_insurance():
         if_row_exists='update',
         create_table=False,
         add_new_columns=True)
+
+
 
 
 

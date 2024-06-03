@@ -34,6 +34,7 @@ from rwanda_sub_tasks.ordersETLs.purchaseorder import fetch_purchase_orders
 from rwanda_sub_tasks.inventory_transfer.itr_logs import fetch_sap_itr_logs
 from rwanda_sub_tasks.inventory_transfer.transfer_details import fetch_sap_inventory_transfer
 from rwanda_sub_tasks.inventory_transfer.transfer_request import fetch_sap_invt_transfer_request
+from rwanda_sub_tasks.postgres.insurance_efficiency import update_approvals_efficiency
 
 DAG_ID = 'RW_Main_Pipeline'
 
@@ -248,9 +249,15 @@ with DAG(
             python_callable = fetch_sap_invt_transfer_request,
             provide_context = True
         ) 
-  
+
+    update_approvals_efficiency = PythonOperator(
+            task_id='update_approvals_efficiency',
+            python_callable=update_approvals_efficiency,
+            provide_context=True
+        )
+
     finish = DummyOperator(
         task_id = "finish"
     )
     
-    start >> orders >> orderlog >> payments >> customers >> prescriptions >> view >> salesorders >> discounts >> purchaseorders >> itrlog >> users >> items >> targets >> inventorytransferdetails >> itrdetails >> finish
+    start >> orders >> orderlog >> payments >> customers >> prescriptions >> view >> salesorders >> discounts >> purchaseorders >> itrlog >> users >> items >> targets >> inventorytransferdetails >> itrdetails >> update_approvals_efficiency >> finish

@@ -6,7 +6,7 @@ import holidays as pyholidays
 from datetime import date, timedelta, datetime, time
 from pangres import upsert
 from sub_tasks.data.connect import (pg_execute, engine) 
-from sub_tasks.libraries.utils import (calculate_time_taken,calculate_time_taken_for_row,today,pastdate)
+from sub_tasks.libraries.utils import (calculate_time_taken,calculate_time_taken_for_row,ke_holidays)
 
 
 def update_printing_identifier():
@@ -47,8 +47,6 @@ def update_printing_identifier():
                 }
     
         branch_data[branch]['working_hours'][day] = (start_time, end_time)
-    
-    ke_holidays = pyholidays.KE()
 
     df['time_taken'] = df.apply(lambda row: calculate_time_taken_for_row(row, 'ods_outlet', 'sales_order_created', 'printed_identifier', branch_data, ke_holidays), axis=1)
     df['time_taken'] = np.where(df['time_taken']<0,0,df['time_taken'])

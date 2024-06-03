@@ -210,7 +210,7 @@ def send_to_salespersons():
                     email_message["From"] = your_email
                     email_message["Body"] = '<body bgcolor="#fff">text</body>'
                     email_message["To"] = r','.join(receiver_email)
-                    email_message["Subject"] = "{name}'s {branch} MTD Performance from {fromdate} to {dateto}".format(
+                    email_message["Subject"] = "{name}'s {branch} MTD Performance from {fromdate} to {dateto}.".format(
                         fromdate=fromdate, dateto=dateto, branch=outlet, name=name.split(" ")[0].capitalize())
                     email_message.attach(MIMEText(html, "html"))
 
@@ -332,11 +332,13 @@ def send_branch_version():
 
             </html>
         """.format(branch_achievement_html=branch_achievement_html, branch_name=branch_name, branch_performance_html=branch_performance_html)
+        
+
 
         email_message = MIMEMultipart("alternative")
         email_message["From"] = your_email
         email_message["To"] = r','.join(receiver_email)
-        email_message["Subject"] = f"{branch_name} MTD Performance up to {get_todate().day} {calendar.month_name[get_todate().month].capitalize()} {get_todate().year}"
+        email_message["Subject"] = f"{branch_name} MTD Performance up to {get_todate().day} {calendar.month_name[get_todate().month].capitalize()} {get_todate().year}."
         email_message.attach(MIMEText(html, "html"))
 
         smtp_server = smtplib.SMTP("smtp.gmail.com", 587)

@@ -2,7 +2,8 @@ import pandas as pd
 from airflow.models import variable
 from reports.draft_to_upload.utils.utils import today
 
-def fetch_orderscreen(database, engine, start_date='2023-01-01'):
+
+def fetch_orderscreen(database, engine, start_date="2023-01-01"):
     orderscreen_query = f"""
     select orderscreen.doc_entry as "DocEntry", odsc_date::date  as "Date",
     case
@@ -23,7 +24,7 @@ def fetch_orderscreen(database, engine, start_date='2023-01-01'):
     return orderscreen
 
 
-def fetch_orders(database, engine, start_date='2023-01-01'):
+def fetch_orders(database, engine, start_date="2023-01-01"):
     orders_query = f"""
     SELECT CAST(orders.doc_entry AS INT) AS "DocEntry", 
         CAST(orders.doc_no AS INT) AS "DocNum", 
@@ -49,7 +50,7 @@ def fetch_orders(database, engine, start_date='2023-01-01'):
     return all_orders
 
 
-def fetch_views(database, engine, start_date='2023-01-01'):
+def fetch_views(database, engine, start_date="2023-01-01"):
     views_query = f"""
     SELECT visit_id::text  as "Code", create_date::date as "Create Date", 
     case
@@ -62,17 +63,19 @@ def fetch_views(database, engine, start_date='2023-01-01'):
     where create_date::date BETWEEN '{start_date}' and '{today}'
     """
     all_views = pd.read_sql_query(views_query, con=engine)
-    all_views = all_views.sort_values(
-        by=["Create Date", "Create Time"], ascending=True)
+    all_views = all_views.sort_values(by=["Create Date", "Create Time"], ascending=True)
     all_views = all_views.drop_duplicates(subset=["Code"], keep="last")
     all_views.loc[:, "Last View Date"] = pd.to_datetime(
-        all_views["Create Date"].astype(str) + " " +
-        all_views["Create Time"].astype(str), format="%Y-%m-%d %H:%M:%S", errors="coerce"
+        all_views["Create Date"].astype(str)
+        + " "
+        + all_views["Create Time"].astype(str),
+        format="%Y-%m-%d %H:%M:%S",
+        errors="coerce",
     )
     return all_views
 
 
-def fetch_insurance_companies(database, engine, start_date='2023-01-01'):
+def fetch_insurance_companies(database, engine, start_date="2023-01-01"):
     insurance_companies_query = f"""
     select orders.doc_no::int as "DocNum",
         insurance_company.insurance_name as "Insurance Company",
@@ -90,12 +93,11 @@ def fetch_insurance_companies(database, engine, start_date='2023-01-01'):
     where orders.ods_createdon::date between '{start_date}' and '{today}'
     """
 
-    insurance_companies = pd.read_sql_query(
-        insurance_companies_query, con=engine)
+    insurance_companies = pd.read_sql_query(insurance_companies_query, con=engine)
     return insurance_companies
 
 
-def fetch_eyetests(database, engine, start_date='2023-01-01'):
+def fetch_eyetests(database, engine, start_date="2023-01-01"):
     eyetests_query = f"""
         SELECT branch_code as "Outlet", tests.doc_entry AS "DocEntry", 
         tests.code::int AS "Eyetest Code", tests.status AS "Status",
@@ -112,7 +114,7 @@ def fetch_eyetests(database, engine, start_date='2023-01-01'):
     return eyetests
 
 
-def fetch_salesorders(database, engine, start_date='2023-01-01'):
+def fetch_salesorders(database, engine, start_date="2023-01-01"):
     sales_orders_query = f"""
     select draft_orderno::int as "Order Number" from {database}.source_orders_header
     where creation_date::date between '{start_date}' and '{today}'
@@ -130,7 +132,7 @@ def fetch_sops_branch_info(engine):
     return sop_branch_info
 
 
-def fetch_registrations(engine, database,  table, table2, start_date='2023-01-01'):
+def fetch_registrations(engine, database, table, table2, start_date="2023-01-01"):
     registrations_query = f"""
     SELECT cust_outlet as "Outlet", CAST(customers.cust_code AS TEXT) AS "Customer Code", 
     customers.cust_createdon AS "Registration Date", 
@@ -141,13 +143,15 @@ def fetch_registrations(engine, database,  table, table2, start_date='2023-01-01
     LEFT JOIN {database}.{table2} AS users 
     ON CAST(customers.cust_sales_employeecode AS TEXT) = CAST(users.se_optom AS TEXT)
     WHERE customers.cust_createdon::date BETWEEN '{start_date}' AND '{today}'
-    """.format(today=today, start_date=start_date)
+    """.format(
+        today=today, start_date=start_date
+    )
 
     registrations = pd.read_sql_query(registrations_query, con=engine)
     return registrations
 
 
-def fetch_payments(engine, database, start_date='2023-01-01'):
+def fetch_payments(engine, database, start_date="2023-01-01"):
     payments_query = f"""
     select payments.doc_entry as "PyDocEntry",payments.full_doc_type as "DocType", 
     payments.mode_of_pay as "Mode of Pay", payments.draft_orderno as "Order Number", 
@@ -168,9 +172,9 @@ def fetch_payments(engine, database, start_date='2023-01-01'):
     return payments
 
 
-def fetch_planos(database, engine, schema, users, customers, table, views, start_date='2023-01-01'):
-    datest = pd.to_datetime(start_date, format="%Y-%m-%d").date()
-    datend = pd.to_datetime(today, format="%Y-%m-%d").date()
+def fetch_planos(
+    database, engine, schema, users, customers, table, views, start_date="2023-01-01"
+):
     planos_query = f"""
         SELECT
             a.code AS "Code",
@@ -186,7 +190,7 @@ def fetch_planos(database, engine, schema, users, customers, table, views, start
             a.last_viewed_by as "Who Viewed RX",
             "RX",
             a.plano_rx AS "Plano RX",
-            CASE WHEN a.days <= %s THEN 1 ELSE 0 END AS "Conversion"
+            CASE WHEN a.days is not null THEN 1 ELSE 0 END AS "Conversion"
         FROM
             (
                 SELECT
@@ -206,21 +210,26 @@ def fetch_planos(database, engine, schema, users, customers, table, views, start
             LEFT JOIN {database}.source_insurance_company AS insurance ON customers.cust_insurance_company::text = insurance.insurance_code::text
         WHERE
             a.r = 1
-            --AND a.plano_rx = 'Y'
-            AND a.create_date::date >= %s
-            AND a.create_date::date <= %s
+            and a.create_date::date between '{start_date}' and '{today}'
             AND a.cust_code <> '10026902'
-            and insurance.insurance_name <> 'KENYA REVENUE AUTHORITY (KRA)'
+            and (insurance.insurance_name <> 'KENYA REVENUE AUTHORITY (KRA)')
+            and activity_no is null
     """
 
-    all_planos = pd.read_sql_query(
-        planos_query, con=engine, params=(14, datest, datend)
-    )
+    all_planos = pd.read_sql_query(planos_query, con=engine)
+    all_planos["Scheme Name"] = all_planos["Scheme Name"].fillna(" ")
+    all_planos["Insurance Company"] = all_planos["Insurance Company"].fillna(" ")
+
+    all_planos = all_planos[
+        (all_planos["Plano RX"] != "Y")
+        & (~all_planos["Insurance Company"].isin(["AAR M-TIBA", "AAR INSURANCE KENYA"]))
+        & (~all_planos["Scheme Name"].str.contains("DIRECT"))
+    ]
 
     return all_planos
 
 
-def fetch_planorderscreen(database, engine, start_date='2023-01-01'):
+def fetch_planorderscreen(database, engine, start_date="2023-01-01"):
     plano_orderscreen_query = f"""
     SELECT 
         orderscreen.doc_entry AS "DocEntry", 
@@ -263,7 +272,7 @@ def fetch_planorderscreen(database, engine, start_date='2023-01-01'):
     return plano_orderscreen
 
 
-def fetch_detractors(database, engine, table, start_date='2023-01-01'):
+def fetch_detractors(database, engine, table, start_date="2023-01-01"):
     detractors_query = f"""
     select sap_internal_number as "SAP Internal Number", branch as "Branch",
     trigger_date::date as "Trigger Date", nps_rating::int as "NPS Rating", long_feedback as "Long Remarks"
@@ -277,7 +286,7 @@ def fetch_detractors(database, engine, table, start_date='2023-01-01'):
     return surveys
 
 
-def fetch_opening_time(database, engine, start_date='2023-01-01'):
+def fetch_opening_time(database, engine, start_date="2023-01-01"):
     opening_time_query = f"""
     select date::date as "Date", "day" as "Day", "branch" as "Branch", 
     "opening_time" as "Opening Time", time_opened as "Time Opened", "lost_time" as "Lost Time"
@@ -476,6 +485,7 @@ def fetch_customers(engine, database, start_date):
     data = pd.read_sql_query(query, con=engine)
     return data
 
+
 def fetch_branch_data(engine, database):
     query = f"""
     select branch_code as "Outlet",
@@ -490,12 +500,14 @@ def fetch_branch_data(engine, database):
     front_desk as "Front Desk",
     zone as "Zone",
     retail_analyst as "Retail Analyst",
-    analyst_email as "Analyst Email"
+    analyst_email as "Analyst Email",
+    escalation_email as "Escalation Email"
     from {database}.branch_data bd 
     """
 
-    branch_data = pd.read_sql_query(query, con = engine)
+    branch_data = pd.read_sql_query(query, con=engine)
     return branch_data
+
 
 def fetch_non_conversion_non_viewed(engine, database, start_date):
     query = f"""
@@ -522,7 +534,7 @@ def fetch_non_conversion_non_viewed(engine, database, start_date):
     and create_date::date between '{start_date}' and '{today}'
     """
 
-    data = pd.read_sql_query(query, con = engine)
+    data = pd.read_sql_query(query, con=engine)
     return data
 
 
@@ -537,7 +549,6 @@ def fetch_working_hours(engine):
     auto_time as "Auto Time"
     from reports_tables.working_hours 
     """
-
     data = pd.read_sql_query(query, con=engine)
     return data
 
@@ -572,14 +583,14 @@ def fetch_no_views_data(database, engine, start_date):
     and create_date::date between '{start_date}' and '{today}'
     """
 
-    data = pd.read_sql_query(query, con = engine)
+    data = pd.read_sql_query(query, con=engine)
     return data
 
 
-def fetch_eyetest_order(engine, start_date):
+def fetch_eyetest_order(engine, start_date, database):
     query = f"""
     SELECT a.*, 
-    (date_part('epoch'::text, a.order_date - a.et_completed_time)::integer / 60) as time_taken
+    (date_part('epoch'::text, a."Order Date" - a."ET Completed Time")::integer / 60) as "Time Taken"
     FROM (
         SELECT
             ROW_NUMBER() OVER (
@@ -587,26 +598,25 @@ def fetch_eyetest_order(engine, start_date):
                 ORDER BY so.ods_createdon::DATE + LPAD(so.ods_createdat::TEXT, 4, '0')::TIME ASC
             ) AS r,
             qt.visit_id,
-            qt.customer_code,
-            qt.completed_time as et_completed_time,
-            qt.branch as et_branch,
-            so.ods_outlet as order_branch,
-            so.doc_no as order_number,
-            so.ods_createdon::DATE + LPAD(so.ods_createdat::TEXT, 4, '0')::TIME as order_date,
-            so.ods_creator as creator,
-            case when so.ods_insurance_order  = 'Yes' then 'Insurance' else 'Cash' end as order_type,
-            so.ods_ordercriteriastatus as criteria,
-            su.user_name as order_creator
+            qt.customer_code as "Customer Code",
+            qt.completed_time as "ET Completed Time",
+            qt.branch as "Outlet",
+            so.ods_outlet as "Order Branch",
+            so.doc_no as "Order Number",
+            so.ods_createdon::DATE + LPAD(so.ods_createdat::TEXT, 4, '0')::TIME as "Order Date",
+            su.user_name as "Order Creator",
+            case when so.ods_insurance_order  = 'Yes' then 'Insurance' else 'Cash' end as "Order Type",
+            so.ods_ordercriteriastatus as "Criteria"
         FROM
             report_views.queue_time AS qt
-            LEFT JOIN mabawa_staging.source_orderscreen AS so ON qt.visit_id::TEXT = so.presctiption_no::text
-            left join mabawa_staging.source_users su 
+            LEFT JOIN {database}.source_orderscreen AS so ON qt.visit_id::TEXT = so.presctiption_no::text
+            left join {database}.source_users su 
             on so.ods_creator::text = su.user_code::text
     ) AS a
     WHERE a.r = 1
-    and a.et_completed_time::date = a.order_date::date
-    and a.et_completed_time::date between '{start_date}' and '{today}'
-    and a.order_branch = et_branch;
+    and a."ET Completed Time"::date = a."Order Date"::date
+    and a."ET Completed Time"::date between '{start_date}' and '{today}'
+    and a."Order Branch" = "Outlet";
     """
 
     data = pd.read_sql_query(query, con=engine)
@@ -640,8 +650,9 @@ def fetch_pending_insurance(engine, start_date):
         and sic.insurance_name is not null;
     """
 
-    pending_insurances = pd.read_sql_query(query, con = engine)
+    pending_insurances = pd.read_sql_query(query, con=engine)
     return pending_insurances
+
 
 def fetch_submitted_insurance(engine, start_date):
     query = f"""
@@ -666,19 +677,210 @@ def fetch_rejections_drop(engine):
     return data
 
 
-def fetch_upload_to_sent_preauth(engine, start_date, database):
+def fetch_eff_bef_feed_desk(start_date, engine, database, view):
     query = f"""
-    select doc_no as "Order Number",sent_branch_code as "Outlet",
-    ods_creator_name as "Creator",
-    upload_resent_tm as "Upload Time",sent_preauth_tm as "Sent-Preuath Time", 
-    upldorrsnt_to_sntprthorrjctd as "Time Taken (Target = 5)"
-    from {database}.insurance_efficiency_before_feedback 
-    where sent_preauth_tm::date between '{start_date}' and '{today}'
-    and sent_preauth <> 'Rejected by Optica Insurance'
-    and sent_branch_name <> 'Insurance Desk'
-    and upldorrsnt_to_sntprthorrjctd > 5
+    select
+    doc_no as "Order Number",ods_outlet as "Outlet",
+    user_name as "Staff Name",
+    draft_rejected as "Start Status",
+    draft_rejected_tm as "Start Time",
+    upload_resent as "End Status",
+    upload_resent_tm as "End Time",
+    case when iebf.upload_resent = 'Corrected Form Resent to Optica Insurance' then ''
+    else sie.preauth_to_upload::text end as "Draft to Preauth",
+    case when iebf.upload_resent = 'Corrected Form Resent to Optica Insurance' then ''
+    else sie.preauth_to_upload::text end as "Preauth to Upload",
+    case when iebf.upload_resent = 'Corrected Form Resent to Optica Insurance' then iebf.drftorrjctd_to_upldorrsnt
+    else sie.draft_to_preauth::int + sie.preauth_to_upload::int end as "Time Taken"
+    from {view}.insurance_efficiency_before_feedback iebf
+    left join {database}.source_insurance_efficiency sie 
+    on iebf.doc_no::text = sie.order_number::text
+    where drft_rw = 1 
+    and ods_outlet not in (
+    select branch_code::text from reports_tables.branch_data where sends_own_insurance = 'Yes'
+    )
+    and upload_resent_tm::date between '{start_date}' and '{today}'
+    and case when draft_rejected = 'Draft Order Created' then sie.draft_to_upload > 8 else drftorrjctd_to_upldorrsnt > 5 end
     """
 
     data = pd.read_sql_query(query, con=engine)
     return data
 
+
+def fetch_eff_bef_feed_nodesk(start_date, engine, database, view):
+    query = f"""
+    select 
+    b."Order Number",
+    b."Outlet",
+    b."Order Branch",
+    b."Staff Name",
+    b."Draft Order Created",
+    b."Upload Attachment",
+    b."Sent Pre-Auth",
+    b."Draft to Preauth",
+    b."Preauth to Upload",
+    b."Draft to Upload In Mins",
+    b."Upload to Sent Pre-Auth In Mins",
+    b."Total Time (Target = 13 Mins)"
+    from ( select iebf.doc_no as "Order Number", iebf.ods_outlet as "Order Branch", 
+    iebf.sentby_branch_code as "Outlet", iebf.ods_outlet, user_name as "Staff Name",
+    iebf.draft_rejected_tm as "Draft Order Created",iebf.upload_resent_tm as "Upload Attachment",
+    iebf.sent_preauth_tm as "Sent Pre-Auth",
+    sie.draft_to_preauth as "Draft to Preauth",
+    sie."preauth_to_upload" as "Preauth to Upload",
+    sie.draft_to_upload as "Draft to Upload In Mins",
+    iebf.upldorrsnt_to_sntprthorrjctd as "Upload to Sent Pre-Auth In Mins",
+    case when iebf.upldorrsnt_to_sntprthorrjctd > 5 and iebf.sentby_branch_code <> iebf.ods_outlet then 1 
+    when iebf.sentby_branch_code = iebf.ods_outlet and iebf.drftorrjctd_to_upldorrsnt + iebf.upldorrsnt_to_sntprthorrjctd > 13 then 1 
+    when iebf.upldorrsnt_to_sntprthorrjctd < 6 and iebf.sentby_branch_code <> iebf.ods_outlet then 0 else 0
+    end as check,
+    sie.draft_to_upload::int + iebf.upldorrsnt_to_sntprthorrjctd as "Total Time (Target = 13 Mins)"
+    from {view}.insurance_efficiency_before_feedback iebf
+    left join {database}.source_insurance_efficiency sie
+    on iebf.doc_no::text = sie.order_number::text
+    where upld_rw = 1  
+    and iebf.sentby_branch_code  in (select bd.branch_code::text from reports_tables.branch_data bd where bd.sends_own_insurance = 'Yes')
+    and iebf.sent_preauth_tm::date between '{start_date}' and '{today}'
+    ) b
+    where b.check = 1 
+    """
+
+    data = pd.read_sql_query(query, con=engine)
+    return data
+
+
+def fetch_eff_af_feed_nodesk(start_date, engine):
+    query = f"""
+    select 
+	doc_no as "Order Number",ods_outlet as "Outlet",
+    ods_creator_name as "Staff Name",approval_update_tm as "Approval Feedback Sent to Branch",
+    fdbck_rcvd_tm as "Branch Received Approval Feedback",apprvl_to_rcvd as "Time Taken"
+    from mabawa_mviews.insurance_efficiency_after_feedback
+    where ods_outlet not in (select branch_code::text from reports_tables.branch_data where sends_own_insurance = 'Yes')
+    and fdbck_rcvd_tm::date between '{start_date}' and '{today}'
+    and apprvl_to_rcvd > 5 
+    """
+
+    data = pd.read_sql_query(query, con=engine)
+    return data
+
+
+def fetch_eff_af_feed_desk(start_date, engine):
+    query = f"""
+    with df as (
+    select 
+	doc_no,ods_outlet,ods_creator_name,approval_remark_tm2,fdbck_rcvd_tm,
+	rmrk2_to_updt, apprvl_to_rcvd,
+	case 
+		when rmrk2_to_updt < 0  then apprvl_to_rcvd 
+		else rmrk2_to_updt + apprvl_to_rcvd
+	end as tt
+    from mabawa_mviews.insurance_efficiency_after_feedback
+    where ods_outlet in (
+        select branch_code::text from reports_tables.branch_data where sends_own_insurance = 'Yes'
+    ))
+    select doc_no as "Order Number",ods_outlet as "Outlet",
+    ods_creator_name as "Staff Name",
+    approval_remark_tm2 as "Approval Feedback Received From Insurance Company",
+    fdbck_rcvd_tm as "Branch Received Approval Feedback",
+    tt as "Time Taken In Minutes"
+    from df 
+    where fdbck_rcvd_tm::date between '{start_date}' and '{today}'
+    and tt > 5 
+    """
+
+    data = pd.read_sql_query(query, con=engine)
+    return data
+
+
+def fetch_direct_insurance_conversion(start_date, engine, mview):
+    query = f"""
+    select ifc.doc_no as "Order Number",
+    ifc.ods_status1 as "Current Status",
+    ifc.cust_code as "Customer Code",
+    ifc.ods_outlet as "Outlet",
+    ifc.user_name as "Order Creator",
+    i.insurance_company as "Insurance Company"
+    from {mview}.insurance_feedback_conversion ifc 
+    left join report_views.insurances i 
+    on i.order_number::text = ifc.doc_no::text
+    where fdbck_date::date between '{start_date}' and '{today}'
+    and fdbck_type = 'Direct'
+    and cnvrtd = 0
+    """
+
+    data = pd.read_sql_query(query, con=engine)
+    return data
+
+
+def fetch_client_contacted_time(start_date, engine, view):
+    query = f"""
+    SELECT ieaf.doc_no::int AS "Order Number",
+    CASE WHEN ieaf.apprvl_to_cstmr_cntctd IS NULL THEN 'Not Contacted' 
+    ELSE CASE WHEN ieaf.apprvl_to_cstmr_cntctd = 1 
+    THEN ieaf.apprvl_to_cstmr_cntctd::text || ' Minute' 
+    ELSE ieaf.apprvl_to_cstmr_cntctd::text || ' Minutes' END
+    END AS "Client Contacted After (Target = 10 (Mins))"
+    FROM {view}.insurance_efficiency_after_feedback ieaf
+    where ieaf.apprvl_updt_tm::date between '{start_date}' and '{today}'
+    """
+
+    data = pd.read_sql_query(query, con=engine)
+    return data
+
+
+def fetch_plano_revised(start_date, engine):
+    query = f"""
+    select 
+    isb.branch_code as "Outlet",
+    isb.cust_code as "Customer Code",
+    isb.plano_rx as "Plano RX",
+    isb.insurance_name as "Insurance Company",
+    isb.optom_name as "Optom Name",
+    isb.handed_over_to as "EWC Handover",
+    isb.last_viewed_by as "Last Viewed By",
+    isb.scheme_type as "Scheme Type"
+    from report_views.insurance_submission isb
+    where create_date::date between '{start_date}' and '{today}'
+    and isb.branch_code not in ('null', 'HOM')
+    and ((isb.insurance_name not in ('AAR M-TIBA', 'AAR INSURANCE KENYA') 
+    and scheme_type not in ('DIRECT', 'DIRECT + SMART')) 
+    or insurance_name is null or scheme_type is null)
+    """
+
+    data = pd.read_sql_query(query, con=engine)
+    return data
+
+
+def fetch_holidays(engine, dw):
+    query = f"""
+    select holiday_date as "Date",
+    holiday_name as "Holiday"
+    from {dw}.dim_holidays;
+    """
+    to_drop = pd.read_sql_query(query, con=engine)
+
+    date_objects = pd.to_datetime(to_drop["Date"], dayfirst=True).dt.date
+    holiday_dict = dict(zip(date_objects, to_drop["Holiday"]))
+
+    return holiday_dict
+
+
+def efficiency_after_feedback(engine, view, start_date) -> pd.DataFrame:
+    query = f"""
+    select ieaf.ods_outlet as "Outlet",
+    ieaf.ods_creator_name as "Order Creator",
+    ieaf.fdbk_stts as "Insurance Feedback",
+    TO_CHAR(ieaf.fdbk_rmrk_tm2, 'YYYY-MM-DD HH24:MI') as "Feedback Time",
+    TO_CHAR(ieaf.apprvl_updt_tm, 'YYYY-MM-DD HH24:MI') as "Time Updated on SAP",
+    rmrk_to_updt as "Time Taken (Target = 5 Mins)"
+    from {view}.insurance_efficiency_after_feedback ieaf 
+    where rmrk_to_updt > 5
+    and apprvl_updt_tm::date between '{start_date}' and '{today}'
+    and ieaf.ods_outlet in (select branch_code::text from reports_tables.branch_data bd where sends_own_insurance = 'Yes')
+    """
+
+    data = pd.read_sql_query(query, con=engine)
+    return data
+
+    

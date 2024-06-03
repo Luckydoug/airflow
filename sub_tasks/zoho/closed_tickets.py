@@ -180,7 +180,9 @@ def fetch_closed_tickets():
         closed_tickets_rename["ticket_number"] = closed_tickets_rename["ticket_number"].astype(int)
         closed_tickets_rename["is_spam"] = closed_tickets_rename["is_spam"].astype(str).str.capitalize()
         closed_tickets_rename["is_escalated"] = closed_tickets_rename["is_escalated"].astype(str).str.capitalize()
+        closed_tickets_rename = closed_tickets_rename.drop_duplicates(subset = ["ticket_number"])
         closed_tickets_rename = closed_tickets_rename.set_index("ticket_number")
+
 
         upsert(engine=engine,
             df=closed_tickets_rename,

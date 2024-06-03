@@ -16,7 +16,7 @@ def download_file_from_email(email_id, mail):
     soup = BeautifulSoup(email_message.get_payload(), 'html.parser')
     links = soup.find_all('a')
     if len(links) >= 2:
-        link = links[1]['href']
+        link = links[0]['href']
     else:
         print("No link found in the email body.")
         return None
@@ -54,8 +54,8 @@ def get_download_data():
 
     date_since = report_day.strftime('%d-%b-%Y')
 
-    search_string1 = 'FROM "noreply@3cx.net" SUBJECT "Your 3CX Report CS Outbound Calls Daily Audit is ready" SENTSINCE ' + date_since
-    search_string2 = 'FROM "noreply@3cx.net" SUBJECT "Your 3CX Report CS Inbound Calls Daily Audit is ready" SENTSINCE ' + date_since
+    search_string1 = 'FROM "noreply@3cx.net" SUBJECT "Your 3CX Report CS Inbound Calls is ready" SENTSINCE ' + date_since
+    search_string2 = 'FROM "noreply@3cx.net" SUBJECT "Your 3CX Report CS Inbound Calls is ready" SENTSINCE ' + date_since
     results1, data1 = mail.search(None, search_string1)
     results2, data2 = mail.search(None, search_string2)
     email_ids1 = data1[0].split()
@@ -79,7 +79,7 @@ def get_download_data():
     mail.logout()
 
 
-# get_download_data()
+get_download_data()
 
 
     

@@ -441,7 +441,7 @@ def transpose_orderscreenc1():
         odsc_datetime, odsc_status, odsc_new_status, 
         odsc_doc_no, odsc_createdby, odsc_usr_dept, is_dropped
     FROM mabawa_staging.source_orderscreenc1_staging4
-    where odsc_date::date >= '2024-01-01'
+    where odsc_date::date >= '2024-03-01'
     """, con=engine)
 
     print('df created')
@@ -453,7 +453,7 @@ def transpose_orderscreenc1():
     
     data = pd.merge(df, df2, how='left', indicator=True)
 
-    data =data[data['_merge'] == 'left_only']
+    # data =data[data['_merge'] == 'left_only']
     
     trans_data = data.pivot_table(index='doc_entry', columns=['odsc_new_status'], values=['odsc_datetime','odsc_createdby', 'odsc_usr_dept', 'is_dropped'], aggfunc='min')
     
@@ -464,6 +464,8 @@ def transpose_orderscreenc1():
         return col
 
     trans_data.columns = map(rename, trans_data.columns)
+    print(list(trans_data.columns))
+    # trans_data.reset_index(inplace=True)
     trans_data['doc_entry'] = trans_data.index
 
     drop_table = """drop table mabawa_staging.source_orderscreenc1_staging_trans;"""
@@ -606,11 +608,14 @@ def create_fact_orderscreenc1_new():
 
     print("Completed Main & Designer Store Working Hours")
 
+
     #len store
     df['sl_sc_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Frame Sent to Lens Store"], row["odsc_datetime_Sent to Control Room"]), axis=1)
     df['sl_isb_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Frame Sent to Lens Store"], row["odsc_datetime_Issue blanks"]), axis=1)
     df['sl_iflb_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Frame Sent to Lens Store"], row["odsc_datetime_Issue Finished Lenses for Both Eyes"]), axis=1)
     df['sl_ov_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Frame Sent to Lens Store"], row["odsc_datetime_Frame Sent to Overseas Desk"]), axis=1)
+    df['sent_bfsl_sc_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Branch Frame Received from Receiver"], row["odsc_datetime_Sent to Control Room"]), axis=1)
+    df['sent_pfsl_sc_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_PF Received from Receiver"], row["odsc_datetime_Sent to Control Room"]), axis=1)
     df['op_isb_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["odsc_datetime_Issue blanks"]), axis=1)
     df['op_iflb_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["odsc_datetime_Issue Finished Lenses for Both Eyes"]), axis=1)
     
@@ -664,7 +669,7 @@ def create_fact_orderscreenc1_new():
 
     print("Calculated All Working Hours")
 
-    df = pd.merge(df,maindesigner,on ='doc_entry',how = 'left')
+    df = pd.merge(df,maindesigner,on ='doc_entry',how = 'outer')
 
     print("Data Merged")  
     print(df['doc_entry'].duplicated().sum())  
@@ -681,13 +686,15 @@ def create_fact_orderscreenc1_new():
     df['so_sc_diff'] = pd.to_numeric(df['so_sc_diff'])
     df['so_ov_diff'] = pd.to_numeric(df['so_ov_diff'])
 
-    #lensstore
+   #lensstore
     df['sl_sc_diff'] = pd.to_numeric(df['sl_sc_diff'])
     df['sl_isb_diff'] = pd.to_numeric(df['sl_isb_diff'])
     df['sl_iflb_diff'] = pd.to_numeric(df['sl_iflb_diff'])
     df['sl_ov_diff'] = pd.to_numeric(df['sl_ov_diff'])
     df['op_isb_diff'] = pd.to_numeric(df['op_isb_diff'])
     df['op_iflb_diff'] = pd.to_numeric(df['op_iflb_diff'])
+    df['sent_bfsl_sc_diff']=pd.to_numeric(df['sent_bfsl_sc_diff'])
+    df['sent_pfsl_sc_diff']=pd.to_numeric(df['sent_pfsl_sc_diff'])
 
     #lensstorerepairs
     df['sent_sl_rop_diff'] = pd.to_numeric(df['sent_sl_rop_diff'])
@@ -964,12 +971,14 @@ def create_fact_orderscreenc1_staging():
     mainstoredf['so_ov_diff']=mainstoredf.apply(lambda row: BusHrs(row["odsc_datetime_Sales Order Created"], row["odsc_datetime_Frame Sent to Overseas Desk"]), axis=1)
     maindesigner = pd.concat([mainstoredf,designerdf])
     maindesigner = maindesigner[['doc_entry','so_op_diff','op_sl_diff','op_sc_diff','op_ov_diff','so_sl_diff','so_sc_diff','so_ov_diff']]
-
+    
     #len store
     df['sl_sc_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Frame Sent to Lens Store"], row["odsc_datetime_Sent to Control Room"]), axis=1)
     df['sl_isb_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Frame Sent to Lens Store"], row["odsc_datetime_Issue blanks"]), axis=1)
     df['sl_iflb_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Frame Sent to Lens Store"], row["odsc_datetime_Issue Finished Lenses for Both Eyes"]), axis=1)
     df['sl_ov_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Frame Sent to Lens Store"], row["odsc_datetime_Frame Sent to Overseas Desk"]), axis=1)
+    df['sent_bfsl_sc_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Branch Frame Received from Receiver"], row["odsc_datetime_Sent to Control Room"]), axis=1)
+    df['sent_pfsl_sc_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_PF Received from Receiver"], row["odsc_datetime_Sent to Control Room"]), axis=1)
     df['op_isb_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["odsc_datetime_Issue blanks"]), axis=1)
     df['op_iflb_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["odsc_datetime_Issue Finished Lenses for Both Eyes"]), axis=1)
     
@@ -1010,7 +1019,12 @@ def create_fact_orderscreenc1_staging():
     df['sp_stb_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Sent to Packaging"], row["odsc_datetime_Sent to Branch"]), axis=1)
     df['sp_gbstb_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Sent to Packaging"], row["odsc_datetime_Branch Glazing Sent to Branch"]), axis=1)
 
-    df = pd.merge(df,maindesigner,on ='doc_entry',how = 'left')
+    df = pd.merge(df,maindesigner,on ='doc_entry',how = 'outer')
+
+    print("Data Merged")  
+    print(df['doc_entry'].duplicated().sum())  
+    df = df.drop_duplicates(subset=['doc_entry'],keep = 'first')
+    print('Existing Duplicates Dropped ')
 
     #main and designer stored
     df['so_op_diff'] = pd.to_numeric(df['so_op_diff'])
@@ -1028,6 +1042,8 @@ def create_fact_orderscreenc1_staging():
     df['sl_ov_diff'] = pd.to_numeric(df['sl_ov_diff'])
     df['op_isb_diff'] = pd.to_numeric(df['op_isb_diff'])
     df['op_iflb_diff'] = pd.to_numeric(df['op_iflb_diff'])
+    df['sent_bfsl_sc_diff']=pd.to_numeric(df['sent_bfsl_sc_diff'])
+    df['sent_pfsl_sc_diff']=pd.to_numeric(df['sent_pfsl_sc_diff'])
 
     #lensstorerepairs
     df['sent_sl_rop_diff'] = pd.to_numeric(df['sent_sl_rop_diff'])
@@ -1189,6 +1205,9 @@ def create_fact_orderscreenc1():
     df['sl_isb_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Frame Sent to Lens Store"], row["odsc_datetime_Issue blanks"]), axis=1)
     df['sl_iflb_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Frame Sent to Lens Store"], row["odsc_datetime_Issue Finished Lenses for Both Eyes"]), axis=1)
     df['sl_ov_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Frame Sent to Lens Store"], row["odsc_datetime_Frame Sent to Overseas Desk"]), axis=1)
+    df['sent_bfsl_sc_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["odsc_datetime_Sent to Control Room"]), axis=1)
+    # df['sent_bfsl_sc_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Branch Frame Received from Receiver"], row["odsc_datetime_Sent to Control Room"]), axis=1)
+    # df['sent_pfsl_sc_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_PF Received from Receiver"], row["odsc_datetime_Sent to Control Room"]), axis=1)
     df['op_isb_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["odsc_datetime_Issue blanks"]), axis=1)
     df['op_iflb_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["odsc_datetime_Issue Finished Lenses for Both Eyes"]), axis=1)
     
@@ -1229,7 +1248,11 @@ def create_fact_orderscreenc1():
     df['sp_stb_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Sent to Packaging"], row["odsc_datetime_Sent to Branch"]), axis=1)
     df['sp_gbstb_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Sent to Packaging"], row["odsc_datetime_Branch Glazing Sent to Branch"]), axis=1)
 
-    df = pd.merge(df,maindesigner,on ='doc_entry',how = 'left')
+    df = pd.merge(df,maindesigner,on ='doc_entry',how = 'outer')
+    print("Data Merged")  
+    print(df['doc_entry'].duplicated().sum())  
+    df = df.drop_duplicates(subset=['doc_entry'],keep = 'first')
+    print('Existing Duplicates Dropped ')
 
     print("Calculated Working Minutes")
 
@@ -1249,6 +1272,8 @@ def create_fact_orderscreenc1():
     df['sl_ov_diff'] = pd.to_numeric(df['sl_ov_diff'])
     df['op_isb_diff'] = pd.to_numeric(df['op_isb_diff'])
     df['op_iflb_diff'] = pd.to_numeric(df['op_iflb_diff'])
+    df['sent_bfsl_sc_diff']=pd.to_numeric(df['sent_bfsl_sc_diff'])
+    df['sent_pfsl_sc_diff']=pd.to_numeric(df['sent_pfsl_sc_diff'])
 
     #lensstorerepairs
     df['sent_sl_rop_diff'] = pd.to_numeric(df['sent_sl_rop_diff'])

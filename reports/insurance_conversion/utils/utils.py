@@ -278,3 +278,36 @@ def clean_final_dataframe(val):
         return value[:-3] + "%"
     return val
 
+
+
+
+def generate_html_multindex(branch,dataframe_dict, styles):
+    html_content = ""
+    subject_parts = []
+    counter = 3
+    
+    for df_key, df in dataframe_dict.items():
+        df = df.reset_index()
+        df = df.drop(columns = [('level_0','')])
+        df = df.rename(columns = {"order_creator": "", "level_1": "", "Order Creator": "", "EWC Handover": ""}, level = 0)
+        df = df.rename(columns = {"Unnamed: 2_level_1": "Staff", "": "Outlet"}, level = 1)
+        branch_data = df[df[('','Outlet')] == branch]
+        branch_data = branch_data.drop(columns = [('','Outlet')])
+        
+        if not branch_data.empty:
+            subject_parts.append(df_key)
+            html_content += f"<b>{counter}. {df_key}</b>"
+            html_content += "<br>"
+            html_content += "<br>"
+            html_content += f"<table>{branch_data.style.hide_index().set_table_styles(styles).to_html(doctype_html=True)}</table>"
+            html_content += "<br>"
+            html_content += "<br>"
+            counter += 1
+    
+    if not subject_parts:
+        return None, None
+    
+    subject = branch + " Response Required - Daily Insurance Checks for "
+ 
+    return html_content
+

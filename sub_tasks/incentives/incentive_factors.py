@@ -1,6 +1,5 @@
 import sys
 sys.path.append(".")
-from airflow.models import Variable
 from sub_tasks.data.connect import pg_execute
 
 
@@ -79,6 +78,15 @@ def refresh_nps_summary():
 
     query = pg_execute(query)
     print('refresh_nps_summary done')
+
+def refresh_older_than_30days_eyetest_viewed():
+    query = """
+    refresh  materialized view mabawa_mviews.optoms_older_than_30days_eyetest_viewed_conversion;
+    refresh  materialized view mabawa_mviews.salespersons_older_than_30days_eyetest_viewed_conversion; 
+    """
+
+    query = pg_execute(query)
+    print('refresh_older_than_30days_eyetest_viewed done')   
 
 
 

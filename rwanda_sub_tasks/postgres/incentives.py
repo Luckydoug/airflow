@@ -58,4 +58,13 @@ def refresh_lens_silh():
 
     query = pg_execute(query)
     print('lens_silh done')
+
+
+def refresh_insurance_feedback_conversion():
+
+    query = """
+    refresh materialized view voler_mviews.insurance_feedback_conversion;
+    """
+
+    query = pg_execute(query)
     

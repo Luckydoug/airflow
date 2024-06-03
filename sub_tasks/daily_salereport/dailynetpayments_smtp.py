@@ -174,7 +174,7 @@ def daily_netsales_email():
         )
 
     to_date = get_todate()
-    # to_date = '2023-12-31'
+    # to_date = '2024-05-31'
 
     sender_email = os.getenv("wairimu_email")
     # receiver_email = 'wairimu@optica.africa'
