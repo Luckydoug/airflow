@@ -4,6 +4,7 @@ import requests
 import re 
 import datetime
 from sub_tasks.libraries.utils import createe_engine
+import os
 from pangres import upsert
 from sub_tasks.libraries.utils import return_session_id
 from reports.draft_to_upload.utils.utils import today
@@ -40,7 +41,7 @@ def get_token():
     engine = createe_engine()
     refresh_token_url = "https://accounts.zoho.com/oauth/v2/token"
     params = {
-        "refresh_token": "1000.0a5036d9ddf7e4e243c3651161b830e6.3b809495570a1d9a53398a0179381a73",
+        "refresh_token": os.getenv("zoho_refresh_token"),
         "client_id": "1000.QRT7VH36RSOKKPZOCDHJTTYB169WBF",
         "client_secret": "fad2d176b51219feb9a0eb2d144fca2e6348c07a13",
         "redirect_uri": "https://support.optica.africa/agent/opticalimited/optica-kenya",
