@@ -1,4 +1,5 @@
 import sys
+from airflow.models import variable
 sys.path.append(".")
 import numpy as np
 import pandas as pd
@@ -6,6 +7,7 @@ import holidays as pyholidays
 from datetime import date, timedelta, datetime, time
 from pangres import upsert
 from sub_tasks.data.connect import (pg_execute, engine) 
+
 from sub_tasks.libraries.utils import (calculate_time_taken,calculate_time_taken_for_row,ke_holidays)
 
 
@@ -16,7 +18,7 @@ def update_insurance_efficiency_before_feedback():
     user_name, draft_rejected, draft_rejected_tm, upload_resent, upload_resent_tm, sent_preauth, 
     sent_preauth_tm, sentby, sentby_branch_code, sentby_branch_name,plan_scheme_type1,plan_scheme_type2 
     from mabawa_mviews.v_insurance_efficiency_before_feedback
-    where coalesce(draft_rejected_tm::date,upload_resent_tm::date,sent_preauth_tm::date) >= current_date - interval '7 days'
+    where coalesce(draft_rejected_tm::date,upload_resent_tm::date,sent_preauth_tm::date) >= current_date - interval '14 days'
     and ods_outlet not in ('Uganda','Rwanda','null')
     and sentby_branch_code not in ('Uganda','Rwanda','null')
     """
@@ -75,10 +77,17 @@ def update_insurance_efficiency_after_feedback():
         rmrk_branch,rmrk_name,fdbk_rmrk_tm,fdbk_rmrk_tm - interval '3 minutes' as fdbk_rmrk_tm2,
         apprvl_updt_tm,cstmr_cntctd,cstmr_cntctd_rmrk,cntctd_by,cstmr_cntctd_tm
     from mabawa_mviews.v_insurance_efficiency_after_feedback
-    where coalesce(apprvl_updt_tm::date,cstmr_cntctd_tm::date) >= current_date - interval '7 days'
+    where coalesce(apprvl_updt_tm::date,cstmr_cntctd_tm::date) >= current_date - interval '14 days'
     """
 
     df = pd.read_sql(df_q,con=engine)
+
+    # df = df[df['ods_outlet']!=None]
+    # df = df[df['rmrk_branch']!=None]
+    df.dropna(subset=['ods_outlet'],inplace=True)
+    df.dropna(subset=['rmrk_branch'],inplace=True)
+
+    # print(df[df['ods_outlet'].isna()==True])
     
     wrkng_hrs_q = """    
     SELECT warehouse_code, warehouse_name, docnum, days, start_time, end_time, auto_time
@@ -125,7 +134,7 @@ def update_approvals_efficiency():
     select 
         doc_entry, doc_no, appr_strt, appr_strt_tm, appr_end, appr_end_tm, apprvd_by, 'APR' as ods_outlet
     from mabawa_mviews.v_approvals_efficiency
-    where coalesce(appr_end_tm,appr_strt_tm)::date >= current_date - interval '7 days'
+    where coalesce(appr_end_tm,appr_strt_tm)::date >= current_date - interval '14 days'
     """
 
     df = pd.read_sql(df_q,con=engine)
@@ -176,3 +185,7 @@ def refresh_insurance_request_no_feedback():
     """
     query = pg_execute(query)
 
+# update_insurance_efficiency_before_feedback()
+# update_insurance_efficiency_after_feedback()
+# update_approvals_efficiency()
+# refresh_insurance_request_no_feedback()

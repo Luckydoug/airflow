@@ -24,7 +24,7 @@ with DAG(
     DAG_ID,
     default_args=default_args,
     tags=['Live'],
-    schedule_interval='50 03 * * *',
+    schedule_interval='50 07 * * *',
     catchup=False
 ) as dag:
 
@@ -34,33 +34,43 @@ with DAG(
 
 
     with TaskGroup('attendance_register') as attendance_register:
-        from hrms_data.attendance_register import (
-            update_GetAttendanceRegisterData)
-        from hrms_data.employee_information import (
-            update_GetEmployeeInformation)
-        from hrms_data.attendance_raw_data import (
-            update_GetAttendanceRawData)        
 
+        from sub_tasks.hrms_data.attendance_register import (update_GetAttendanceRegisterData)  
         update_GetAttendanceRegisterData = PythonOperator(
             task_id='update_GetAttendanceRegisterData',
             python_callable=update_GetAttendanceRegisterData,
             provide_context=True
         )
 
+        from sub_tasks.hrms_data.employee_information import (update_GetEmployeeInformation)
         update_GetEmployeeInformation = PythonOperator(
             task_id='update_GetEmployeeInformation',
             python_callable=update_GetEmployeeInformation,
             provide_context=True
         )
 
+        from sub_tasks.hrms_data.attendance_raw_data import (update_GetAttendanceRawData)  
         update_GetAttendanceRawData = PythonOperator(
             task_id='update_GetAttendanceRawData',
             python_callable=update_GetAttendanceRawData,
             provide_context=True
         )
 
-        update_GetAttendanceRegisterData >> update_GetEmployeeInformation >> update_GetAttendanceRawData
+        from sub_tasks.hrms_data.employee_contact_email import (update_GetEmployeeContactEmail)  
+        update_GetEmployeeContactEmail = PythonOperator(
+            task_id='update_GetEmployeeContactEmail',
+            python_callable=update_GetEmployeeContactEmail,
+            provide_context=True
+        )
 
+        from sub_tasks.hrms_data.employee_seperate_information import (update_GetSeparateEmployeeInformation) 
+        update_GetSeparateEmployeeInformation = PythonOperator(
+            task_id='update_GetSeparateEmployeeInformation',
+            python_callable=update_GetSeparateEmployeeInformation,
+            provide_context=True
+        )
+
+        update_GetAttendanceRegisterData >> update_GetEmployeeInformation >> update_GetAttendanceRawData >> update_GetEmployeeContactEmail >> update_GetSeparateEmployeeInformation
 
 
     finish = DummyOperator(

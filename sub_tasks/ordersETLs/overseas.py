@@ -59,13 +59,17 @@ def update_source_orderscreenc1_overseas():
 def transpose_overseas():
     
     data = pd.read_sql("""
-        select v.doc_entry,v.doc_no,v.odsc_date,v.odsc_time_int,v.odsc_time,
-            v.odsc_datetime,v.check_datetime,v.order_date,v.check_order_date,
-            v.branch_name,v.delivery_date,v.odsc_status,v.odsc_new_status,
-            v.rownum,v.odsc_doc_no,v.odsc_createdby,odsc_usr_dept,v.is_dropped,
-            so.ods_ordercriteriastatus,so.ods_ordertype  from mabawa_staging.v_transpose_query v
-            left join mabawa_staging.source_orderscreen so on so.doc_no = v.doc_no 
-            where so.ods_ordercriteriastatus not in ('Contact Lens from Overseas')            
+                select v.doc_entry,v.doc_no,v.odsc_date,v.odsc_time_int,v.odsc_time,
+                v.odsc_datetime,v.check_datetime,v.order_date,v.check_order_date,
+                v.branch_name,v.delivery_date,v.odsc_status,v.odsc_new_status,
+                v.rownum,v.odsc_doc_no,v.odsc_createdby,odsc_usr_dept,v.is_dropped,
+                so.ods_ordercriteriastatus,so.ods_ordertype  from mabawa_staging.v_transpose_query v
+                left join mabawa_staging.source_orderscreen so on so.doc_no = v.doc_no 
+                where so.ods_ordercriteriastatus not in ('Contact Lens from Overseas') 
+                and v.doc_entry not in 
+                (select doc_entry  from mabawa_staging.source_orderscreenc1 so2 
+                where odsc_date::date >= '2024-03-01'
+                and odsc_status = 'Overseas Damages Transferred To Damage Store')           
     """, con=engine)
 
     print("Data Fetched")
@@ -191,7 +195,6 @@ def create_fact_orderscreenc1_overseas():
     df['check_fsod_po_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Frame Sent to Overseas Desk"], row["order_date_Frame Sent to Overseas Desk"]), axis=1)
     df['check_bfsod_po_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_Branch Frame Sent to Overseas Desk"], row["order_date_Branch Frame Sent to Overseas Desk"]), axis=1)
     df['check_pfsod_po_diff']=df.apply(lambda row: BusHrs(row["odsc_datetime_PF Sent to Overseas Desk"], row["order_date_PF Sent to Overseas Desk"]), axis=1)
-
 
 
     """Rejected Jobs - Product Return Received at Overseas """

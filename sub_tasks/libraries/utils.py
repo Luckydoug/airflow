@@ -21,7 +21,7 @@ import requests
 import holidays
 
 today = date.today()
-pastdate = today - timedelta(days=2)
+pastdate = today - timedelta(days=7)
 FromDate = pastdate.strftime('%Y/%m/%d')
 ToDate = date.today().strftime('%Y/%m/%d')
 
@@ -902,5 +902,47 @@ Parameters:
             items.append((new_key, v))
     return dict(items)
 
+
+def add_autotime_branchlens(start_time, branch, minutes, working_hours, holidays):
+    def get_next_working_day(current_time, branch):
+        while True:
+            current_day = current_time.strftime('%A')
+            if (current_day in working_hours[branch]['working_hours'] and
+                working_hours[branch]['working_hours'][current_day][0] != working_hours[branch]['working_hours'][current_day][1] and
+                current_time.date() not in holidays):
+                start_work = working_hours[branch]['working_hours'][current_day][0]
+                return datetime.combine(current_time.date(), start_work)
+            current_time += timedelta(days=1)
+
+    current_time = start_time
+
+    if current_time is pd.NaT:
+        current_time = None
+    
+    else:
+        while minutes > 0:
+            current_day = current_time.strftime('%A')
+            start_work, end_work = working_hours[branch]['working_hours'][current_day]
+            
+            start_work = datetime.combine(current_time.date(), start_work)
+            end_work = datetime.combine(current_time.date(), end_work)
+            
+            if current_time < start_work:
+                current_time = start_work
+            
+            if current_time >= end_work or current_time.date() in holidays:
+                current_time = get_next_working_day(current_time + timedelta(days=1), branch)
+                continue
+            
+            time_left_today = (end_work - current_time).total_seconds() / 60
+            
+            if minutes <= time_left_today:
+                current_time += timedelta(minutes=minutes)
+                minutes = 0
+            else:
+                minutes -= time_left_today
+                current_time = end_work
+    
+    return current_time
 
 

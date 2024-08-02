@@ -21,6 +21,9 @@ selection = get_conversion_frequency(
 )
 start_date = return_report_daterange(selection=selection)
 
+
+selection = "Monthly"
+
 """
 CREATE AN INSTANCE OF FetchData CLASS
 """
@@ -105,7 +108,7 @@ CREATE INSURANCE CONVERSION REPORT
 
 
 def holidays() -> pd.DataFrame:
-    holidays = data_fetcher.fetch_holidays()
+    holidays = data_fetcher.fetch_holidays(dw="mabawa_dw")
 
     return holidays
 
@@ -171,13 +174,12 @@ WHEN YOU WANT TO SEND A TEST EMAIL
 PASS "Test" AS AN ARGUMENT TO THE country PARAMETER
 """
 def send_to_kenya_management() -> None:
-    return
-    if not assert_integrity(engine=engine,database="mabawa_staging"):
-        print("We run into an error. Ensure all the tables are updated in data warehouse and try again.")
-        return
+    # if not assert_integrity(engine=engine,database="mabawa_staging"):
+    #     print("We run into an error. Ensure all the tables are updated in data warehouse and try again.")
+    #     return
     send_to_management(
         selection=selection,
-        country = "Kenya",
+        country = "Test",
         path=path
     )
 

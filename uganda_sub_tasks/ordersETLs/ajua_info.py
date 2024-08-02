@@ -9,7 +9,7 @@ from sub_tasks.data.connect_mawingu import (engine)
 from sub_tasks.libraries.utils import return_session_id
 from sub_tasks.libraries.utils import FromDate, ToDate
 FromDate = "2024/01/01"
-ToDate = "2024/04/06"
+# ToDate = "2024/04/06"
 
 def fetch_ajua_info ():
     SessionId = return_session_id(country="Uganda")   
@@ -73,3 +73,5 @@ def fetch_ajua_info ():
     create_table=True)
 
     print("Data Inserted")
+
+# fetch_ajua_info()

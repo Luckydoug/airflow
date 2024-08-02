@@ -27,6 +27,8 @@ engine = create_rwanda_engine()
 selection = get_conversion_frequency(
     report="Conversion"
 )
+selection = "Monthly"
+
 
 start_date, end_date = return_conversion_daterange(selection=selection)
 
@@ -108,7 +110,7 @@ def trigger_rwanda_management_smtp():
         return
     send_management_report(
         path=rwanda_path,
-        country="Rwanda", #Change to "Test" if you want to test the email first.
+        country="Test", #Change to "Test" if you want to test the email first.
         selection=selection
     )
 

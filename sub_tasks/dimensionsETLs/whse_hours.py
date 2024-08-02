@@ -5,7 +5,7 @@ import pandas as pd
 from airflow.models import Variable
 from pangres import upsert
 from sub_tasks.data.connect import (pg_execute, engine) 
-from sub_tasks.api_login.api_login import(login)
+# from sub_tasks.api_login.api_login import(login)
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from sub_tasks.libraries.utils import return_session_id
@@ -53,7 +53,8 @@ def create_mviews_whse_hrs():
     """
 
     query = pg_execute(query)
-create_mviews_whse_hrs()
+    
+# create_mviews_whse_hrs()
 
 def create_mviews_branch_hours_array():
 

@@ -7,9 +7,9 @@ from pangres import upsert
 from airflow.models import Variable
 from sub_tasks.data.connect_voler import engine
 from sub_tasks.libraries.utils import return_session_id
+from sub_tasks.libraries.utils import FromDate, ToDate
 
-FromDate = '2023-01-01'
-ToDate = date.today().strftime('%Y/%m/%d')
+
 
 def fetch_sap_branch_targets():
     SessionId = return_session_id(country = "Rwanda")

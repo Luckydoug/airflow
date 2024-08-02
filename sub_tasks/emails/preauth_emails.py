@@ -6,6 +6,9 @@ from sub_tasks.libraries.utils import FromDate, ToDate
 from sub_tasks.emails.preauth_creds import credentials
 from googleapiclient.discovery import build
 
+FromDate = '2024/06/01'
+ToDate = '2024/07/15'
+
 def fetch_preauth_requests():
 
     creds = credentials()
@@ -113,3 +116,5 @@ def fetch_preauth_requests():
     table_name='source_preauth_requests',
     if_row_exists='update',
     create_table=True)
+
+# fetch_preauth_requests()

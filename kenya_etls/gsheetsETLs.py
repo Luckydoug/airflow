@@ -1,6 +1,5 @@
 import os
 import sys
-
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from datetime import datetime, timedelta
 from airflow import DAG
@@ -13,7 +12,7 @@ from sub_tasks.gsheets.branch_user_mapping import (
     create_dim_branch_user_mapping,
 )
 from sub_tasks.gsheets.branches import fetch_branch_tiers, create_dim_branches
-from sub_tasks.gsheets.holidays import (
+from sub_tasks.gsheets.holiday import (
     fetch_holidays,
     fetch_uganda_holidays,
     fetch_rwanda_holidays,
@@ -64,9 +63,8 @@ default_args = {
     "retry_delay": timedelta(seconds=1),
     "start_date": datetime(2021, 12, 13),
     "email": [
-        "ian.gathumbi@optica.africa",
         "wairimu@optica.africa",
-        "douglas.kathurima@optica.africa",
+        "michael.ongoro@optica.africa"
     ],
     "email_on_failure": True,
     "email_on_retry": False,

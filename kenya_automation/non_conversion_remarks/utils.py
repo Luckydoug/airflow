@@ -20,10 +20,7 @@ def generate_html_and_subject(branch, branch_name, dataframe_dict, date, styles)
         <b>Hi {branch_name},</b> <br>
         <p>Kindly comment on the following.</p>
     """
-
-
-
-    
+   
     html_end_template = """
         <p>Kind regards,</p>
         <p>Data Team</p>

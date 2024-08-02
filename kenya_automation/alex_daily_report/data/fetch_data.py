@@ -31,10 +31,9 @@ elif selection == 'Daily':
 print(start_date)
 print(yesterday)
 
-
 # today = datetime.date.today()
-# start_date = today - datetime.timedelta(days=2)
-# yesterday = today - datetime.timedelta(days=2)
+# start_date = today - datetime.timedelta(days=1)
+# yesterday = today - datetime.timedelta(days=1)
 # formatted_date = yesterday.strftime('%Y-%m-%d')
 # print(start_date)
 # print(yesterday)

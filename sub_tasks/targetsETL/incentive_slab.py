@@ -6,7 +6,7 @@ from datetime import date
 from pangres import upsert
 from airflow.models import Variable
 from sub_tasks.data.connect import engine
-from sub_tasks.api_login.api_login import(login)
+# from sub_tasks.api_login.api_login import(login)
 from sub_tasks.libraries.utils import return_session_id
 
 FromDate = '2018/01/01'
@@ -109,3 +109,4 @@ def fetch_sap_incentive_slab():
 
         return "insert incentive_slabs successfull"
 
+# fetch_sap_incentive_slab()

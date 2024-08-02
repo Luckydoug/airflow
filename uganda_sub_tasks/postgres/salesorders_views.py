@@ -20,7 +20,7 @@ import datetime
 
 
 from sub_tasks.data.connect_mawingu import (pg_execute, engine) 
-from sub_tasks.api_login.api_login import(login_uganda)
+# from sub_tasks.api_login.api_login import(login_uganda)
 conn = psycopg2.connect(host="10.40.16.19",database="mawingu", user="postgres", password="@Akb@rp@$$w0rtf31n")
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -74,6 +74,9 @@ def refresh_optom_queue_no_et():
 
     query = """
     refresh materialized view mawingu_mviews.optom_queue_no_et;
+    refresh materialized view mawingu_mviews.old_eyetest_viewed_conversion;
+    refresh materialized view mawingu_mviews.optoms_older_than_30days_eyetest_viewed_conversion;
+    refresh materialized view mawingu_mviews.salespersons_older_than_30days_eyetest_viewed_conversion;
     """
 
     query = pg_execute(query)    

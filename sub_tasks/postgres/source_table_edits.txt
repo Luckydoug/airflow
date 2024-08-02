@@ -1,0 +1,92 @@
+update mabawa_staging.source_orders_header
+set creation_date = '2024-06-30'
+where (internal_number,document_number) in (
+(1413009,24609224),
+(1412369,24609210),
+(1412087,24609200),
+(1411929,24609197),
+(1413527,24609237),
+(1411792,245901560),
+(1413476,245901570),
+(1413743,24609249),
+(1414025,24609262),
+(1412897,241404817),
+(1415367,241404868),
+(1417170,241404910),
+(1417712,241404922),
+(1414054,241404846),
+(1416509,241404892)
+);
+update mabawa_staging.source_orders_header
+set creation_date = '2024-06-29'
+where (internal_number,document_number) in (
+(1411232,246400789),
+(1413568,246400805),
+(1412070,246400793),
+(1413570,246400806),
+(1413586,246400810),
+(1413581,246400808),
+(1417478,241404915),
+(1417157,241404909),
+(1417905,241404934),
+(1417419,241404913),
+(1411332,245901552),
+(1411323,245901546),
+(1411911,24609194),
+(1411981,24609198),
+(1413102,24609230),
+(1412690,241404813),
+(1416282,241404880),
+(1413409,241404824),
+(1412045,241801237),
+(1411225,245901542)
+);
+update mabawa_staging.source_orders_header
+set creation_date = '2024-06-28'
+where (internal_number,document_number) in (
+(1411233,246400790),
+(1411254,246400791),
+(1413585,246400809),
+(1412507,246400794),
+(1413603,246400811),
+(1413087,246400797),
+(1413089,246400798),
+(1414890,241404861),
+(1413190,241404821),
+(1417438,241404914),
+(1416652,241404894),
+(1419348,241404971),
+(1411345,245901557)
+);
+update mabawa_staging.source_orders_header
+set creation_date = '2024-06-26'
+where (internal_number,document_number) in (
+(1412334,24609206)
+);
+update mabawa_staging.source_orders_header
+set creation_date = '2024-06-24'
+where (internal_number,document_number) in (
+(1412502,24609212)
+);
+update mabawa_staging.source_orders_header
+set creation_date = '2024-06-22'
+where (internal_number,document_number) in (
+(1413162,24609231)
+);
+update mabawa_staging.source_orders_header
+set creation_date = '2024-05-28'
+where (internal_number,document_number) in (
+(1407012,244101851)
+);
+update mabawa_staging.source_payment 
+set createdon = '2024-06-26 00:00:00.0000000'
+where doc_entry = 2006730;
+update mabawa_staging.source_payment 
+set createdon = '2024-06-29 00:00:00.0000000'
+where doc_entry in (
+2007001,
+2006165,
+2006172,
+2006182,
+2006191
+);

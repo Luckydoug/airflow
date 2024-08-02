@@ -21,7 +21,7 @@ from sqlalchemy import create_engine, text, VARCHAR
 from pandas.io.json._normalize import nested_to_record 
 
 from sub_tasks.data.connect_mawingu import (pg_execute, pg_fetch_all, engine, pg_bulk_insert) 
-from sub_tasks.api_login.api_login import(login_uganda)
+# from sub_tasks.api_login.api_login import(login_uganda)
 from sub_tasks.libraries.utils import return_session_id
 
 # FromDate = '2023/12/13'

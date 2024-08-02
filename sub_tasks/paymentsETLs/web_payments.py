@@ -112,3 +112,5 @@ def fetch_sap_web_payments():
         create_table=False)
 
         print('Update successful')
+
+# fetch_sap_web_payments()

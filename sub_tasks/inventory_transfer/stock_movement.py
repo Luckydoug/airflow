@@ -7,7 +7,7 @@ from airflow.models import Variable
 from pangres import upsert
 from datetime import date, timedelta
 from sub_tasks.data.connect import  engine
-from sub_tasks.api_login.api_login import(login)
+# from sub_tasks.api_login.api_login import(login)
 conn = psycopg2.connect(host="10.40.16.19",database="mabawa", user="postgres", password="@Akb@rp@$$w0rtf31n")
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)

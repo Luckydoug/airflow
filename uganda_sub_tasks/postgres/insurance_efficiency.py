@@ -24,7 +24,7 @@ def update_insurance_efficiency_before_feedback():
     user_name, draft_rejected, draft_rejected_tm, upload_resent, upload_resent_tm, sent_preauth, 
     sent_preauth_tm, sentby, sentby_branch_code, sentby_branch_name,plan_scheme_type1,plan_scheme_type2 
     from mawingu_mviews.v_insurance_efficiency_before_feedback
-    where coalesce(draft_rejected_tm::date,upload_resent_tm::date,sent_preauth_tm::date) >= current_date - interval '7 days'
+    where coalesce(draft_rejected_tm::date,upload_resent_tm::date,sent_preauth_tm::date) >= current_date - interval '14 days'
     and ods_outlet not in ('Uganda','Rwanda','null')
     and sentby_branch_code not in ('Uganda','Rwanda','null')
     """
@@ -108,7 +108,7 @@ def update_insurance_efficiency_after_feedback():
         rmrk_branch,rmrk_name,fdbk_rmrk_tm,fdbk_rmrk_tm - interval '3 minutes' as fdbk_rmrk_tm2,
         apprvl_updt_tm,cstmr_cntctd,cstmr_cntctd_rmrk,cntctd_by,cstmr_cntctd_tm
     from mawingu_mviews.v_insurance_efficiency_after_feedback
-    where coalesce(apprvl_updt_tm::date,cstmr_cntctd_tm::date) >= current_date - interval '7 days'
+    where coalesce(apprvl_updt_tm::date,cstmr_cntctd_tm::date) >= current_date - interval '14 days'
     and rmrk_branch not in ('null')
     and rmrk_branch is not null
     """
@@ -185,7 +185,7 @@ def update_approvals_efficiency():
     select 
         doc_entry, doc_no, appr_strt, appr_strt_tm, appr_end, appr_end_tm, apprvd_by, 'APR' as ods_outlet
     from mawingu_mviews.v_approvals_efficiency
-    where coalesce(appr_end_tm,appr_strt_tm)::date >= current_date - interval '7 days'
+    where coalesce(appr_end_tm,appr_strt_tm)::date >= current_date - interval '14 days'
     """
 
     df = pd.read_sql(df_q, con=engine)

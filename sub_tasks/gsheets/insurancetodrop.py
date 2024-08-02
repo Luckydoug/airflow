@@ -24,7 +24,7 @@ from workalendar.africa import Kenya
 import pygsheets
 
 from sub_tasks.data.connect import (pg_execute, pg_fetch_all, engine) 
-from sub_tasks.api_login.api_login import(login)
+# from sub_tasks.api_login.api_login import(login)
 
 def fetch_insurance_errors_to_drop():
 
@@ -56,13 +56,34 @@ def fetch_insurance_errors_to_drop():
 
      sh[['date','order_no','branch','error_to_transfer_to','reason']].to_sql('source_drop_insurance_errors', con = engine, schema='mabawa_staging', if_exists = 'append', index=False)
 
-     # truncate_table = """truncate mabawa_staging.source_npsreviews_with_issues;"""
-     # truncate_table = pg_execute(truncate_table)
+def fetch_declinedbutapprovedorders():
 
-     # wk1.to_sql('source_npsreviews_with_issues', con = engine, schema='mabawa_staging', if_exists = 'append', index=False)   
-     
-     # print('orders with issues pulled')
+     gc = pygsheets.authorize(service_file='/home/opticabi/airflow/dags/sub_tasks/gsheets/keys2.json')
+     sh = gc.open_by_key('16oFwly1sKlX48xL3LXLZKfHv7ClI-84o7DZzmlxCZeE')
+     sh = sh.worksheet_by_title("Declined but Approved on SAP Ins Order To Drop")
+     values = sh.get_all_values()
+     sh = pd.DataFrame(values)
+     csv_string = sh.to_csv(index=False,header=False)
+     sh = pd.read_csv(io.StringIO(csv_string), na_values='')
+
+     sh.rename (columns = {
+                    'Branch':'branch', 
+                    'Approval Date ':'approval_date',
+                    'Order Number':'order_number', 
+                    'Insurance Feedback':'insurance_feedback',
+                    'Reason to drop ':'reason_to_drop'
+                         }
+            ,inplace=True)   
+
+     print('renamed successfully')
+
+     query = """truncate mabawa_staging.source_declinedbutapprovedorders;"""
+     query = pg_execute(query)
+
+     sh['approval_date'] = pd.to_datetime(sh['approval_date'],dayfirst=True,errors='coerce')
+     sh['order_number'] = sh['order_number'].apply("{:.0f}".format).astype(str)
 
 
+     sh[['branch','approval_date','order_number','insurance_feedback','reason_to_drop']].to_sql('source_declinedbutapprovedorders', con = engine, schema='mabawa_staging', if_exists = 'append', index=False)
 
-# fetch_insurance_errors_to_drop()
+# fetch_declinedbutapprovedorders()

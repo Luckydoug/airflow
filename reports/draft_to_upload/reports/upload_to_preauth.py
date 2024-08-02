@@ -12,6 +12,22 @@ def uploadToSentPreauth(data, path, selection) -> None:
 
     data["Time Taken (Target = 5)"] = data["Time Taken (Target = 5)"].astype(int).astype(str)
 
+    cols = data.columns
+
+    columns_to_convert = [
+        "Preauth to Upload",
+        "Draft to Upload in Mins",
+        "Upload to Sent Pre-Auth In Mins",
+        "Total Time (Target = 13 Mins)",
+        "Preauth to Upload",
+        "Draft to Preauth"
+    ]
+
+    for column in columns_to_convert:
+        print(True)
+        if column in cols:
+            data[column] = data[column].astype(int).astype(str)
+
     with pd.ExcelWriter(f"{path}draft_upload/upload_sent_preauth.xlsx") as writer:
         data.to_excel(writer, sheet_name = "Data", index = False)
 

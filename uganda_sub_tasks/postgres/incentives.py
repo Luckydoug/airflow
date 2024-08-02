@@ -20,7 +20,7 @@ import datetime
 
 
 from sub_tasks.data.connect_mawingu import (pg_execute, engine) 
-from sub_tasks.api_login.api_login import(login_uganda)
+# from sub_tasks.api_login.api_login import(login_uganda)
 conn = psycopg2.connect(host="10.40.16.19",database="mawingu", user="postgres", password="@Akb@rp@$$w0rtf31n")
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -34,6 +34,7 @@ def create_incentive_cash():
     refresh materialized view mawingu_mviews.m_ojdt_details;
     refresh materialized view mawingu_mviews.m_discount_details;
     refresh materialized view mawingu_mviews.incentive_cash; 
+    refresh materialized view mawingu_mviews.errors_deductible;
     """
 
     query = pg_execute(query)

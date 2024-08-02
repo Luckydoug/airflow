@@ -130,43 +130,43 @@ with DAG(
 
             fetch_cutoffs >> update_cutoffs >> create_cutoffs_live
 
-        with TaskGroup('novax') as novax:
+        # with TaskGroup('novax') as novax:
 
-            from sub_tasks.gsheets.novax import (fetch_novax_data, create_dim_novax_data, fetch_dhl_data, 
-            create_dim_dhl_data, create_dhl_with_orderscreen_data)
+        #     from sub_tasks.gsheets.novax import (fetch_novax_data, create_dim_novax_data, fetch_dhl_data, 
+        #     create_dim_dhl_data, create_dhl_with_orderscreen_data)
 
-            fetch_novax_data = PythonOperator(
-                task_id = 'fetch_novax_data',
-                python_callable=fetch_novax_data,
-                provide_context=True
-            )
+        #     fetch_novax_data = PythonOperator(
+        #         task_id = 'fetch_novax_data',
+        #         python_callable=fetch_novax_data,
+        #         provide_context=True
+        #     )
 
-            fetch_dhl_data = PythonOperator(
-                task_id = 'fetch_dhl_data',
-                python_callable=fetch_dhl_data,
-                provide_context=True
-            )
+        #     fetch_dhl_data = PythonOperator(
+        #         task_id = 'fetch_dhl_data',
+        #         python_callable=fetch_dhl_data,
+        #         provide_context=True
+        #     )
 
 
-            create_dim_novax_data = PythonOperator(
-                task_id = 'create_dim_novax_data',
-                python_callable=create_dim_novax_data,
-                provide_context=True
-            )
+        #     create_dim_novax_data = PythonOperator(
+        #         task_id = 'create_dim_novax_data',
+        #         python_callable=create_dim_novax_data,
+        #         provide_context=True
+        #     )
 
-            create_dim_dhl_data = PythonOperator(
-                task_id = 'create_dim_dhl_data',
-                python_callable=create_dim_dhl_data,
-                provide_context=True
-            )
+        #     create_dim_dhl_data = PythonOperator(
+        #         task_id = 'create_dim_dhl_data',
+        #         python_callable=create_dim_dhl_data,
+        #         provide_context=True
+        #     )
 
-            create_dhl_with_orderscreen_data = PythonOperator(
-                task_id = 'create_dhl_with_orderscreen_data',
-                python_callable=create_dhl_with_orderscreen_data,
-                provide_context=True
-            )
+        #     create_dhl_with_orderscreen_data = PythonOperator(
+        #         task_id = 'create_dhl_with_orderscreen_data',
+        #         python_callable=create_dhl_with_orderscreen_data,
+        #         provide_context=True
+        #     )
 
-            [fetch_novax_data, fetch_dhl_data] >> create_dim_novax_data >> create_dim_dhl_data >> create_dhl_with_orderscreen_data
+        #     [fetch_novax_data, fetch_dhl_data] >> create_dim_novax_data >> create_dim_dhl_data >> create_dhl_with_orderscreen_data
     
         with TaskGroup('branchstock_cutoff') as branchstock_cutoff:
 
@@ -228,7 +228,7 @@ with DAG(
             )
 
 
-        order_iisues >> time_iisues >> cutoffs >> novax >> branchstock_cutoff >> itr_issues >> user_mapping
+        order_iisues >> time_iisues >> cutoffs >> branchstock_cutoff >> itr_issues >> user_mapping
         
     """
     FETCH ORDERSCREEN   
@@ -378,14 +378,13 @@ with DAG(
             provide_context=True
         )
 
-        # create_fact_dropped_orders = PythonOperator(
-        #     task_id = 'create_fact_dropped_orders',
-        #     python_callable=create_fact_dropped_orders,
-        #     provide_context=True
-        # )
+        create_fact_dropped_orders = PythonOperator(
+            task_id = 'create_fact_dropped_orders',
+            python_callable=create_fact_dropped_orders,
+            provide_context=True
+        )
 
-        get_source_dropped_orders >> update_source_dropped_orders >> get_source_dropped_orders_staging 
-        # >> create_fact_dropped_orders
+        get_source_dropped_orders >> update_source_dropped_orders >> get_source_dropped_orders_staging  >> create_fact_dropped_orders
 
     finish = DummyOperator(
         task_id = "finish"

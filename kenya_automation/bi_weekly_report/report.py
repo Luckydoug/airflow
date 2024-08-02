@@ -2,19 +2,30 @@ import pandas as pd
 from airflow.models import variable
 from sub_tasks.libraries.utils import path
 from sub_tasks.libraries.utils import createe_engine
-from reports.bi_weekly.reports.report import create_month_trend
+from reports.bi_weekly.reports.report import create_overall_trend, create_lowrx_trend
 from reports.bi_weekly.data.fetch_data import fetch_biweekly_kpis
 from reports.bi_weekly.reports.report import create_biweekly_report
 from reports.bi_weekly.reports.report import create_biweekly_report
 from reports.draft_to_upload.data.fetch_data import fetch_branch_data
 from reports.bi_weekly.reports.report import create_biweekly_comparison
-from reports.bi_weekly.utils.utils import first_range_start
-from reports.bi_weekly.utils.utils import first_range_end
-from reports.bi_weekly.utils.utils import second_range_start
-from reports.bi_weekly.utils.utils import second_range_end
+# from reports.bi_weekly.utils.utils import first_range_start
+# from reports.bi_weekly.utils.utils import first_range_end
+# from reports.bi_weekly.utils.utils import second_range_start
+# from reports.bi_weekly.utils.utils import second_range_end
 from reports.bi_weekly.smtp.smtp import send_to_branch
 from reports.bi_weekly.data.fetch_data import KPIsData
 from reports.bi_weekly.reports.report import generate_biweekly_data
+from reports.bi_weekly.utils.utils import get_last_two_months
+
+
+(
+    first_range_start,
+    first_range_end,
+    second_range_start,
+    second_range_end
+) = get_last_two_months(mode="Dates")
+
+
 
 engine = createe_engine()
 
@@ -78,6 +89,14 @@ def conversion_trend() -> pd.DataFrame:
     return KPIsFetcher.fetch_conversion_trend()
 
 
+def lowrx_conversion_trend() -> pd.DataFrame:
+    return KPIsFetcher.fetch_lowrx_conversion_trend()
+
+
+def anomolous_eyetest_times() -> pd.DataFrame:
+    return KPIsFetcher.fetch_anomalous_eyetest_times()
+
+
 def export_data():
     generate_biweekly_data(
         path=path,
@@ -90,6 +109,7 @@ def export_data():
         sops_not_complied=sops_not_complied(),
         frame_only_orders=frame_only_orders(),
         insurance_non_conversions=feedbacks_not_converted(),
+        anomalouse_et_time=anomolous_eyetest_times(),
     )
 
 
@@ -142,8 +162,16 @@ def build_biweekly_kpi_comparison() -> None:
     )
 
 
-def build_conversion_trend() -> None:
-    create_month_trend(path=path, data=conversion_trend())
+def build_overall_trend() -> None:
+    create_overall_trend(path=path, data=conversion_trend())
 
 
+def build_lowrx_trend() -> None:
+    create_lowrx_trend(path=path, data=lowrx_conversion_trend())
+
+
+# export_data()
+# build_biweekly_kpi()
+# build_biweekly_kpi_comparison()
+# build_lowrx_trend()
 # send_to_branch(path=path, branch_data=branch_data())

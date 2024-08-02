@@ -22,12 +22,8 @@ from reports.insurance_conversion.reports.conversion import create_insurance_con
 from reports.draft_to_upload.reports.sops import create_ug_sops_report
 from reports.draft_to_upload.reports.ratings import create_ratings_report
 from reports.draft_to_upload.data.push_data import push_insurance_efficiency_data
-from reports.draft_to_upload.reports.no_view_no_conv import (
-    create_non_conversions_non_view,
-)
-from reports.draft_to_upload.reports.mtd_insurance import (
-    create_mtd_insurance_conversion,
-)
+from reports.draft_to_upload.reports.no_view_no_conv import create_non_conversions_non_view
+from reports.draft_to_upload.reports.mtd_insurance import create_mtd_insurance_conversion
 from reports.draft_to_upload.data.fetch_data import fetch_views
 from reports.draft_to_upload.data.fetch_data import fetch_orders
 from reports.draft_to_upload.data.fetch_data import fetch_eyetests
@@ -682,7 +678,7 @@ def trigger_kenya_branches_smtp():
         branch_data=branch_data(),
         selection=selection,
         path=path,
-        country="Test",
+        country="Kenya",
         filename=f"{path}draft_upload/log.txt",
     )
 
@@ -700,4 +696,13 @@ DOUGLAS KATHURIMA
 """
 
 
-# push_kenya_efficiency_data()
+# # push_kenya_efficiency_data()
+# build_efficiency_before_feedback()
+
+# trigger_kenya_branches_smtp()
+
+
+# build_kenya_insurance_conversion()
+
+
+

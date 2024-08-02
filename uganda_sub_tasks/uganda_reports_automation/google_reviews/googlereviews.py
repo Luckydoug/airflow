@@ -35,7 +35,7 @@ from sub_tasks.libraries.styles import styles, properties
 
 # PG Execute(Query)
 from sub_tasks.data.connect_mawingu import (pg_execute, pg_fetch_all, engine)  
-from sub_tasks.api_login.api_login import(login_uganda)
+# from sub_tasks.api_login.api_login import(login_uganda)
 from sub_tasks.libraries.utils import (get_rm_srm_total, get_rm_srm_total_multiindex, get_comparison_months,check_date_range,
 arrange_dateranges,get_todate,fourth_week_start,fourth_week_end)
 

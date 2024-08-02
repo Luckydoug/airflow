@@ -497,6 +497,23 @@ def generate_html_and_subject(branch, branch_manager, dataframe_dict, date, styl
         branch_data = df[df["Outlet"] == branch]
         branch_data = branch_data.drop(columns = ["Outlet"])
 
+        cols = branch_data.columns
+        columns_to_change = [
+            "Preauth to Upload",
+            "Draft to Upload In Mins",
+            "Upload to Sent Pre-Auth In Mins",
+            "Total Time (Target = 13 Mins)",
+            "Preauth to Upload",
+            "Draft to Preauth"
+        ]
+
+
+        for column in columns_to_change:
+            if column in cols and df_key == "Delayed Orders from Upload Attachment to Sent - Preauth":
+                branch_data[column] = branch_data[column].apply(
+            lambda x: str(int(x)) if pd.notnull(x) else x
+        )
+
         if df_key =="Time from Eye Test Completed to Draft Order Created":
             branch_data = branch_data[[
                 "Customer Code",

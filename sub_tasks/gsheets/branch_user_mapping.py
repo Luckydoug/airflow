@@ -87,3 +87,4 @@ def create_dim_branch_user_mapping():
     data.to_sql('branch_user_mapping', con = engine, schema='mabawa_dw', if_exists = 'append', index=False)
 
 # fetch_branch_user_mappings()
+# create_dim_branch_user_mapping()

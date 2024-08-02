@@ -247,6 +247,7 @@ def create_insurance_conversion(
         with pd.ExcelWriter(f"{path}draft_upload/insurance_daily.xlsx", engine='xlsxwriter') as writer:
             creator_summary.to_excel(writer, sheet_name="daily_summary", index=False)
             feedback_non = feedback_non[cols]
+            print(contact_time)
             feedback_non = pd.merge(feedback_non, contact_time, on ="Order Number", how = "left")
             feedback_non = feedback_non.drop_duplicates(subset="Order Number")
             feedback_non.to_excel(writer, sheet_name = "daily_data", index = False)

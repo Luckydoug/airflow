@@ -22,6 +22,7 @@ from rwanda_sub_tasks.postgres.salesorders_views import (
     refresh_salesorders_line_cl_and_rr,
     refresh_fact_orders_header,
     refresh_order_contents,
+    refresh_optom_queue_no_et
 )
 from rwanda_sub_tasks.postgres.prescriptions_views import refresh_et_conv
 from rwanda_sub_tasks.postgres.incentives import (
@@ -33,6 +34,8 @@ from rwanda_sub_tasks.postgres.insurance_efficiency import (
     update_insurance_efficiency_after_feedback,
     update_insurance_efficiency_before_feedback,
 )
+
+from rwanda_sub_tasks.postgres.printing_identifier import update_printing_identifier
 
 DAG_ID = "RW_Update_Views"
 
@@ -90,12 +93,19 @@ with DAG(
             provide_context=True,
         )
 
+        refresh_optom_queue_no_et = PythonOperator(
+            task_id="refresh_optom_queue_no_et",
+            python_callable=refresh_optom_queue_no_et,
+            provide_context=True,
+        )
+
         (
             refresh_order_line_with_details
             >> refresh_salesorders_line_cl_and_rr
             >> refresh_fact_orders_header
             >> refresh_order_contents
             >> refresh_insurance_feedback_conversion
+            >> refresh_optom_queue_no_et
         )
 
     with TaskGroup("prescriptions") as prescriptions:
@@ -140,6 +150,15 @@ with DAG(
         )
 
         update_insurance_efficiency_before_feedback >> update_insurance_efficiency_after_feedback >> update_approvals_efficiency
+
+    with TaskGroup("printing_identifier") as printing_identifier:
+        update_printing_identifier = PythonOperator(
+            task_id="update_printing_identifier",
+            python_callable=update_printing_identifier,
+            provide_context=True,
+        )
+
+        update_printing_identifier
 
     finish = DummyOperator(task_id="finish")
 

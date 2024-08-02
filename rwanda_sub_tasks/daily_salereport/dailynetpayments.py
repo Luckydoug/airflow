@@ -31,15 +31,15 @@ from sub_tasks.data.connect_voler import (pg_execute, pg_fetch_all, engine)
 conn = psycopg2.connect(host="10.40.16.19",database="voler", user="postgres", password="@Akb@rp@$$w0rtf31n")
 # SessionId = login_rwanda()
 
-#Define the days that is yesterday and when the month starts
 today = datetime.date.today()
 yesterday = today - datetime.timedelta(days=1)
 start_month = datetime.date(today.year,today.month,1)
+print(start_month,yesterday)
 
 # today = datetime.date.today()
-# yesterday = today - datetime.timedelta(days=3)
+# yesterday = today - datetime.timedelta(days=1)
 # start_month = datetime.date(yesterday.year,yesterday.month,1)
-# print(yesterday)
+# print(start_month,yesterday)
 
 def daily_net_payments_rwanda():
     payments = """

@@ -46,7 +46,8 @@ def get_source_dropped_orders():
                 s.odsc_remarks 
             FROM mabawa_staging.source_orderscreenc1_staging4 s2 
             left join mabawa_staging.source_orderscreenc1_staging2 s on s2.doc_entry = s.doc_entry 
-            and s2.odsc_lineid = s.odsc_lineid 
+            and s2.odsc_lineid = s.odsc_lineid
+            where s2.odsc_date::date >= '2024-01-01'
                 
             """, con=engine)
     
@@ -116,8 +117,10 @@ def get_source_dropped_orders_staging():
             odsc_time_int, odsc_time, odsc_datetime, 
             odsc_status, odsc_new_status, odsc_doc_no, 
             odsc_createdby, odsc_usr_dept, dropped_status
-        FROM mabawa_staging.source_droppedc1;
+        FROM mabawa_staging.source_droppedc1
+        where odsc_date::date >= '2024-04-01';
         """, con=engine)
+    print('Data Fetched')
 
     data = data.pivot_table(index='doc_entry', columns=['odsc_new_status'], values=['odsc_datetime','odsc_createdby', 'odsc_usr_dept', 'dropped_status'], aggfunc='min')
     # rename columns
@@ -128,6 +131,7 @@ def get_source_dropped_orders_staging():
     data.columns = map(rename, data.columns)
     data['doc_entry'] = data.index
 
+    print('About to Truncate')
     truncate_dropped = """drop table mabawa_staging.source_droppedc1_staging;"""
     truncate_dropped=pg_execute(truncate_dropped)
 
@@ -271,6 +275,7 @@ def create_fact_dropped_orders():
     data['sl_isb_diff']=data.apply(lambda row: BusHrs(row["odsc_datetime_Frame Sent to Lens Store"], row["odsc_datetime_Issue blanks"]), axis=1)
     data['sl_iflb_diff']=data.apply(lambda row: BusHrs(row["odsc_datetime_Frame Sent to Lens Store"], row["odsc_datetime_Issue Finished Lenses for Both Eyes"]), axis=1)
     data['sl_ov_diff']=data.apply(lambda row: BusHrs(row["odsc_datetime_Frame Sent to Lens Store"], row["odsc_datetime_Frame Sent to Overseas Desk"]), axis=1)
+    data['sent_bfsl_sc_diff']=data.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["odsc_datetime_Sent to Control Room"]), axis=1)
     data['op_isb_diff']=data.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["odsc_datetime_Issue blanks"]), axis=1)
     data['op_iflb_diff']=data.apply(lambda row: BusHrs(row["odsc_datetime_Order Printed"], row["odsc_datetime_Issue Finished Lenses for Both Eyes"]), axis=1)
     
@@ -290,7 +295,10 @@ def create_fact_dropped_orders():
     data['sc__ssf_diff']=data.apply(lambda row: BusHrs(row["odsc_datetime_Sent to Control Room"], row["odsc_datetime_Sent to Surfacing"]), axis=1)
     data['sc_sp_diff']=data.apply(lambda row: BusHrs(row["odsc_datetime_Sent to Control Room"], row["odsc_datetime_Sent to Packaging"]), axis=1)
     data['sc_spqc_diff']=data.apply(lambda row: BusHrs(row["odsc_datetime_Sent to Control Room"], row["odsc_datetime_Sent to Pre Quality"]), axis=1)
-
+    data['bsc_ssf_diff']=data.apply(lambda row: BusHrs(row["odsc_datetime_Blanks Sent to Control Room"], row["odsc_datetime_Sent to Surfacing"]), axis=1)
+    data['bsc_sp_diff']=data.apply(lambda row: BusHrs(row["odsc_datetime_Blanks Sent to Control Room"], row["odsc_datetime_Sent to Packaging"]), axis=1)
+    data['bsc_spqc_diff']=data.apply(lambda row: BusHrs(row["odsc_datetime_Blanks Sent to Control Room"], row["odsc_datetime_Sent to Pre Quality"]), axis=1)
+    
     #surfacing
     data['ssf__astch_diff']=data.apply(lambda row: BusHrs(row["odsc_datetime_Sent to Surfacing"], row["odsc_datetime_Surfacing Assigned to Technician"]), axis=1)
     data['astch_spqc_diff']=data.apply(lambda row: BusHrs(row["odsc_datetime_Surfacing Assigned to Technician"], row["odsc_datetime_Sent to Pre Quality"]), axis=1)
@@ -340,6 +348,7 @@ def create_fact_dropped_orders():
     data['sl_isb_diff'] = pd.to_numeric(data['sl_isb_diff'])
     data['sl_iflb_diff'] = pd.to_numeric(data['sl_iflb_diff'])
     data['sl_ov_diff'] = pd.to_numeric(data['sl_ov_diff'])
+    data['sent_bfsl_sc_diff'] = pd.to_numeric(data['sent_bfsl_sc_diff'])
     data['op_isb_diff'] = pd.to_numeric(data['op_isb_diff'])
     data['op_iflb_diff'] = pd.to_numeric(data['op_iflb_diff'])
 
@@ -356,6 +365,9 @@ def create_fact_dropped_orders():
     data['sc__ssf_diff'] = pd.to_numeric(data['sc__ssf_diff'])
     data['sc_sp_diff'] = pd.to_numeric(data['sc_sp_diff'])
     data['sc_spqc_diff'] = pd.to_numeric(data['sc_spqc_diff'])
+    data['bsc_ssf_diff'] = pd.to_numeric(data['bsc_ssf_diff'])
+    data['bsc_sp_diff'] = pd.to_numeric(data['bsc_sp_diff'])
+    data['bsc_spqc_diff'] = pd.to_numeric(data['bsc_spqc_diff'])
 
     #surfacing
     data['ssf__astch_diff'] = pd.to_numeric(data['ssf__astch_diff'])
@@ -375,8 +387,9 @@ def create_fact_dropped_orders():
     print(data.columns.to_list())
     print(data)
 
-    # truncate_fact = """drop table mabawa_dw.fact_dropped_orderscreenc1;"""
-    # truncate_fact = pg_execute(truncate_fact)
+    truncate_fact = """truncate mabawa_dw.fact_dropped_orderscreenc1;"""
+    truncate_fact = pg_execute(truncate_fact)
+    ("Table Dropped")
 
     data.to_sql('fact_dropped_orderscreenc1', con = engine, schema='mabawa_dw', if_exists = 'append', index=False)
     
@@ -384,7 +397,7 @@ def create_fact_dropped_orders():
 
 
 # get_source_dropped_orders()
-# update_source_dropped_orders()
+# # update_source_dropped_orders()
 # get_source_dropped_orders_staging()
 # create_fact_dropped_orders()
 

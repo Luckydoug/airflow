@@ -16,6 +16,7 @@ def create_incentive_cash():
     refresh materialized view mabawa_mviews.m_ojdt_details;
     refresh materialized view mabawa_mviews.m_discount_details;
     refresh materialized view mabawa_mviews.incentive_cash; 
+    refresh materialized view mabawa_mviews.errors_deductible;
     """
 
     query = pg_execute(query)
@@ -24,9 +25,6 @@ def create_incentive_cash():
 def create_incentive_insurance():
     
     query = """
-    update mabawa_staging.source_orders_header
-    set creation_date = '2024-02-29'
-    where draft_orderno = '245502222';
     refresh materialized view mabawa_mviews.incentive_insurance2;
     insert into mabawa_dw.update_log(table_name, update_time) values('incentives', default);
     """

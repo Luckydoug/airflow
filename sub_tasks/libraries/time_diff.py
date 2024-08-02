@@ -6,6 +6,7 @@ import pandas as pd
 import warnings
 warnings.simplefilter(action='ignore', category=UserWarning)
 
+
 FMT = '%H:%M'
 def working_hours_dictionary(working_hours) -> dict:
     unique_branches = working_hours["Warehouse Code"].unique()
@@ -42,8 +43,6 @@ def working_hours_dictionary(working_hours) -> dict:
 
     
     return working_hours_dictionary
-
-
 
 holidays_to_remove = [
     datetime.date(2023, 10, 10),
@@ -120,33 +119,6 @@ def calculate_time_difference(row, x, y, working_hours, holiday_dict, country = 
             return ((normal_business_hours.difference(start, end).hours + float(normal_business_hours.difference(start, end).seconds) / 3600) + (saturday_business_hours.difference(start, end).hours + float(saturday_business_hours.difference(start, end).seconds) / 3600)) * 60
     else:
         return 0
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 def return_working_hours_dict1(row, working_hours):
     branch_working_hours = {row["Outlet"]: {}}

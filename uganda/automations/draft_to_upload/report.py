@@ -72,9 +72,8 @@ database = "mawingu_staging"
 engine = create_unganda_engine()
 engine2 = createe_engine()
 selection = get_report_frequency()
-
+selection = "Daily"
 start_date = return_report_daterange(selection=selection)
-
 start_date = pd.to_datetime(start_date, format="%Y-%m-%d").date()
 
 
@@ -485,7 +484,10 @@ def desk_before() -> pd.DataFrame:
 
 def no_desk_before() -> pd.DataFrame:
     no_desk_before = fetch_eff_bef_feed_nodesk(
-        start_date=start_date, engine=engine, view="mawingu_mviews"
+        start_date=start_date,
+        engine=engine,
+        view="mawingu_mviews",
+        database="mawingu_staging",
     )
 
     return no_desk_before
@@ -500,6 +502,7 @@ def build_efficiency_before_feedback() -> None:
 
 
 def trigger_uganda_smtp() -> None:
+    return 
     if not assert_integrity(engine=engine, database="mawingu_staging"):
         print(
             "We run into an error. Ensure all the tables are updated in data warehouse and try again."
@@ -528,3 +531,7 @@ def trigger_uganda_branches_smtp() -> None:
 
 def clean_uganda_folder() -> None:
     clean_folders(path=uganda_path)
+
+
+
+# build_uganda_insurance_conversion()

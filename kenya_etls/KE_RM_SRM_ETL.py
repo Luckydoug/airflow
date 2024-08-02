@@ -6,7 +6,6 @@ from airflow import DAG
 from airflow.utils.task_group import TaskGroup
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python_operator import PythonOperator
-
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 DAG_ID = "KENYA_SRM_RM_ETL"

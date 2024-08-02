@@ -173,7 +173,7 @@ def send_management_report(path, country, selection):
     if selection == "Monthly":
         weekly_monthly = "Monthly"
         first_month, second_month = get_comparison_months()
-        subject = f"{country} Monthly Registrations, Eyes Tests, and View RX Conversion Report for {first_month} and {second_month}"
+        subject = f"{country} Updated Monthly Registrations, Eyes Tests, and View RX Conversion Report for {first_month} and {second_month}"
         # Registrations
         registrations_path = f"{path}conversion/registrations/overall.xlsx"
 
@@ -466,7 +466,7 @@ def send_branches_report(path, branch_data, selection):
                 email_message = MIMEMultipart("alternative")
                 email_message["From"] = your_email
                 email_message["To"] = r','.join(receiver_email)
-                email_message["Subject"] = f"{branch_name} Registrations, Eye Tests, and View RX Conversion Report from {fourth_week_start} to {fourth_week_end}"
+                email_message["Subject"] = f"{branch_name} Updated Registrations, Eye Tests, and View RX Conversion Report from {fourth_week_start} to {fourth_week_end}"
                 email_message.attach(MIMEText(html, "html"))
 
                 if branch in eyetests_non_conversions.sheet_names:

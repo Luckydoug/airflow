@@ -169,11 +169,11 @@ class FetchData:
         return self.fetch_data(query)
 
     
-    def fetch_holidays(self):
-        query = """
+    def fetch_holidays(self, dw):
+        query = f"""
         select holiday_date as "Date",
         holiday_name as "Holiday"
-        from mabawa_dw.dim_holidays;
+        from {dw}.dim_holidays;
         """
         to_drop =  pd.read_sql_query(query, con=self.engine)
 

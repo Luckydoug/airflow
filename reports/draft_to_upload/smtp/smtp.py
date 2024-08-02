@@ -21,6 +21,7 @@ from sub_tasks.libraries.utils import (
     return_sent_emails,
     assert_date_modified,
 )
+
 from reports.draft_to_upload.smtp.emails import (
     test,
     kenya_daily,
@@ -33,6 +34,7 @@ from reports.draft_to_upload.smtp.emails import (
     rwanda_weekly,
     rwanda_monthly,
 )
+
 from sub_tasks.libraries.styles import ug_styles, styles_daily
 from sub_tasks.libraries.utils import highlight_spaces
 from reports.draft_to_upload.utils.utils import highlight_efficiency
@@ -41,7 +43,6 @@ from reports.draft_to_upload.html.html import drafts_html
 from sub_tasks.libraries.utils import return_evn_credentials
 from sub_tasks.libraries.utils import service_file
 import pygsheets
-
 
 load_dotenv()
 sender_email = os.getenv("douglas_email")
@@ -125,6 +126,9 @@ def send_draft_upload_report(selection: str, country: str, path: str, target: in
         and not os.path.exists(rejections_path)
         and not os.path.exists(sops_path)
         and not os.path.exists(planos_path)
+        and not os.path.exists(dectractors_path)
+        and not os.path.exists(opening_path)
+        and not os.path.exists(non_views_path)
     ):
         return
 
@@ -944,6 +948,9 @@ def send_to_branches(branch_data, selection, path, filename, country):
 
             if branch == "OHO" or branch == "YOR":
                 branch_manager = "Insurance Desk"
+            
+            if branch == "DUNCAN":
+                branch_manager = "Paulette"
 
             html, subject = generate_html_and_subject(
                 branch=branch,
@@ -988,6 +995,7 @@ def send_to_branches(branch_data, selection, path, filename, country):
                 subject = subject.replace("DUNCAN", "Optica House")
                 receiver_email = [
                     "kimstone@optica.africa",
+                    "insuranceoh@optica.africa",
                     "duncan.muchai@optica.africa",
                     "susan@optica.africa",
                     srm_email,
@@ -1075,8 +1083,16 @@ def send_to_branches(branch_data, selection, path, filename, country):
                     )
                     record_sent_branch(branch_email, filename)
 
+
+
                     email_subjects["Branch"].append(branch)
-                    email_subjects["Email"].append(branch_email)
+                    if branch == "OHO":
+                        email_subjects["Email"].append("insuranceoh@optica.africa")
+                    elif branch == "DUNCAN":
+                        email_subjects["Email"].append("duncan.muchai@optica.africa")
+                    else:
+                        email_subjects["Email"].append(branch_email)
+                    
                     email_subjects["Date"].append(todate)
                     email_subjects["Status"].append("Open")
                     email_subjects["Subject"].append(subject)

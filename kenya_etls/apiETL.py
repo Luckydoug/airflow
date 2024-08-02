@@ -10,6 +10,7 @@ from airflow.operators.python_operator import PythonOperator
 from sub_tasks.api_login.api_login import login
 from sub_tasks.api_login.api_login import login_uganda
 from sub_tasks.api_login.api_login import login_rwanda
+from sub_tasks.api_login.api_login import login_hrms,login_hrms_uganda,login_hrms_rwanda
 
 # from tmp.python_test
 DAG_ID = 'API_LOGIN_Pipeline'
@@ -43,26 +44,59 @@ with DAG(
             login = PythonOperator(
                 task_id = 'login',
                 python_callable=login,
-                provide_context=True
+                provide_context=True,
+                trigger_rule="all_done"
             ) 
+    
 
     with TaskGroup('api_login_ug') as api_login_ug:
         login_uganda = PythonOperator(
             task_id = 'login_uganda',
             python_callable=login_uganda,
-            provide_context=True
-        )          
-
+            provide_context=True,
+            trigger_rule="all_done"
+        )  
+                
     with TaskGroup('api_login_rw') as api_login_rw:
         login_rwanda = PythonOperator(
             task_id = 'login_rwanda',
             python_callable=login_rwanda,
-            provide_context=True
+            provide_context=True,
+            trigger_rule="all_done"
         ) 
-          
-          
+
+    
+
+    with TaskGroup('api_login_hrms') as api_login_hrms:
+        login_hrms = PythonOperator(
+            task_id = 'login_hrms',
+            python_callable=login_hrms,
+            provide_context=True,
+            trigger_rule="all_done"
+        )        
+    
+
+    with TaskGroup('api_login_hrms_ug') as api_login_hrms_ug:
+        login_hrms_uganda = PythonOperator(
+            task_id = 'login_hrms_uganda',
+            python_callable=login_hrms_uganda,
+            provide_context=True,
+            trigger_rule="all_done"
+        )        
+    
+
+    with TaskGroup('api_login_hrms_rw') as api_login_hrms_rw:
+        login_hrms_rwanda = PythonOperator(
+            task_id = 'login_hrms_rwanda',
+            python_callable=login_hrms_rwanda,
+            provide_context=True,
+            trigger_rule="all_done"
+        )        
+    
+
     finish = DummyOperator(
             task_id = "finish"
         )
+      
 
-start >> api_login >> api_login_ug >> api_login_rw >> finish
+start >> api_login >> api_login_ug >> api_login_rw >> api_login_hrms >> api_login_hrms_ug >> api_login_hrms_rw >> finish

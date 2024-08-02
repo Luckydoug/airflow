@@ -11,12 +11,13 @@ from pangres import upsert
 from datetime import date, timedelta, time, datetime
 from sub_tasks.data.connect import (pg_execute, engine) 
 from sub_tasks.libraries.utils import return_session_id
-# from sub_tasks.libraries.utils import FromDate, ToDate
+from sub_tasks.libraries.utils import FromDate, ToDate
 
-today = date.today()
-pastdate = today - timedelta(days=14)
-FromDate = pastdate.strftime('%Y/%m/%d')
-ToDate = date.today().strftime('%Y/%m/%d')
+# today = date.today()
+# pastdate = today - timedelta(days=14)
+# FromDate = pastdate.strftime('%Y/%m/%d')
+# # FromDate = '2024/06/01'
+# ToDate = date.today().strftime('%Y/%m/%d')
 
 def fetch_sap_invt_transfer_request ():
     SessionId = return_session_id(country = "Kenya")
@@ -109,7 +110,7 @@ def fetch_sap_invt_transfer_request ():
         itemdetails_df = itemdetails_df.append(data1, ignore_index=True)
 
     print("Created Item Details DF")
-    print(itemdetails_df)
+    # print(itemdetails_df)
     itemdetails_df.rename (columns = {
             'Document_Internal_ID':'doc_internal_id',
             'RowNumber':'row_no',
@@ -127,7 +128,8 @@ def fetch_sap_invt_transfer_request ():
             'Flag_for_INV':'flag_for_inv',
             'ITR_Status':'itr__status',
             'Replaced_ItemCode':'replaced_itemcode',
-            'Picker_Name':'picker_name'
+            'Picker_Name':'picker_name',
+            'Line_Was_Closed_Manually': 'line_was_closed_manually'
             }
         ,inplace=True)
 

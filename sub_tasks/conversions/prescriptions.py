@@ -6,7 +6,7 @@ from datetime import date, timedelta
 from airflow.models import variable
 from pangres import upsert
 from sub_tasks.data.connect import (pg_execute, engine)
-from sub_tasks.api_login.api_login import(login)
+# from sub_tasks.api_login.api_login import(login)
 from sub_tasks.libraries.utils import return_session_id
 from sub_tasks.libraries.utils import FromDate, ToDate
 

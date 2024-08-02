@@ -2,27 +2,29 @@ from airflow.models import variable
 import pandas as pd
 from reports.insurance_conversion.reports.conversion import create_insurance_conversion
 from reports.insurance_conversion.data.fetch_data import FetchData
-from reports.insurance_conversion.smtp.smtp import send_to_management, mop_folder, send_to_branches
+from reports.insurance_conversion.smtp.smtp import (
+    send_to_management,
+    mop_folder,
+    send_to_branches,
+)
 from sub_tasks.libraries.utils import (
     create_unganda_engine,
     uganda_path,
-    assert_integrity
+    assert_integrity,
 )
-from reports.draft_to_upload.utils.utils import (return_report_daterange)
-from reports.conversion.utils.utils import (get_conversion_frequency)
+from reports.draft_to_upload.utils.utils import return_report_daterange
+from reports.draft_to_upload.data.fetch_data import fetch_client_contacted_time
+from reports.conversion.utils.utils import get_conversion_frequency
 
 engine = create_unganda_engine()
 
-selection = get_conversion_frequency(
-    report="Insurance Conversion"
-)
+selection = get_conversion_frequency(report="Insurance Conversion")
 
 start_date = return_report_daterange(selection=selection)
+start_date = "2024-01-01"
 
-data_fetcher = FetchData(
-    engine=engine,
-    database="mawingu_staging"
-)
+
+data_fetcher = FetchData(engine=engine, database="mawingu_staging")
 
 """
 FETCH ORDERSCREEN LOGS
@@ -30,9 +32,7 @@ FETCH ORDERSCREEN LOGS
 
 
 def orderscreen() -> pd.DataFrame:
-    orderscreen = data_fetcher.fetch_orderscreen(
-        start_date='2023-01-01'
-    )
+    orderscreen = data_fetcher.fetch_orderscreen(start_date="2023-01-01")
 
     return orderscreen
 
@@ -65,9 +65,7 @@ FETCH SALES ORDERS
 
 
 def sales_orders() -> pd.DataFrame:
-    sales_orders = data_fetcher.fetch_sales_orders(
-        start_date=start_date
-    )
+    sales_orders = data_fetcher.fetch_sales_orders(start_date=start_date)
 
     return sales_orders
 
@@ -88,8 +86,7 @@ FETCH INSURANCE ORDERS THAT HAVE NOT RECEIVED A FEEDBACK FROM THE INSURANCE COMP
 
 def no_feedbacks() -> pd.DataFrame:
     no_feedbacks = data_fetcher.fetch_no_feedbacks(
-        database="report_views",
-        start_date=start_date
+        database="report_views", start_date=start_date
     )
 
     return no_feedbacks
@@ -106,9 +103,21 @@ def working_hours() -> pd.DataFrame:
     return working_hours
 
 
+def holidays() -> pd.DataFrame:
+    return data_fetcher.fetch_holidays(dw="mawingu_dw")
+
+
 """
 BUILD INSURANCE CONVERSION REPORT
 """
+
+
+def contact_time() -> pd.DataFrame:
+    contact_time = fetch_client_contacted_time(
+        start_date=start_date, engine=engine, view="mawingu_mviews"
+    )
+
+    return contact_time
 
 
 def build_uganda_insurance_conversion() -> None:
@@ -123,7 +132,9 @@ def build_uganda_insurance_conversion() -> None:
         sales_orders=sales_orders(),
         insurance_companies=insurance_companies(),
         no_feedbacks=no_feedbacks(),
-        country="Uganda"
+        holidays=holidays(),
+        contact_time=contact_time(),
+        country="Uganda",
     )
 
 
@@ -133,15 +144,11 @@ SEND REPORT TO THE MANAGEMENT
 
 
 def send_to_uganda_management() -> None:
-    if not assert_integrity(engine=engine,database="mawingu_staging"):
-        print("We run into an error. Ensure all the tables are updated in data warehouse and try again.")
-        return
-    
-    send_to_management(
-        selection=selection,
-        country="Uganda",
-        path=uganda_path
-    )
+    # if not assert_integrity(engine=engine,database="mawingu_staging"):
+    #     print("We run into an error. Ensure all the tables are updated in data warehouse and try again.")
+    #     return
+
+    send_to_management(selection=selection, country="Test", path=uganda_path)
 
 
 """
@@ -150,16 +157,17 @@ SEND THE REPORT TO UGANDA MANAGEMENT
 
 
 def send_to_uganda_branches() -> None:
-    if not assert_integrity(engine=engine,database="mawingu_staging"):
-        print("We run into an error. Ensure all the tables are updated in data warehouse and try again.")
+    if not assert_integrity(engine=engine, database="mawingu_staging"):
+        print(
+            "We run into an error. Ensure all the tables are updated in data warehouse and try again."
+        )
         return
-    
+
     send_to_branches(
         path=uganda_path,
         branch_data=branch_data(),
         country="Uganda",
-        filename=f"{uganda_path}insurance_conversion/branch_log.txt"
-
+        filename=f"{uganda_path}insurance_conversion/branch_log.txt",
     )
 
 
@@ -172,3 +180,5 @@ def clean_uganda_folder() -> None:
     mop_folder(path=uganda_path)
 
 
+# build_uganda_insurance_conversion()
+# send_to_uganda_management()

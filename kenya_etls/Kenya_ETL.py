@@ -89,6 +89,30 @@ with DAG(
             fetch_sap_orderscreendetailsc1 >> update_to_source_orderscreenc1
 
         """
+        GET ORDERSCREENC0
+        """
+        with TaskGroup("fetch_orderscreenc0") as fetch_orderscreenc0:
+
+            from sub_tasks.ordersETLs.orderscreen_c0 import (
+                fetch_orderscreen_c0
+            )
+            fetch_orderscreen_c0 = PythonOperator(
+                task_id="fetch_orderscreen_c0",
+                python_callable=fetch_orderscreen_c0,
+                provide_context=True,
+            )
+
+        """
+        GET SALES ORDER HEADER
+        """
+        from sub_tasks.ordersETLs.salesorders import fetch_sap_orders
+        fetch_sap_orders = PythonOperator(
+            task_id="fetch_sap_orders",
+            python_callable=fetch_sap_orders,
+            provide_context=True,
+        )
+
+        """
         GET PRESCRIPTIONS
         """
         from sub_tasks.conversions.prescriptions import fetch_prescriptions
@@ -110,15 +134,48 @@ with DAG(
             provide_context=True,
         )
 
+        from sub_tasks.inventory_transfer.transfer_request import fetch_sap_invt_transfer_request
+        
+        fetch_sap_invt_transfer_request = PythonOperator(
+            task_id="fetch_sap_invt_transfer_request",
+            python_callable=fetch_sap_invt_transfer_request,
+            provide_context=True,
+        )
+
         (
             login
             >> fetch_orderscreen
             >> fetch_orderscreenc1
+            >> fetch_orderscreenc0
+            >> fetch_sap_orders
             >> fetch_prescriptions
             >> fetch_optom_queue_mgmt
+            >> fetch_sap_invt_transfer_request
         )
 
-    with TaskGroup("branch_efficiency") as branch_efficiency:
+    with TaskGroup("branch") as branch:
+
+        from sub_tasks.ordersETLs.salesorders import update_source_orders_line
+
+        update_source_orders_line = PythonOperator(
+            task_id="update_source_orders_line",
+            python_callable=update_source_orders_line,
+            provide_context=True,
+        )
+
+        from sub_tasks.postgres.conversions import (refresh_order_contents,refresh_fronly_orders)
+
+        refresh_order_contents = PythonOperator(
+            task_id="refresh_order_contents",
+            python_callable=refresh_order_contents,
+            provide_context=True,
+        )
+
+        refresh_fronly_orders = PythonOperator(
+            task_id="refresh_fronly_orders",
+            python_callable=refresh_fronly_orders,
+            provide_context=True,
+        )
 
         from sub_tasks.postgres.printing_identifier import update_printing_identifier
 
@@ -195,15 +252,59 @@ with DAG(
             provide_context=True,
         )
 
-        (
-            update_printing_identifier
+        from sub_tasks.postgres.order_glazing import (update_branchlens_glazing_efficiency,update_hqlens_glazing_efficiency, update_promised_collectiondate)
+
+        update_branchlens_glazing_efficiency = PythonOperator(
+            task_id="update_branchlens_glazing_efficiency",
+            python_callable=update_branchlens_glazing_efficiency,
+            provide_context=True,
+        )
+
+        update_hqlens_glazing_efficiency = PythonOperator(
+            task_id="update_hqlens_glazing_efficiency",
+            python_callable=update_hqlens_glazing_efficiency,
+            provide_context=True,
+        )
+
+        update_promised_collectiondate = PythonOperator(
+            task_id="update_promised_collectiondate",
+            python_callable=update_promised_collectiondate,
+            provide_context=True,
+        )
+
+        from sub_tasks.gsheets.old_clients_followup import fetch_old_clients_followup
+
+        fetch_old_clients_followup = PythonOperator(
+            task_id="fetch_old_clients_followup",
+            python_callable=fetch_old_clients_followup,
+            provide_context=True,
+        )
+
+        from sub_tasks.postgres.old_clients_called import refresh_old_clients_called
+
+        refresh_old_clients_called = PythonOperator(
+            task_id="refresh_old_clients_called",
+            python_callable=refresh_old_clients_called,
+            provide_context=True,
+        )
+
+        (   update_source_orders_line
+            >> refresh_order_contents
+            >> refresh_fronly_orders
+            >> update_printing_identifier
             >> refresh_optom_queue_no_et
             >> refresh_optom_queue_time
+            >> update_promised_collectiondate
+            >> update_branchlens_glazing_efficiency
+            >> update_hqlens_glazing_efficiency
             >> update_insurance_efficiency_before_feedback
             >> refresh_insurance_request_no_feedback
             >> update_insurance_efficiency_after_feedback
             >> update_approvals_efficiency
             >> upsert_corrected_forms_data
+            >> fetch_old_clients_followup
+            >> refresh_old_clients_called
+
         )
 
     with TaskGroup("lensstore") as lensstore:
@@ -238,6 +339,18 @@ with DAG(
             >> update_salesorder_to_senttolensstore
         )
 
+    with TaskGroup("delayedorders") as delayedorders:
+
+        from sub_tasks.postgres.delayedorders import (refresh_delayedorders)
+
+        refresh_delayedorders = PythonOperator(
+            task_id="refresh_delayedorders",
+            python_callable=refresh_delayedorders,
+            provide_context=True,
+        )
+
+        refresh_delayedorders
+
     """
     GET OTHER TABLES
     """
@@ -257,17 +370,7 @@ with DAG(
             provide_context=True,
         )
 
-        from sub_tasks.inventory_transfer.transfer_request import (
-            fetch_sap_invt_transfer_request,
-        )
-
-        fetch_sap_invt_transfer_request = PythonOperator(
-            task_id="fetch_sap_invt_transfer_request",
-            python_callable=fetch_sap_invt_transfer_request,
-            provide_context=True,
-        )
-
-        login >> fetch_ajua_info >> fetch_sap_invt_transfer_request
+        login >> fetch_ajua_info
 
     with TaskGroup("nps") as nps:
 
@@ -302,15 +405,25 @@ with DAG(
         provide_context=True,
     )
 
+    from sub_tasks.postgres.edit_source_tables import edit_source_tables
+
+    edit_source_tables = PythonOperator(
+        task_id="edit_source_tables",
+        python_callable=edit_source_tables,
+        provide_context=True,
+    )
+
     finish = DummyOperator(task_id="finish")
 
     (
         start
         >> main_tables
-        >> branch_efficiency
+        >> branch
         >> lensstore
+        >> delayedorders
         >> other_tables
         >> nps
         >> fetch_insurance_tracking
+        >> edit_source_tables
         >> finish
     )

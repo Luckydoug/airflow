@@ -4,7 +4,7 @@ import requests
 import pandas as pd
 from airflow.models import Variable
 from sub_tasks.data.connect import engine
-from sub_tasks.api_login.api_login import(login)
+# from sub_tasks.api_login.api_login import(login)
 from pangres import upsert
 from sub_tasks.libraries.utils import return_session_id
 

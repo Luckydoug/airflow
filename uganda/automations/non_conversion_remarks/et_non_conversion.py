@@ -32,27 +32,107 @@ def fetch_et_non_conversions():
     monthstart = datetime.date(today.year, today.month, 1)
     datefrom = (monthstart - dateutil.relativedelta.relativedelta(months=3))
 
-    et_q = """           
-    select 
-            code, create_date, lpad(a.create_time::text,4,'0')::time as create_time, optom, optom_name, rx_type, branch_code, a.cust_code,a.mode_of_pay, status,
-            patient_to_ophth, "RX", sales_employees, handed_over_to, view_doc_entry, view_date, view_creator, 
-            last_viewed_by, branch_viewed, order_converted, a.ods_insurance_order, order_converted_mode, date_converted, on_after,  on_after_status,
-            case when "RX" = 'High Rx' then 1 else 0 end as high_rx,conversion_reason,conversion_remarks,
-            case when (a.days >= %(Days)s or on_after is null or (on_after_status in ('Draft Order Created','Pre-Auth Initiated For Optica Insurance','Customer to Revert','Cancel Order') and order_converted is null)) then 1 else 0 end as non_conversion
-    from
-    (select row_number() over(partition by cust_code, create_date order by days, rx_type, code desc) as r, *
-    from mawingu_mviews.et_conv
-    where status not in ('Cancel','Unstable')
-    and (patient_to_ophth not in ('Yes') or patient_to_ophth is null)
-    and optom not in ('data2','dennisnjo','ss','data6','yuri','data7','rm','data5','manager')) as a 
-    left join mawingu_staging.source_users b on a.optom::text = b.se_optom::text
-    where a.r = 1
-    and a.create_date::date >=  %(From)s
-    and a.create_date::date <= %(To)s
-    and a.branch_code not in ('0MA','HOM','null')
-    and "RX" = 'High Rx'
-    and (a.days >= %(Days)s or on_after is null or (on_after_status in ('Draft Order Created','Pre-Auth Initiated For Optica Insurance','Customer to Revert','Cancel Order') and order_converted is null))
-    """
+    et_q = f"""           
+   SELECT a.code,
+            a.create_date,
+            lpad(a.create_time::text,4,'0')::time as create_time,
+            a.optom,
+            a.optom_name,
+            a.rx_type,
+            a.branch_code,
+            a.cust_code,
+            a.mode_of_pay,
+            a.status,
+            a.patient_to_ophth,
+            a."RX",
+            a.sales_employees,
+            a.handed_over_to,
+            a.view_doc_entry,
+            a.view_date,
+            a.view_creator,
+            a.last_viewed_by,
+            a.branch_viewed,
+            a.order_converted,
+            a.ods_insurance_order,
+            a.insurance_name,
+            a.insurance_scheme,
+            a.order_converted_mode,
+            a.date_converted,
+            a.on_after,
+            a.on_after_status,
+            a.conversion_reason,
+            a.conversion_remarks,
+                CASE
+                    WHEN a."RX" = 'High Rx'::text THEN 1
+                    ELSE 0
+                END AS high_rx,
+                CASE
+                    WHEN a.days > 7 or a.order_converted IS NULL THEN 1
+                    ELSE 0
+                END AS non_conversion
+           FROM ( SELECT row_number() OVER (PARTITION BY et_conv.cust_code, et_conv.create_date ORDER BY et_conv.days, et_conv.rx_type, et_conv.code DESC) AS r,
+                    et_conv.code,
+                    et_conv.create_date,
+                    et_conv.create_time,
+                    et_conv.optom,
+                    et_conv.optom_name,
+                    et_conv.rx_type,
+                    et_conv.branch_code,
+                    et_conv.cust_code,
+                    et_conv.status,
+                    et_conv.patient_to_ophth,
+                    et_conv."RX",
+                    et_conv.plano_rx,
+                    et_conv.sales_employees,
+                    et_conv.handed_over_to,
+                    et_conv.view_doc_entry,
+                    et_conv.view_date,
+                    et_conv.view_creator,
+                    et_conv.last_viewed_by,
+                    et_conv.branch_viewed,
+                    et_conv.order_converted,
+                    et_conv.ods_insurance_order,
+                    et_conv.order_converted_mode,
+                    et_conv.date_converted,
+                    et_conv.days,
+                    et_conv.on_after,
+                    et_conv.on_after_createdon,
+                    et_conv.on_after_cancelled,
+                    et_conv.on_after_status,
+                    et_conv.on_after_mode,
+                    et_conv.on_after_days,
+                    et_conv.ods_insurance_actaprvamt1,
+                    et_conv.ods__insurance_actaprvamt2,
+                    et_conv.ods_total_amt,
+                    et_conv.approved_amount,
+                    et_conv.insurance_feedback,
+                    et_conv.ods_insurance_rejectrsn1,
+                    et_conv.scheme_type,
+                    et_conv.on_before,
+                    et_conv.on_before_cancelled,
+                    et_conv.on_before_createdon,
+                    et_conv.on_before_prescription_order,
+                    et_conv.on_before_mode,
+                    et_conv.reg_cust_type,
+                    et_conv.mode_of_pay,
+                    et_conv.insurance_name,
+                    et_conv.insurance_scheme,
+                    et_conv.conversion_reason,
+                    et_conv.conversion_remarks
+                   FROM mawingu_mviews.et_conv
+                  WHERE (et_conv.status <> ALL (ARRAY['CanceledEyeTest'::text,'Cancel'::text, 'Unstable'::text,'Hold'::text])) 
+                  AND (et_conv.patient_to_ophth <> 'Yes'::text OR et_conv.patient_to_ophth IS NULL)
+                  AND activity_no is null
+                  ) a
+             left join mawingu_staging.source_users b on a.optom::text = b.se_optom::text
+             left join mawingu_staging.source_customers sc on sc.cust_code::text = a.cust_code::text
+          WHERE a.r = 1 
+          AND (a.branch_code <> ALL (ARRAY['0MA'::text, 'HOM'::text, 'null'::text])) 
+          AND a."RX" = 'High Rx'::text 
+          AND (a.days > 7 or a.order_converted IS null)   
+          AND create_date::date between '{datefrom}' and '{today}'
+          AND mode_of_pay = 'Cash'
+          """
     conv = pd.read_sql_query(et_q,con=engine,params={'From':datefrom,'To':today,'Days':7})
     return conv
 
@@ -62,7 +142,7 @@ def smtp():
     engine = create_unganda_engine()
     current_date = date.today()
     if current_date.weekday() == 0:  # 0 means Monday
-        days_back_to_report_day = timedelta(days=2)
+        days_back_to_report_day = timedelta(days=1)
     else:
         days_back_to_report_day =timedelta(days=1)
     pwfrom = current_date - days_back_to_report_day
@@ -75,6 +155,7 @@ def smtp():
                             group by cust_outlet 
                             """
     dfregisteredcustomers = pd.read_sql_query(registeredcustomers,con = engine)
+    
 
     """ Non Converted Registration"""
     non_reg_conv = f""" SELECT cust_code as "Customer Code", cust_createdon as "Date", cust_outlet as "Outlet", 
@@ -85,133 +166,60 @@ def smtp():
                 and days is null
             """
     dfnon_reg_conv = pd.read_sql_query(non_reg_conv,con = engine)
+    dfnon_reg_conv['Branch Remark'] = ''
 
 
     """ Eye test older than 30 days """
-    old_et_viewed = f""" with views as 
-    (
-    select 
-            spc.code as "Visit ID",
-            spc.view_date::date - ec.create_date::date AS days_old,
-            case when spc.view_date::text = ec.create_date::text then 0 else 1 end as new_et_done,
-            spc.view_date as "View Date",
-            spc.view_time as "View Time",
-            spc.requestedby,
-            su.user_name as "Viewed By",
-            ec.branch_code,
-            aa.branch"Eye Test Branch",
-            ec.create_date as "Eye Test Date",
-            ec.optom,
-            ec.optom_name,
-            ec.rx_type as "RX Type",
-            ec."RX",
-            ec.cust_code as "Customer Code",
-            ec.order_converted,
-            ec.days,
-            sp.code,sp.create_date
-    from mawingu_staging.source_prescriptions_c1 spc
-            left join (
-                        select * 
-                        from
-                        (select row_number() over (partition by "date",branch,user_code order by ets desc) as r,
-                        * 
-                        from 
-                        (select "date",
-                        branch,user_code,staff_name,count(id) as ets from mawingu_mviews.all_activity ec
-                        where branch not in ('0MA','null', 'HOM') 
-                        and user_code is not null
-                        group by branch,user_code,staff_name,"date") a) b
-                        where b.r = 1
-                        ) aa on aa.user_code = spc.requestedby and aa."date"::date = spc.view_date::date 
-            left join mawingu_staging.source_users su on su.user_code = spc.requestedby 
-            left join mawingu_mviews.et_conv ec on ec.code = spc.code
-            left join mawingu_mviews.et_conv sp on sp.cust_code = ec.cust_code 
-            where spc.view_date::date between '{pwfrom}' and '{pwto}'
-            and (ec.days > 7 or ec.days is null)
-            and ec.branch_code not in ('0MA','null', 'HOM') 
-            and requestedby not in ('data7','data11','data5','data6','retman5')
-    ),
-    old_et as 
-            (
-            select 
-            row_number() over (partition by "View Date","Customer Code" order by create_date desc ) as r,
-            * from views
-            where days_old > 30
-            and new_et_done = 1
-            ),
-    old_et_optom as (		
-            select 
-            "Customer Code",
-            "View Date"::date, 
-            "Visit ID",
-            "RX", 
-            "Eye Test Date"::date, 
-            days_old, 
-            "Viewed By",  
-            "Eye Test Branch" as "Outlet",
-            null as "Branch Remark" 
-            from old_et
-            where r = 1
-            and "RX" = 'High Rx'
-            ),
-    old_et_view_sp  as 
-                (
-                SELECT 
-                    case when od.view_date::text = sp.create_date::text then 0 else 1 end as new_et_done,
-                    od.cust_loyalty_code as "Customer Code",od.view_date as "View Date", od.visit_id as "Visit ID", od."RX", 
-                    od.et_date as "Eye Test Date", sp.code,sp.create_date,
-                    od.days_old, od.viewed_by as "Viewed By",  
-                    od.branch as "Outlet",null as "Branch Remark"
-                FROM mawingu_mviews.old_eyetest_viewed_conversion od
-                    left join mawingu_mviews.et_conv sp on sp.cust_code = od.cust_loyalty_code 
-                    where od.view_date::date between '{pwfrom}' and '{pwto}'
-                    and (od.days > 7 or od.days is null)
-                    and days_old > 30
-                    and od.branch not in ('0MA','null', 'HOM') 
-                ),
-    old_et_sp as
-                (
-            select 
-                row_number() over (partition by "View Date","Customer Code" order by create_date desc) as r,
-                * 
-            from old_et_view_sp
-                where new_et_done = 1
-                ),
-    old_et_salespersons as                
-                (select 
-                    "Customer Code",
-                    "View Date"::date,
-                    "Visit ID",
-                    "RX", 
-                    "Eye Test Date"::date,
-                    days_old,
-                    "Viewed By",  
-                    "Outlet",
-                    null as "Branch Remark"
-                from old_et_sp
-                where r = 1
-                and "RX" = 'High Rx'),
-    combined as             
-                (select * from old_et_salespersons
-                union all 
-                select * from old_et_optom)
-    select 
-            "Customer Code",
-            "View Date"::date,
-            "Visit ID",
-            "RX", 
-            "Eye Test Date"::date,
-            days_old,
-            "Viewed By",  
-            "Outlet",
-            null as "Branch Remark"
-    from
-    (select 
-    row_number() over (partition by "Customer Code" order by "Eye Test Date" desc) as r,
-    * from combined) a 
-    where a.r = 1
+    old_et_viewed = f"""  
+                    WITH old_et_optom AS (
+                    select * from  mawingu_mviews.optoms_older_than_30days_eyetest_viewed_conversion
+                    where "View Date"::date between '{pwfrom}' and '{pwto}'
+                    and "RX" = 'High Rx'
+                    and (days > 7 or days is null)
+                    ), old_et_salespersons AS (
+                    select * from mawingu_mviews.salespersons_older_than_30days_eyetest_viewed_conversion
+                    where "View Date"::date between '{pwfrom}' and '{pwto}'
+                    and (days > 7 or days is null)
+                    ), combined AS (
+                    SELECT old_et_salespersons."Customer Code",
+                        old_et_salespersons."View Date",
+                        old_et_salespersons."Visit ID",
+                        old_et_salespersons."RX",
+                        old_et_salespersons."Eye Test Date",
+                        old_et_salespersons.days_old,
+                        old_et_salespersons."Viewed Code",
+                        old_et_salespersons."Viewed By",
+                        old_et_salespersons."Outlet",
+                        old_et_salespersons."Branch Remark"
+                    FROM old_et_salespersons
+                    UNION ALL
+                    SELECT old_et_optom."Customer Code",
+                        old_et_optom."View Date",
+                        old_et_optom."Visit ID",
+                        old_et_optom."RX",
+                        old_et_optom."Eye Test Date",
+                        old_et_optom.days_old,
+                        old_et_optom."Viewed Code",
+                        old_et_optom."Viewed By",
+                        old_et_optom."Outlet",
+                        old_et_optom."Branch Remark"
+                    FROM old_et_optom
+                    )
+                    SELECT 
+                        combined."Customer Code",
+                        combined."View Date",
+                        combined."Visit ID",
+                        combined."RX",
+                        combined."Eye Test Date",
+                        combined.days_old,
+                        combined."Viewed Code",
+                        combined."Viewed By",
+                        combined."Outlet",
+                        NULL::text AS "Branch Remark"
+                        from combined
             """
     dfold_et_viewed = pd.read_sql_query(old_et_viewed,con = engine)
+    dfold_et_viewed['Branch Remark'] = ''
 
 
     """ High RX Non Converted """
@@ -240,8 +248,9 @@ def smtp():
     non_q  = non_q[non_q_cols]
     non_q["Remarks"] = ""
     non_q["EWC Sign"] = ""
+    non_q["Branch Remark"] = ""
     non_q['ET Date and Time'] = non_q['ET Date'].astype(str) + " " + non_q['ET Time'].astype(str)
-    et_nonconv = non_q[['ET Date and Time','Outlet','Customer Code','Mode of Pay','Optom','Handed Over To','Last Viewed By','Conversion Reason','Conversion Remarks']]
+    et_nonconv = non_q[['ET Date and Time','Outlet','Customer Code','Mode of Pay','Optom','Handed Over To','Last Viewed By','Conversion Reason','Conversion Remarks',"Branch Remark"]]
     et_nonconv = et_nonconv.replace(np.nan, " ")
 
 #-------------------------
@@ -291,8 +300,8 @@ def smtp():
             continue
         
 
-        sender_email = "felix.murithi@optica.africa"
-        password = 'PetsOnViwan2#7'
+        sender_email = os.getenv("getrude_email")
+        password = os.getenv("getrude_password")
 
         receiver_email = [branchemail,"raghav@optica.africa","wairimu@optica.africa","felicity@optica.africa","lenah@optica.africa","john@optica.africa","larry.larsen@optica.africa"] 
 

@@ -22,7 +22,7 @@ from workalendar.africa import Kenya
 import pygsheets
 
 from sub_tasks.data.connect import (pg_execute, pg_fetch_all, engine) 
-from sub_tasks.api_login.api_login import(login)
+# from sub_tasks.api_login.api_login import(login)
 
 
 def fetch_cutoffs():
@@ -41,7 +41,7 @@ def fetch_cutoffs():
 
      wk1.to_sql('landing_dept_cutoff', con = engine, schema='mabawa_staging', if_exists = 'append', index=False)
      return 'something' 
-# fetch_cutoffs()
+
 def update_cutoffs():
 
      data = pd.read_sql("""
@@ -82,4 +82,7 @@ def create_cutoffs_live():
     data.to_sql('dim_dept_cutoff', con = engine, schema='mabawa_dw', if_exists = 'append', index=False)
     print("Inserted Cut Offs")
     return 'something'
+
+# fetch_cutoffs()
+# update_cutoffs()
 # create_cutoffs_live()

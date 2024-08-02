@@ -1,9 +1,9 @@
 from airflow.models import Variable
+from sub_tasks.libraries.utils import service_file
 from sub_tasks.data.connect import engine
 from sub_tasks.data.connect_voler import engine as rwanda_engine
 from sub_tasks.data.connect_mawingu import engine as uganda_engine
 from pangres import upsert
-from sub_tasks.libraries.utils import oauth_credentials, service_file
 import pandas as pd
 import pygsheets
 import sys
@@ -35,6 +35,7 @@ def fetch_kenya_branch_data():
          "Analyst Email": "analyst_email",
          "Sends Own Insurance": "sends_own_insurance",
          "Escalation Email": "escalation_email",
+         "Mpesa Name": "mpesa_name"
       },
       inplace=True,
    )
@@ -43,6 +44,7 @@ def fetch_kenya_branch_data():
       [
          "branch_code",
          "branch_name",
+         "mpesa_name",
          "email",
          "rm",
          "rm_email",
@@ -165,6 +167,5 @@ def fetch_hrms_branch_data():
         create_table=False,
     )
 
-# fetch_kenya_branch_data()
 
 

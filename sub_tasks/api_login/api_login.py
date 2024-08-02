@@ -16,7 +16,6 @@ from sub_tasks.libraries.utils import createe_engine
 # from sub_tasks.libraries.utils import create_unganda_engine
 # from sub_tasks.libraries.utils import create_rwanda_engine
 
-
 # api login
 login_url = "https://10.40.16.9:4300/OpticaBI/XSJS/login_demo.xsjs"
 hrms_login_url = "http://52.71.65.50:8094/API/Login/AuthenticateLogin"
@@ -130,3 +129,59 @@ def login_hrms():
         if_row_exists="update",
         create_table=False,
     )
+
+def login_hrms_uganda():
+    engine = createe_engine()
+
+    payload = json.dumps({"cmpCode": "OLUG", "userName": "api", "password": "Happy@34"})
+    headers = {"Content-Type": "application/json"}
+
+    response = requests.request(
+        "POST", hrms_login_url, headers=headers, data=payload, verify=False
+    )
+    data = response.json()
+    print(data)
+    access_token = data["result"]["access_token"]
+
+    df = pd.DataFrame({"country": "Uganda:HRMS", "session_id": access_token}, index=[0])
+    df = df.set_index("country")
+
+    upsert(
+        engine=engine,
+        df=df,
+        schema="mabawa_staging",
+        table_name="api_login",
+        if_row_exists="update",
+        create_table=False,
+    )
+
+def login_hrms_rwanda():
+    engine = createe_engine()
+
+    payload = json.dumps({"cmpCode": "OLRWD", "userName": "api", "password": "Happy@80"})
+    headers = {"Content-Type": "application/json"}
+
+    response = requests.request(
+        "POST", hrms_login_url, headers=headers, data=payload, verify=False
+    )
+    data = response.json()
+    print(data)
+    access_token = data["result"]["access_token"]
+
+    df = pd.DataFrame({"country": "Rwanda:HRMS", "session_id": access_token}, index=[0])
+    df = df.set_index("country")
+
+    upsert(
+        engine=engine,
+        df=df,
+        schema="mabawa_staging",
+        table_name="api_login",
+        if_row_exists="update",
+        create_table=False,
+    )
+
+# login_rwanda()
+# login_uganda()
+# login_hrms()    
+# login_hrms_rwanda()
+# login_hrms_uganda

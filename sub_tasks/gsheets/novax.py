@@ -24,7 +24,7 @@ def fetch_novax_data():
     
      gc = pygsheets.authorize(service_file='/home/opticabi/airflow/dags/sub_tasks/gsheets/keys2.json')
      sh = gc.open_by_key('11b4saaTI-xmNooQ_9IJwDHoF8GsOQz_v991k8c8Z11Y')
-     wk1 = sh[1]
+     wk1 = sh.worksheet_by_title("Revised Novax Data")
      wk1 = pd.DataFrame(wk1.get_all_records())
      wk1.rename (columns = {'Order_DATE':'order_date', 
                        'Order_Delivery_DATE':'order_delivery_date', 
@@ -71,13 +71,16 @@ def fetch_dhl_data():
     
      gc = pygsheets.authorize(service_file='/home/opticabi/airflow/dags/sub_tasks/gsheets/keys2.json')
      sh = gc.open_by_key('11b4saaTI-xmNooQ_9IJwDHoF8GsOQz_v991k8c8Z11Y')
-     wk1 = sh[2]
+     wk1 = sh.worksheet_by_title("DHL Data")
      wk1 = pd.DataFrame(wk1.get_all_records())
+     print(wk1)
      wk1.rename (columns = {'Invoice Date':'invoice_date', 
                        'Delivery Date':'delivery_date', 
                        'Delivery Time':'delivery_time', 
                         'AWB':'awb',
-                        'Invoice':'invoice'}
+                        'Invoice':'invoice',
+                        'PARCEL DESCRIPTION':'parcel_description',
+                        'NUMBER OF PARCELS':'number_of_parcels'}
             ,inplace=True)
 
      # wk1 = wk1.drop_duplicates()
@@ -100,9 +103,11 @@ def create_dim_dhl_data():
      SELECT 
           to_date(invoice_date,'dd-MM-yy') as invoice_date,
           to_date(delivery_date,'dd-MM-yy') as delivery_date, 
-          (case when delivery_time <> '' then delivery_time::time end) as delivery_time,
+          case when delivery_time <> '' then lpad(delivery_time::text,4,'0')::time end as delivery_time,
           awb,
-          invoice
+          invoice,
+          parcel_description,
+          number_of_parcels
      FROM mabawa_staging.source_dhl_data
      """
      
@@ -115,7 +120,7 @@ def create_dhl_with_orderscreen_data():
      query = """
      truncate mabawa_dw.dhl_with_orderscreen_data;
      insert into mabawa_dw.dhl_with_orderscreen_data
-     SELECT invoice_date, delivery_date, delivery_time, awb, invoice, order_screen, order_entry
+     SELECT invoice_date, delivery_date, delivery_time, awb, invoice, parcel_description,number_of_parcels,order_screen, order_entry
      FROM mabawa_dw.v_dhl_with_orderscreen_data;
      """
      

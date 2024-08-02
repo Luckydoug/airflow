@@ -1,4 +1,5 @@
 import sys
+from airflow.models import variable
 sys.path.append(".")
 import json
 import requests
@@ -6,7 +7,7 @@ import pandas as pd
 from datetime import date, timedelta
 from pangres import upsert
 from sub_tasks.data.connect import (pg_execute, engine) 
-from sub_tasks.api_login.api_login import(login)
+# from sub_tasks.api_login.api_login import(login)
 from sub_tasks.libraries.utils import return_session_id
 from sub_tasks.libraries.utils import FromDate, ToDate
 
@@ -149,4 +150,4 @@ def create_view_rx_conv ():
 
     query = pg_execute(query)
 
-fetch_order_checking_details()
+# fetch_order_checking_details()

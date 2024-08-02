@@ -104,4 +104,4 @@ def create_source_google_reviews():
     return "Table Created"
 
 
-create_source_google_reviews()
+# create_source_google_reviews()

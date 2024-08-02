@@ -163,32 +163,34 @@ def smtp():
     pwto = current_date - days_back_to_report_day
 
     """ Non Converted Registration"""
-    non_reg_conv = f""" SELECT cust_code as "Customer Code",
-                        cust_createdon as "Date", cust_outlet as "Outlet", su.user_name as "Staff Name", 
-                        case when cust_type = 'OTC' then 'Cash' else cust_type end as "Customer Type",
-                        cust_insurance_company as "Insurance Co",insurance_name as "Insurance Name",
-                        conversion_reason as "Conversion Reason", conversion_remark as "Conversion Remark",null as "Branch Remark"
-                        FROM mabawa_mviews.reg_conv reg
-                        left join 
-                        (
-                        select user_code,user_name,se_optom,user_department_name
-                        from mabawa_staging.source_users
-                        where user_code ~ '^[0-9]{4}$'
-                        ) su on reg.cust_sales_employeecode::text = su.se_optom::text
-                        where cust_createdon::date between '{pwfrom}' and '{pwto}'
-                        and cust_active_status <> 'N'
-                        and days is null
-                        and cust_outlet not in ('0MA','null', 'HOM')
-                        and cust_campaign_master <> 'GMC'
-            """
+    non_reg_conv = f"""  
+    SELECT cust_code as "Customer Code",
+    cust_createdon as "Date", cust_outlet as "Outlet", su.user_name as "Staff Name", 
+    case when cust_type = 'OTC' then 'Cash' else cust_type end as "Customer Type",
+    insurance_name as "Insurance Name",cust_insurance_scheme as "Insurance Scheme",
+    conversion_reason as "Conversion Reason", conversion_remark as "Conversion Remark",null as "Branch Remark"
+    FROM mabawa_mviews.reg_conv reg
+    left join 
+    (
+    select user_code,user_name,se_optom,user_department_name
+    from mabawa_staging.source_users
+    where user_code ~ '^[0-9]{4}$'
+    ) su on reg.cust_sales_employeecode::text = su.se_optom::text
+    where cust_createdon::date between '{pwfrom}' and '{pwto}'
+    and cust_active_status <> 'N'
+    and days is null
+    and cust_outlet not in ('0MA','null', 'HOM')
+    and cust_campaign_master <> 'GMC'
+    """
     dfnon_reg_conv = pd.read_sql_query(non_reg_conv,con = engine)
     dfnon_reg_conv[['Conversion Remark','Conversion Reason','Branch Remark']] = dfnon_reg_conv[['Conversion Remark','Conversion Reason','Branch Remark']].fillna('')
 
     """ Eye test older than 30 days """
     old_et_viewed = f"""     
                         WITH old_et_optom AS (
-                    select * from  mabawa_mviews.optoms_older_than_30days_eyetest_viewed_conversion
+                    select * from  mabawa_mviews.optoms_older_than_30days_eyetest_viewed_conversion                    
                     where "View Date"::date between '{pwfrom}' and '{pwto}'
+                    and "RX" = 'High Rx'
                     and (days > 7 or days is null)
                     ), old_et_salespersons AS (
                     select * from mabawa_mviews.salespersons_older_than_30days_eyetest_viewed_conversion
@@ -268,13 +270,75 @@ def smtp():
                                     ]]
     et_nonconv = et_nonconv.replace(np.nan, " ")
 
+
+    """Blue Block Recommended Eye tests"""
+    bbrecomm = f"""
+            select 
+        distinct
+            sp.code as "ET Code",sp.create_date as "ET Date",sp.branch_code as "Outlet",sp.cust_code as "Customer Code",su.user_name as "Optom",
+            sp.slaesperson_rmks as "SalesPerson Remarks",
+            --,on_after as "Order Created",on_after_status as "Order Status",
+            --insurance_feedback as "Insurance Feedback",
+            sp.conversion_reason as "Conversion Reason",sp.conversion_remarks as "Conversion Remarks",
+            null as "Branch Remark"
+        from mabawa_staging.source_prescriptions sp 
+        left join mabawa_staging.source_users su on sp.latest_updated_optomid = su.user_code 
+        left join mabawa_mviews.et_conv ec on sp.code = ec.code 
+        left join reports_tables.branch_data bd on sp.branch_code = bd.branch_code
+        where sp.status <> 'Cancel'
+        and "RX" = 'High Rx'
+        and slaesperson_rmks ~~* any(array['%%BB%%','%%blue%%','%%blu%%','%%bluv%%','%%bb%%','%%Blue%%','%%Bluv%%','Blu'])
+        and order_converted is null
+        and sp.create_date::date between '{pwfrom}' and '{pwto}'
+    """
+    bbrecomm_df = pd.read_sql_query(bbrecomm,con = engine)
+    bbrecomm_df['Branch Remark'] = bbrecomm_df['Branch Remark'].fillna(" ")
+
+    """Branches below 80% High RX Conversion to share their non conversions"""
+    highrxbelowthresh = f"""select * 
+                        from 
+                        (
+                        select 
+                            branch_code,
+                            sum("High RX") as "High RX Eye Tests",
+                            sum(high_converted) as "High RX Orders",
+                            ROUND((SUM(high_converted)::numeric / NULLIF(SUM("High RX")::numeric, 0)) * 100, 0) AS "High RX Conversion"
+                        FROM    
+                        (
+                        select 
+                            date_trunc('Month',create_date::date)::date as "Month",
+                            row_number() over(partition by create_date,et.cust_code order by days, rx_type, code desc) as rw,
+                            code,create_date,create_time,optom,optom_name,rx_type,branch_code,et.cust_code,status,patient_to_ophth,"RX",plano_rx,
+                            sales_employees,handed_over_to,view_doc_entry,view_date,view_creator,last_viewed_by,branch_viewed,
+                            order_converted,ods_creator,days,
+                            coalesce(ods_creator,view_creator,sales_employees) as staff_code,
+                            case when days <= 7 then 1 else 0 end as cnvrtd,
+                            case when "RX" = 'Low Rx'  then 1 else 0 end as "Low RX",
+                            case when "RX" = 'High Rx'  then 1 else 0 end as "High RX",
+                            case when (days <= 7 and "RX" = 'High Rx') then 1 else 0 end as high_converted,
+                            case when (days <= 7 and "RX" = 'Low Rx') then 1 else 0 end as low_converted
+                        from mabawa_mviews.et_conv et
+                        left join mabawa_staging.source_orderscreen so on et.order_converted = so.doc_no::text
+                        where status = 'Close'
+                        and (patient_to_ophth not in ('Yes') or patient_to_ophth is null)
+                        and et.cust_code not  in (select cust_code from mabawa_staging.source_customers sc 
+                        where cust_campaign_master = 'GMC')
+                        and create_date::date >= '2024-06-17' 
+                        and create_date::date <= '2024-06-23' 
+                        and branch_code not in ('0MA','HOM')
+                        ) a
+                        where rw=1
+                        group by branch_code
+                        ) aa
+                        where "High RX Conversion" < 80
+                        """
+    highrxbelowthresh_df = pd.read_sql_query(highrxbelowthresh,con = engine)    
 #-------------------------
     from reports.draft_to_upload.data.fetch_data import fetch_branch_data
     engine = createe_engine()
     branch_data = fetch_branch_data(engine=engine,database="reports_tables")
-    toshareonly = ['NAN','MER',	'RIV','OHO','ROS','EBK','UNI','MAL','AGR','IMA','NGO','NWE','BUS','CAP','TUF','INM','JUN','KAU','YOR','KAR','OIL','THI']
-    # branch_data = branch_data[branch_data['Outlet'].isin(toshareonly)]
-    print(branch_data)
+    toshareonly = highrxbelowthresh_df['branch_code'].to_list()
+    # toshareonly = ['NAN','MER',	'RIV','OHO','ROS','EBK','UNI','MAL','AGR','IMA','NGO','NWE','BUS','CAP','TUF','INM','JUN','KAU','YOR','KAR','OIL','THI']
 
     log_file=f"{path}et_non_conversions/branch_log.txt"
     load_dotenv()
@@ -306,12 +370,14 @@ def smtp():
             dataframe_dict = {
                 "High RX Non Conversion":et_nonconv,
                 "Viewed Eye test older than 30 days and did not convert": dfold_et_viewed,
-                "Registration Non Conversion":dfnon_reg_conv}
+                "Registration Non Conversion":dfnon_reg_conv,
+                "Blue Block Recommendations":bbrecomm_df}
             
         else:
             dataframe_dict = {
                 "Viewed Eye test older than 30 days and did not convert": dfold_et_viewed,
-                "Registration Non Conversion":dfnon_reg_conv}
+                "Registration Non Conversion":dfnon_reg_conv,
+                "Blue Block Recommendations":bbrecomm_df}
 
         html,subject = generate_html_and_subject(
             branch = branch, 

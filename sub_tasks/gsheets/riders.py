@@ -22,19 +22,20 @@ from workalendar.africa import Kenya
 import pygsheets
  
 from sub_tasks.data.connect import (pg_execute, pg_fetch_all, engine) 
-from sub_tasks.api_login.api_login import(login)
+# from sub_tasks.api_login.api_login import(login)
 
 def fetch_rider_times():
 
      gc = pygsheets.authorize(service_file='/home/opticabi/airflow/dags/sub_tasks/gsheets/opticabi-a4e46c63f7d9.json')
      sh = gc.open_by_key('1pl19z9XHZkXtSyAm5OQyyCes7u99kjXrUo9ZxLmPpzY')
-     riders = sh[0]
+     riders = sh[1]
      riders = pd.DataFrame(riders.get_all_records())
 
      print('The riders information has been fetched')
      print(riders.shape)
 
      # Drop the rows with blank dates
+     print(riders)
      riders = riders[riders['Date']!=""]
 
      # Change the date column to datetime

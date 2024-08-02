@@ -137,7 +137,6 @@ def order_efficiency_smtp():
     else:
         report_date = (today - relativedelta(days=1)).strftime('%d-%m-%Y')
 
-
     i=0
     j=0
 
@@ -196,42 +195,46 @@ def order_efficiency_smtp():
                 table2html = table2.to_html(index=False)
 
             table3heading = "Cut Off Summary - Uganda"
-            table3 = cutoff_efficiency_summary_dfs[6].fillna("")
-            table3html = table3.to_html(index=False,formatters={
-            # 'var1': '{:,.2f}'.format,
-                    '%_ge Efficiency': '{:,.2%}'.format
-                })
-            brs_cutoff_full_ug = cutoff_efficiency_full_dfs[6].rename(columns = {'Unnamed: 0':''})
-            table4 = brs_cutoff_full_ug[brs_cutoff_full_ug["BRS CUT OFF"] == 0][['Item No.', 'Item/Service Description', 'ITR Status',
-                                                                            'ITR Number', 'Internal Number', 'ITR Date', 'Exchange Type',
-                                                                            'Sales Order number', 'Sales Order entry', 'Sales Branch',
-                                                                            'Draft order entry', 'Order Number', 'Creation Date',
-                                                                            'Creatn Time - Incl. Secs', 'Picker Name', 'Branch', 'Type', 'Max',
-                                                                            'Warehouse Name', 'Address', 'BRS Cut', 'Lens Store Cut',
-                                                                            'Designer Store Cut', 'Main Store Cut', 'Control Cut', 'Packaging Cut',
-                                                                            'Region', 'BRS CUT OFF', 'DEPARTMENT', 'DEPARTMENT 2']]
-            if not table4.empty:  
-                table4heading = "cut off delays"
-                table4html = table4.to_html(index=False)
+            if not cutoff_efficiency_summary_dfs[6].empty and len(cutoff_efficiency_summary_dfs[6]) > 0:
+                table3 = cutoff_efficiency_summary_dfs[6].fillna("")
+                table3html = table3.to_html(index=False,formatters={'%_ge Efficiency': '{:,.2%}'.format})
+            else:
+                table3html = """<p style = "color: purple;"> No Replacements were done for Rwanda</p>"""  
+
+            if not cutoff_efficiency_full_dfs[6].empty and len(cutoff_efficiency_full_dfs[6]) > 0:
+                brs_cutoff_full_ug = cutoff_efficiency_full_dfs[6].rename(columns = {'Unnamed: 0':''})
+                table4 = brs_cutoff_full_ug[brs_cutoff_full_ug["BRS CUT OFF"] == 0][['Item No.', 'Item/Service Description', 'ITR Status',
+                                                                                'ITR Number', 'Internal Number', 'ITR Date', 'Exchange Type',
+                                                                                'Sales Order number', 'Sales Order entry', 'Sales Branch',
+                                                                                'Draft order entry', 'Order Number', 'Creation Date',
+                                                                                'Creatn Time - Incl. Secs', 'Picker Name', 'Branch', 'Type', 'Max',
+                                                                                'Warehouse Name', 'Address', 'BRS Cut', 'Lens Store Cut',
+                                                                                'Designer Store Cut', 'Main Store Cut', 'Control Cut', 'Packaging Cut',
+                                                                                'Region', 'BRS CUT OFF', 'DEPARTMENT', 'DEPARTMENT 2']]
+                if not table4.empty:  
+                    table4heading = "cut off delays"
+                    table4html = table4.to_html(index=False)
 
             table5heading = "Cut Off Summary - Rwanda"
-            table5 = cutoff_efficiency_summary_dfs[7].fillna("")
-            table5html = table5.to_html(index=False,formatters={
-            # 'var1': '{:,.2f}'.format,
-                    '%_ge Efficiency': '{:,.2%}'.format
-                })
-            brs_cutoff_full_rw = cutoff_efficiency_full_dfs[7].rename(columns = {'Unnamed: 0':''})
-            table6 = brs_cutoff_full_rw[brs_cutoff_full_rw["BRS CUT OFF"] == 0][['Item No.', 'Item/Service Description', 'ITR Status',
-                                                                            'ITR Number', 'Internal Number', 'ITR Date', 'Exchange Type',
-                                                                            'Sales Order number', 'Sales Order entry', 'Sales Branch',
-                                                                            'Draft order entry', 'Order Number', 'Creation Date',
-                                                                            'Creatn Time - Incl. Secs', 'Picker Name', 'Branch', 'Type', 'Max',
-                                                                            'Warehouse Name', 'Address', 'BRS Cut', 'Lens Store Cut',
-                                                                            'Designer Store Cut', 'Main Store Cut', 'Control Cut', 'Packaging Cut',
-                                                                            'Region', 'BRS CUT OFF', 'DEPARTMENT', 'DEPARTMENT 2']]
-            if not table6.empty:  
+            if not cutoff_efficiency_summary_dfs[7].empty and len(cutoff_efficiency_summary_dfs[7]) > 0:
+                table5 = cutoff_efficiency_summary_dfs[7].fillna("")
+                table5html = table5.to_html(index=False,formatters={'%_ge Efficiency': '{:,.2%}'.format})
+            else:
+                table5html = """<p style = "color: purple;"> No Replacements were done for Rwanda</p>"""   
+
+            if not cutoff_efficiency_full_dfs[7].empty and len(cutoff_efficiency_full_dfs[7]) > 0:
+                brs_cutoff_full_rw = cutoff_efficiency_full_dfs[7].rename(columns={'Unnamed: 0': ''})
+                table6 = brs_cutoff_full_rw[brs_cutoff_full_rw["BRS CUT OFF"] == 0][[
+                    'Item No.', 'Item/Service Description', 'ITR Status', 'ITR Number', 'Internal Number', 'ITR Date', 
+                    'Exchange Type', 'Sales Order number', 'Sales Order entry', 'Sales Branch', 'Draft order entry', 
+                    'Order Number', 'Creation Date', 'Creatn Time - Incl. Secs', 'Picker Name', 'Branch', 'Type', 
+                    'Max', 'Warehouse Name', 'Address', 'BRS Cut', 'Lens Store Cut', 'Designer Store Cut', 
+                    'Main Store Cut', 'Control Cut', 'Packaging Cut', 'Region', 'BRS CUT OFF', 'DEPARTMENT', 
+                    'DEPARTMENT 2'
+                ]]
                 table6heading = "cut off delays"
-                table6html = table6.to_html(index=False)    
+                table6html = table6.to_html(index=False)         
+                   
         elif department == "Packaging":
             table1heading = "Order Efficiency"
             table1 = order_efficiency_dfs[12].iloc[:4, :].rename(columns = {'Unnamed: 0':''})
@@ -467,37 +470,26 @@ def order_efficiency_smtp():
                         <p>Kindly comment on your performance. </p>
                         <p><u><b>{table1heading}</b></u></p>
                         <table>{table1html}</table>
-                        <br>
                         <p><u><b>{table2heading}</b></u></p>
                         <table>{table2html}</table>
-                        <br>
                         <p><u><b>{table3heading}</b></u></p>
                         <table>{table3html}</table>
-                        <br>
                         <p><u><b>{table11heading}</b></u></p>
                         <table>{table11html}</table>
-                        <br>
                         <p><u><b>{table4heading}</b></u></p>
                         <table>{table4html}</table>
-                        <br>
                         <p><u><b>{table5heading}</b></u></p>
                         <table>{table5html}</table>
-                        <br>
                         <p><u><b>{table6heading}</b></u></p>
                         <table>{table6html}</table>
-                        <br>
                         <p><u><b>{table7heading}</b></u></p>
                         <table>{table7html}</table>
-                        <br>
                         <p><u><b>{table8heading}</b></u></p>
                         <table>{table8html}</table>
-                        <br>
                         <p><u><b>{table9heading}</b></u></p>
                         <table>{table9html}</table>
-                        <br>
                         <p><u><b>{table10heading}</b></u></p>
                         <table>{table10html}</table>
-                        <br>
                 </body>
             </html>
             '''.format(departmemt=department,table1html=table1html,table1heading = table1heading,

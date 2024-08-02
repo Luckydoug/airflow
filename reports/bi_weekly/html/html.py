@@ -23,16 +23,31 @@ branch_html = """
     </head>
     <body>
         <div>
-            <p>Hi {branch_name},</p>
-            <p>Below is your bi-weekly performance report for the metrics listed in the sections below.</p>
+            <p>Hi {rm_name},</p>
+            <p>Please see {branch_name} performance for the metrics listed in the sections below</p>
 
             <ol>
 
                  <li>
-                    <b>Overall Eye Test Conversion Trend Last 12 Weeks</b>
-                    <div class="spacing">
-                        <img src="cid:conversion_trend_image" align="middle" width="480px" height="">
-                    </div>
+                    <b>Eye Test Conversion Trends Last 12 Weeks (Latest week on the right)</b>
+                    <ol>
+                    <li>
+                        <p>Overall Eye Test Conversion</p>
+                        <div class="spacing">
+                            <img src="cid:conversion_trend_image" align="middle" width="480px" height="">
+                        </div>
+                    </li>
+
+
+                    <li>
+                        <p>Low RX Eye Test Conversion</p>
+                        <div class="spacing">
+                            <img src="cid:lowrx_conversion_trend_image" align="middle" width="480px" height="">
+                        </div>
+                    </li>
+
+                    </ol>
+
                 </li>
 
                 <li>

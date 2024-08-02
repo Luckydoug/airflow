@@ -44,6 +44,7 @@ today = datetime.date.today()
 # today = datetime.date(2024,1,25)
 yesterday = today - datetime.timedelta(days=1)
 formatted_date = yesterday.strftime('%Y-%m-%d')
+print(yesterday)
 
 
 def awaiting_feedback():

@@ -3,7 +3,7 @@ from airflow.models import variable
 from reports.draft_to_upload.utils.utils import today
 
 
-def fetch_orderscreen(database, engine, start_date="2023-01-01"):
+def fetch_orderscreen(database, engine, start_date="2024-01-01"):
     orderscreen_query = f"""
     select orderscreen.doc_entry as "DocEntry", odsc_date::date  as "Date",
     case
@@ -24,7 +24,7 @@ def fetch_orderscreen(database, engine, start_date="2023-01-01"):
     return orderscreen
 
 
-def fetch_orders(database, engine, start_date="2023-01-01"):
+def fetch_orders(database, engine, start_date="2024-01-01"):
     orders_query = f"""
     SELECT CAST(orders.doc_entry AS INT) AS "DocEntry", 
         CAST(orders.doc_no AS INT) AS "DocNum", 
@@ -50,7 +50,7 @@ def fetch_orders(database, engine, start_date="2023-01-01"):
     return all_orders
 
 
-def fetch_views(database, engine, start_date="2023-01-01"):
+def fetch_views(database, engine, start_date="2024-01-01"):
     views_query = f"""
     SELECT visit_id::text  as "Code", create_date::date as "Create Date", 
     case
@@ -75,7 +75,7 @@ def fetch_views(database, engine, start_date="2023-01-01"):
     return all_views
 
 
-def fetch_insurance_companies(database, engine, start_date="2023-01-01"):
+def fetch_insurance_companies(database, engine, start_date="2024-01-01"):
     insurance_companies_query = f"""
     select orders.doc_no::int as "DocNum",
         insurance_company.insurance_name as "Insurance Company",
@@ -97,7 +97,7 @@ def fetch_insurance_companies(database, engine, start_date="2023-01-01"):
     return insurance_companies
 
 
-def fetch_eyetests(database, engine, start_date="2023-01-01"):
+def fetch_eyetests(database, engine, start_date="2024-01-01"):
     eyetests_query = f"""
         SELECT branch_code as "Outlet", tests.doc_entry AS "DocEntry", 
         tests.code::int AS "Eyetest Code", tests.status AS "Status",
@@ -114,7 +114,7 @@ def fetch_eyetests(database, engine, start_date="2023-01-01"):
     return eyetests
 
 
-def fetch_salesorders(database, engine, start_date="2023-01-01"):
+def fetch_salesorders(database, engine, start_date="2024-01-01"):
     sales_orders_query = f"""
     select draft_orderno::int as "Order Number" from {database}.source_orders_header
     where creation_date::date between '{start_date}' and '{today}'
@@ -132,7 +132,7 @@ def fetch_sops_branch_info(engine):
     return sop_branch_info
 
 
-def fetch_registrations(engine, database, table, table2, start_date="2023-01-01"):
+def fetch_registrations(engine, database, table, table2, start_date="2024-01-01"):
     registrations_query = f"""
     SELECT cust_outlet as "Outlet", CAST(customers.cust_code AS TEXT) AS "Customer Code", 
     customers.cust_createdon AS "Registration Date", 
@@ -151,7 +151,7 @@ def fetch_registrations(engine, database, table, table2, start_date="2023-01-01"
     return registrations
 
 
-def fetch_payments(engine, database, start_date="2023-01-01"):
+def fetch_payments(engine, database, start_date="2024-01-01"):
     payments_query = f"""
     select payments.doc_entry as "PyDocEntry",payments.full_doc_type as "DocType", 
     payments.mode_of_pay as "Mode of Pay", payments.draft_orderno as "Order Number", 
@@ -173,7 +173,7 @@ def fetch_payments(engine, database, start_date="2023-01-01"):
 
 
 def fetch_planos(
-    database, engine, schema, users, customers, table, views, start_date="2023-01-01"
+    database, engine, schema, users, customers, table, views, start_date="2024-01-01"
 ):
     planos_query = f"""
         SELECT
@@ -213,6 +213,7 @@ def fetch_planos(
             and a.create_date::date between '{start_date}' and '{today}'
             AND a.cust_code <> '10026902'
             and (insurance.insurance_name <> 'KENYA REVENUE AUTHORITY (KRA)')
+            and (insurance.insurance_name <> 'CORPORATE OUTREACH')
             and activity_no is null
     """
 
@@ -229,7 +230,7 @@ def fetch_planos(
     return all_planos
 
 
-def fetch_planorderscreen(database, engine, start_date="2023-01-01"):
+def fetch_planorderscreen(database, engine, start_date="2024-01-01"):
     plano_orderscreen_query = f"""
     SELECT 
         orderscreen.doc_entry AS "DocEntry", 
@@ -272,7 +273,7 @@ def fetch_planorderscreen(database, engine, start_date="2023-01-01"):
     return plano_orderscreen
 
 
-def fetch_detractors(database, engine, table, start_date="2023-01-01"):
+def fetch_detractors(database, engine, table, start_date="2024-01-01"):
     detractors_query = f"""
     select sap_internal_number as "SAP Internal Number", branch as "Branch",
     trigger_date::date as "Trigger Date", nps_rating::int as "NPS Rating", long_feedback as "Long Remarks"
@@ -286,7 +287,7 @@ def fetch_detractors(database, engine, table, start_date="2023-01-01"):
     return surveys
 
 
-def fetch_opening_time(database, engine, start_date="2023-01-01"):
+def fetch_opening_time(database, engine, start_date="2024-01-01"):
     opening_time_query = f"""
     select date::date as "Date", "day" as "Day", "branch" as "Branch", 
     "opening_time" as "Opening Time", time_opened as "Time Opened", "lost_time" as "Lost Time"
@@ -686,9 +687,9 @@ def fetch_eff_bef_feed_desk(start_date, engine, database, view):
     draft_rejected_tm as "Start Time",
     upload_resent as "End Status",
     upload_resent_tm as "End Time",
-    case when iebf.upload_resent = 'Corrected Form Resent to Optica Insurance' then ''
-    else sie.preauth_to_upload::text end as "Draft to Preauth",
-    case when iebf.upload_resent = 'Corrected Form Resent to Optica Insurance' then ''
+    case when iebf.upload_resent = 'Corrected Form Resent to Optica Insurance' then null
+    else sie.draft_to_preauth::text end as "Draft to Preauth",
+    case when iebf.upload_resent = 'Corrected Form Resent to Optica Insurance' then null
     else sie.preauth_to_upload::text end as "Preauth to Upload",
     case when iebf.upload_resent = 'Corrected Form Resent to Optica Insurance' then iebf.drftorrjctd_to_upldorrsnt
     else sie.draft_to_preauth::int + sie.preauth_to_upload::int end as "Time Taken"
@@ -731,7 +732,7 @@ def fetch_eff_bef_feed_nodesk(start_date, engine, database, view):
     sie.draft_to_upload as "Draft to Upload In Mins",
     iebf.upldorrsnt_to_sntprthorrjctd as "Upload to Sent Pre-Auth In Mins",
     case when iebf.upldorrsnt_to_sntprthorrjctd > 5 and iebf.sentby_branch_code <> iebf.ods_outlet then 1 
-    when iebf.sentby_branch_code = iebf.ods_outlet and iebf.drftorrjctd_to_upldorrsnt + iebf.upldorrsnt_to_sntprthorrjctd > 13 then 1 
+    when iebf.sentby_branch_code = iebf.ods_outlet and sie.draft_to_upload + iebf.upldorrsnt_to_sntprthorrjctd > 13 then 1 
     when iebf.upldorrsnt_to_sntprthorrjctd < 6 and iebf.sentby_branch_code <> iebf.ods_outlet then 0 else 0
     end as check,
     sie.draft_to_upload::int + iebf.upldorrsnt_to_sntprthorrjctd as "Total Time (Target = 13 Mins)"
@@ -868,10 +869,12 @@ def fetch_holidays(engine, dw):
 
 def efficiency_after_feedback(engine, view, start_date) -> pd.DataFrame:
     query = f"""
-    select ieaf.ods_outlet as "Outlet",
+    select 
+    ieaf.doc_no as "Order Number",
+    ieaf.ods_outlet as "Outlet",
     ieaf.ods_creator_name as "Order Creator",
     ieaf.fdbk_stts as "Insurance Feedback",
-    TO_CHAR(ieaf.fdbk_rmrk_tm2, 'YYYY-MM-DD HH24:MI') as "Feedback Time",
+    TO_CHAR(ieaf.fdbk_rmrk_tm, 'YYYY-MM-DD HH24:MI') as "Feedback Time",
     TO_CHAR(ieaf.apprvl_updt_tm, 'YYYY-MM-DD HH24:MI') as "Time Updated on SAP",
     rmrk_to_updt as "Time Taken (Target = 5 Mins)"
     from {view}.insurance_efficiency_after_feedback ieaf 
@@ -882,5 +885,3 @@ def efficiency_after_feedback(engine, view, start_date) -> pd.DataFrame:
 
     data = pd.read_sql_query(query, con=engine)
     return data
-
-    

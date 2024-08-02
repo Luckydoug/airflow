@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 from uganda_sub_tasks.ordersETLs.prescriptions import fetch_prescriptions
 from uganda.automations.non_conversion_remarks.et_non_conversion import (smtp,clean_folder)
-# from tmp.python_test
+
 DAG_ID = 'ET_Non_converstions_UG_ETL'
 
 default_args = {
@@ -29,7 +29,7 @@ with DAG(
     DAG_ID,
     default_args=default_args,
     tags=['Live'],
-    schedule_interval='30 09 * * 1,2,3,4,5,6',
+    schedule_interval='35 02 * * 1,2,3,4,5,6,7',
     catchup=False
 ) as dag:
 

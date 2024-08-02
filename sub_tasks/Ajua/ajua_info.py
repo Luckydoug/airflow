@@ -16,6 +16,7 @@ from sub_tasks.libraries.utils import FromDate, ToDate
 
 # FromDate = '2024-05-01'
 # ToDate = '2024-05-27'
+print(FromDate,ToDate)
 
 def fetch_ajua_info ():
     SessionId = return_session_id(country = "Kenya")

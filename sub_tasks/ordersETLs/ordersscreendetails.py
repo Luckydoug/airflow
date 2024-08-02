@@ -10,8 +10,8 @@ from sub_tasks.data.connect import (pg_execute, engine)
 from sub_tasks.libraries.utils import return_session_id
 from sub_tasks.libraries.utils import FromDate, ToDate
 
-# FromDate = '2024/01/02'
-# ToDate = '2024/01/05'
+# FromDate = '2024/07/01'
+# ToDate = '2024/07/31'
 
 def fetch_sap_orderscreendetails():
     SessionId = return_session_id(country = "Kenya")
@@ -382,7 +382,7 @@ def create_fact_orderscreen():
     
     print('create_fact_orderscreen')
 
-
-
+# fetch_sap_orderscreendetails()
+# update_to_source_orderscreen()
 
  

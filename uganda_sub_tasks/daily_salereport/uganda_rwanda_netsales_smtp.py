@@ -36,7 +36,7 @@ from sub_tasks.libraries.utils import (clean_folder_uganda,clean_folder_rwanda,g
 
 # PG Execute(Query)
 from sub_tasks.data.connect_mawingu import (pg_execute, pg_fetch_all, engine)  
-from sub_tasks.api_login.api_login import(login_uganda)
+# from sub_tasks.api_login.api_login import(login_uganda)
 conn = psycopg2.connect(host="10.40.16.19",database="mawingu", user="postgres", password="@Akb@rp@$$w0rtf31n")
 
 
@@ -263,7 +263,7 @@ def daily_netsales_email_uganda_rwanda():
         )
 
     to_date = get_todate()
-    # to_date = '2024-05-31'
+    # to_date = '2024-07-31'
   
     sender_email = os.getenv("wairimu_email")
     # receiver_email = ['wairimu@optica.africa']

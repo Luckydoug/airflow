@@ -5,12 +5,12 @@ from datetime import datetime, timedelta
 def fetch_biweekly_kpis(start_date, end_date, engine, database, view):
     query = f"""
     with opening_time as (
-    select bd.branch_code as "Branch", 
+    select shb.branch_code as "Branch", 
     'OVERALL' as "Payroll Number",
     count(*) as "Times Opened Late(Thresh = 0)"
     from {database}.source_opening_time sot 
-    left join reports_tables.branch_data bd 
-    on lower(sot.branch) = lower(bd.branch_name)
+    left join {database}.source_hrms_branch shb 
+    on shb.branch_name::text = sot.branch::text
     where lost_time > 0
     and date between '{start_date}' and '{end_date}'
     group by 1
@@ -20,13 +20,14 @@ def fetch_biweekly_kpis(start_date, end_date, engine, database, view):
     count(distinct(al.date)) as "Active Days"
     from {view}.all_activity al
     where "date"::date between '{start_date}' and '{end_date}'
+    and al.user_code is not null
     group by grouping sets((al.branch), (al.branch, al.user_code))
     order by al.branch
     ),
     optom_conversion as (
     select a.branch_code as "Branch",
     coalesce(a.optom, 'OVERALL') as "Payroll Number",
-    round((sum(case when days <= 7 then 1 else 0 end))::decimal / count(a.code) * 100, 0)::decimal as "Optom Overall Conversion"
+    round((sum(case when days <= 7 then 1 else 0 end))::decimal / count(a.code) * 100, 0)::decimal as "Optom Low RX Conversion (Target = 65)"
     from
     (select row_number() over(partition by cust_code, create_date, code order by days, rx_type, code desc) as r, *
     from {view}.et_conv
@@ -68,7 +69,7 @@ def fetch_biweekly_kpis(start_date, end_date, engine, database, view):
     coalesce(COALESCE(orders.ods_creator, a.view_creator, a.sales_employees, optom), 'OVERALL') 
     AS "Payroll Number",
     round((sum(case when a.days <= 7 then 1 else 0 end))::decimal / count(a.code) * 100, 0)::decimal 
-    as "EWC Overall Conversion (Target = 75)"
+    as "EWC Low RX Conversion (Target = 65)"
     FROM (
     SELECT 
     ROW_NUMBER() OVER(PARTITION BY cust_code, create_date, code ORDER BY days, rx_type, code DESC) AS r, 
@@ -103,6 +104,7 @@ def fetch_biweekly_kpis(start_date, end_date, engine, database, view):
     AND ns.response = 'Yes'::text 
     AND ns.drop = 'No'::text
     and ns.trigger_date::date between '{start_date}' and '{end_date}'
+    and ns.user_code is not null
     group by grouping sets((ns.branch), (ns.branch, ns.user_code))
     ),
     google_reviews as (
@@ -126,15 +128,6 @@ def fetch_biweekly_kpis(start_date, end_date, engine, database, view):
     where pk_date::date between '{start_date}' and '{end_date}'
     group by 1
     ),																		
-    frame_only as (
-    select foo."OrderBranch" as "Branch",
-    coalesce(foo."OrderCreatorPayroll", 'OVERALL') as "Payroll Number",
-    count(foo."OrderNumber") as "Frame only Orders" from 
-    {view}.frame_only_orders foo 
-    where foo."SalesOrderCreateDate"::date between '{start_date}' and '{end_date}'
-    group by grouping sets((foo."OrderBranch"), (foo."OrderBranch", foo."OrderCreatorPayroll"))
-    order by 1
-    ),
     quality_rejected as (
     SELECT 
     orders.ods_outlet as "Branch",
@@ -204,8 +197,8 @@ def fetch_biweekly_kpis(start_date, end_date, engine, database, view):
     ifc.ods_outlet as "Branch",
     coalesce(ifc.ods_creator, 'OVERALL') as "Payroll Number",
     round((
-    nullif(sum(case when ifc.fdbck_type = 'Use Available Amount on SMART' and 
-    ifc.cnvrtd = 1 then 1 else 0 end)::decimal,0) / 
+    sum(case when ifc.fdbck_type = 'Use Available Amount on SMART' and 
+    ifc.cnvrtd = 1 then 1 else 0 end)::decimal / 
     nullif(sum(case when ifc.fdbck_type = 'Use Available Amount on SMART' 
     then 1 else 0 end)::decimal,0))::decimal * 100, 0) as "Use Available Amount Conversion",
     round((
@@ -231,7 +224,7 @@ def fetch_biweekly_kpis(start_date, end_date, engine, database, view):
     client_concated as (
     select af.ods_outlet as "Branch",
     coalesce(af.ods_creator, 'OVERALL') as "Payroll Number",
-    round((sum(case when af.apprvl_to_cstmr_cntctd <= 60 then 1 else 0 end)::decimal / nullif(count(af.apprvl_to_cstmr_cntctd)::decimal, 0)) * 100,0) as "InsuranceFeedbackToCustomerTime"
+    round((sum(case when af.apprvl_to_cstmr_cntctd <= 10 then 1 else 0 end)::decimal / nullif(count(af.apprvl_to_cstmr_cntctd)::decimal, 0)) * 100,0) as "InsuranceFeedbackToCustomerTime"
     from {view}.insurance_efficiency_after_feedback af
     where af.cstmr_cntctd_tm is not null 
     and af.cstmr_cntctd_tm::date between '{start_date}' and '{end_date}'
@@ -286,48 +279,43 @@ def fetch_biweekly_kpis(start_date, end_date, engine, database, view):
     where cfr.corrected_date::date between '{start_date}' and '{end_date}'
     group by grouping sets ((cfr.order_branch), (cfr.order_branch, cfr.creator))
     ),
-    old_eyetest_view as (
-    select b."Outlet" as "Branch",
-    coalesce(b."Viewed Code", 'OVERALL') as "Payroll Number",
-    round(((sum(case when b.days <= 7 then 1 else 0 end)::decimal / nullif(count(b.*),0)))::decimal * 100, 0) 
-    as "Viewed Eyetest Older than 30 Days Conversion"
-    from (
-    select * from {view}.salespersons_older_than_30days_eyetest_viewed_conversion
-    union all
-    select * from {view}.optoms_older_than_30days_eyetest_viewed_conversion) b
-    where b."Outlet" is not null
-    and b."View Date"::date between '{start_date}' and '{end_date}'
-    group by grouping sets ((b."Outlet"), (b."Outlet", b."Viewed Code"))
+    smart_forwarded as (
+    select sf.branch as "Branch",
+	coalesce(sf.ods_creator, 'OVERALL') as "Payroll Number",
+	round((sum(case when sf.time_taken <= 60 then 1 else 0 end)::decimal / count(sf.order_number))::decimal * 100, 0) as "Approval Received to SMART Forwarded Efficiency"
+	from report_views.smart_forwarded sf 
+	where sf.smart_time::date between '{start_date}' and '{end_date}'
+	group by grouping sets ((sf.branch), (sf.branch, sf.ods_creator))
+	order by 1
     ),
     overall as (
     select
-    coalesce(nps."Branch", opening_time."Branch", sops."Branch", frame_only."Branch", 
+    coalesce(nps."Branch", opening_time."Branch", sops."Branch", 
     quality_rejected."Branch", customer_issue."Branch", discounts."Branch", 
     insurance_conversion."Branch",aprvl_upd_eff."Branch", optom_conversion."Branch",
     staff_conversion."Branch",eyetest_time."Branch", eyetest_to_order."Branch", pie."Branch", 
-    gr."Branch", ad."Branch", war."Branch", cl."Branch", ed."Branch", cf."Branch", oev."Branch"
+    gr."Branch", ad."Branch", war."Branch", cl."Branch", ed."Branch", cf."Branch", sff."Branch"
     ) as "Branch",
-    coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", frame_only."Payroll Number", 
+    coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", 
     quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number", 
     insurance_conversion."Payroll Number",aprvl_upd_eff."Payroll Number", optom_conversion."Payroll Number",
     staff_conversion."Payroll Number", eyetest_time."Payroll Number", eyetest_to_order."Payroll Number", 
     pie."Payroll Number", gr."Payroll Number", ad."Payroll Number", war."Payroll Number", cl."Payroll Number",
-    ed."Payroll Number", cf."Payroll Number", oev."Payroll Number"
+    ed."Payroll Number", cf."Payroll Number",sff."Payroll Number"
     ) as "Payroll Number",
     coalesce(ad."Active Days", 0) as "Active Days",
     coalesce(opening_time."Times Opened Late(Thresh = 0)") as "Times Opened Late(Thresh = 0)",
     coalesce(sops."SOPs/ Customers") as "SOPs/ Customers",
     war."Warranties Not Returned",
-    optom_conversion."Optom Overall Conversion",
-    staff_conversion."EWC Overall Conversion (Target = 75)",
-    oev."Viewed Eyetest Older than 30 Days Conversion",
+    optom_conversion."Optom Low RX Conversion (Target = 65)",
+    staff_conversion."EWC Low RX Conversion (Target = 65)",
     ed."Error Deductable",
     eyetest_time."Average Eye Test Time",
     eyetest_to_order."Eye Test to Order Efficiency (Target = 90%% in 45 minutes)",
     pie."Printing Identifier Efficiency (Target = 5 Mins)",
     cf."CorrectedFormsResentEfficiency",
-    coalesce(frame_only."Frame only Orders", 0) as "Frame Only Orders",
     coalesce(quality_rejected."Quality Rejected at Branch", 0) as "Quality Rejected at Branch",
+    sff."Approval Received to SMART Forwarded Efficiency",
     nps."NPS Score(Target = 90)",
     gr."Average Rating",
     coalesce(customer_issue."Customer Issue", 0) as "Customer Issue During Collection",
@@ -342,60 +330,57 @@ def fetch_biweekly_kpis(start_date, end_date, engine, database, view):
     full outer join sops 
     on sops."Branch" = coalesce(nps."Branch", opening_time."Branch") 
     and sops."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number")
-    full outer join frame_only 
-    on frame_only."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch") 
-    and frame_only."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number")
     full outer join quality_rejected 
-    on quality_rejected."Branch"=  coalesce(nps."Branch", opening_time."Branch", sops."Branch", frame_only."Branch") 
-    and quality_rejected."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", frame_only."Payroll Number")
+    on quality_rejected."Branch"=  coalesce(nps."Branch", opening_time."Branch", sops."Branch") 
+    and quality_rejected."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number")
     full outer join customer_issue 
-    on customer_issue."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", frame_only."Branch", quality_rejected."Branch") 
-    and customer_issue."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", frame_only."Payroll Number", quality_rejected."Payroll Number")
+    on customer_issue."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", quality_rejected."Branch") 
+    and customer_issue."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", quality_rejected."Payroll Number")
     full outer join discounts 
-    on discounts."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", frame_only."Branch", quality_rejected."Branch", customer_issue."Branch") 
-    and discounts."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", frame_only."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number")
+    on discounts."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", quality_rejected."Branch", customer_issue."Branch") 
+    and discounts."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number")
     full outer join insurance_conversion 
-    on insurance_conversion."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", frame_only."Branch", quality_rejected."Branch", customer_issue."Branch", discounts."Branch") 
-    and insurance_conversion."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", frame_only."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number")
+    on insurance_conversion."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", quality_rejected."Branch", customer_issue."Branch", discounts."Branch") 
+    and insurance_conversion."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number")
     full outer join aprvl_upd_eff 
-    on aprvl_upd_eff."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", frame_only."Branch", quality_rejected."Branch", customer_issue."Branch", discounts."Branch", insurance_conversion."Branch") 
-    and aprvl_upd_eff."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", frame_only."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number", insurance_conversion."Payroll Number")
+    on aprvl_upd_eff."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", quality_rejected."Branch", customer_issue."Branch", discounts."Branch", insurance_conversion."Branch") 
+    and aprvl_upd_eff."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number", insurance_conversion."Payroll Number")
     full outer join optom_conversion 
-    on optom_conversion."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", frame_only."Branch", quality_rejected."Branch", customer_issue."Branch", discounts."Branch", insurance_conversion."Branch",aprvl_upd_eff."Branch") 
-    and optom_conversion."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", frame_only."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number", insurance_conversion."Payroll Number", aprvl_upd_eff."Payroll Number")
+    on optom_conversion."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", quality_rejected."Branch", customer_issue."Branch", discounts."Branch", insurance_conversion."Branch",aprvl_upd_eff."Branch") 
+    and optom_conversion."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number", insurance_conversion."Payroll Number", aprvl_upd_eff."Payroll Number")
     full outer join staff_conversion 
-    on staff_conversion."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", frame_only."Branch", quality_rejected."Branch", customer_issue."Branch", discounts."Branch", insurance_conversion."Branch",aprvl_upd_eff."Branch", optom_conversion."Branch")
-    and staff_conversion."Payroll Number" =  coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", frame_only."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number", insurance_conversion."Payroll Number", aprvl_upd_eff."Payroll Number", optom_conversion."Payroll Number")
+    on staff_conversion."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", quality_rejected."Branch", customer_issue."Branch", discounts."Branch", insurance_conversion."Branch",aprvl_upd_eff."Branch", optom_conversion."Branch")
+    and staff_conversion."Payroll Number" =  coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number", insurance_conversion."Payroll Number", aprvl_upd_eff."Payroll Number", optom_conversion."Payroll Number")
     full outer join eyetest_time 
-    on eyetest_time."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", frame_only."Branch", quality_rejected."Branch", customer_issue."Branch", discounts."Branch", insurance_conversion."Branch",aprvl_upd_eff."Branch", optom_conversion."Branch", staff_conversion."Branch")
-    and eyetest_time."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", frame_only."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number", insurance_conversion."Payroll Number", aprvl_upd_eff."Payroll Number", optom_conversion."Payroll Number", staff_conversion."Payroll Number")
+    on eyetest_time."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", quality_rejected."Branch", customer_issue."Branch", discounts."Branch", insurance_conversion."Branch",aprvl_upd_eff."Branch", optom_conversion."Branch", staff_conversion."Branch")
+    and eyetest_time."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number", insurance_conversion."Payroll Number", aprvl_upd_eff."Payroll Number", optom_conversion."Payroll Number", staff_conversion."Payroll Number")
     full outer join eyetest_to_order 
-    on eyetest_to_order."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", frame_only."Branch", quality_rejected."Branch", customer_issue."Branch", discounts."Branch", insurance_conversion."Branch",aprvl_upd_eff."Branch", optom_conversion."Branch", staff_conversion."Branch", eyetest_time."Branch")
-    and eyetest_to_order."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", frame_only."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number", insurance_conversion."Payroll Number", aprvl_upd_eff."Payroll Number", optom_conversion."Payroll Number", staff_conversion."Payroll Number", eyetest_time."Payroll Number")
+    on eyetest_to_order."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", quality_rejected."Branch", customer_issue."Branch", discounts."Branch", insurance_conversion."Branch",aprvl_upd_eff."Branch", optom_conversion."Branch", staff_conversion."Branch", eyetest_time."Branch")
+    and eyetest_to_order."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number", insurance_conversion."Payroll Number", aprvl_upd_eff."Payroll Number", optom_conversion."Payroll Number", staff_conversion."Payroll Number", eyetest_time."Payroll Number")
     full outer join printing_identifier pie 
-    on pie."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", frame_only."Branch", quality_rejected."Branch", customer_issue."Branch", discounts."Branch", insurance_conversion."Branch",aprvl_upd_eff."Branch", optom_conversion."Branch", staff_conversion."Branch", eyetest_time."Branch", eyetest_to_order."Branch")
-    and pie."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", frame_only."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number", insurance_conversion."Payroll Number", aprvl_upd_eff."Payroll Number", optom_conversion."Payroll Number", staff_conversion."Payroll Number", eyetest_time."Payroll Number", eyetest_to_order."Payroll Number")
+    on pie."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", quality_rejected."Branch", customer_issue."Branch", discounts."Branch", insurance_conversion."Branch",aprvl_upd_eff."Branch", optom_conversion."Branch", staff_conversion."Branch", eyetest_time."Branch", eyetest_to_order."Branch")
+    and pie."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number", insurance_conversion."Payroll Number", aprvl_upd_eff."Payroll Number", optom_conversion."Payroll Number", staff_conversion."Payroll Number", eyetest_time."Payroll Number", eyetest_to_order."Payroll Number")
     full outer join google_reviews gr
-    on gr."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", frame_only."Branch", quality_rejected."Branch", customer_issue."Branch", discounts."Branch", insurance_conversion."Branch",aprvl_upd_eff."Branch", optom_conversion."Branch", staff_conversion."Branch", eyetest_time."Branch", eyetest_to_order."Branch", pie."Branch")
-    and gr."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", frame_only."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number", insurance_conversion."Payroll Number", aprvl_upd_eff."Payroll Number", optom_conversion."Payroll Number", staff_conversion."Payroll Number", eyetest_time."Payroll Number", eyetest_to_order."Payroll Number", pie."Payroll Number")
+    on gr."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", quality_rejected."Branch", customer_issue."Branch", discounts."Branch", insurance_conversion."Branch",aprvl_upd_eff."Branch", optom_conversion."Branch", staff_conversion."Branch", eyetest_time."Branch", eyetest_to_order."Branch", pie."Branch")
+    and gr."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number", insurance_conversion."Payroll Number", aprvl_upd_eff."Payroll Number", optom_conversion."Payroll Number", staff_conversion."Payroll Number", eyetest_time."Payroll Number", eyetest_to_order."Payroll Number", pie."Payroll Number")
     full outer join active_days ad 
-    on ad."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", frame_only."Branch", quality_rejected."Branch", customer_issue."Branch", discounts."Branch", insurance_conversion."Branch",aprvl_upd_eff."Branch", optom_conversion."Branch", staff_conversion."Branch", eyetest_time."Branch", eyetest_to_order."Branch", pie."Branch", gr."Branch")
-    and ad."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", frame_only."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number", insurance_conversion."Payroll Number", aprvl_upd_eff."Payroll Number", optom_conversion."Payroll Number", staff_conversion."Payroll Number", eyetest_time."Payroll Number", eyetest_to_order."Payroll Number", pie."Payroll Number", gr."Payroll Number")
+    on ad."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", quality_rejected."Branch", customer_issue."Branch", discounts."Branch", insurance_conversion."Branch",aprvl_upd_eff."Branch", optom_conversion."Branch", staff_conversion."Branch", eyetest_time."Branch", eyetest_to_order."Branch", pie."Branch", gr."Branch")
+    and ad."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number", insurance_conversion."Payroll Number", aprvl_upd_eff."Payroll Number", optom_conversion."Payroll Number", staff_conversion."Payroll Number", eyetest_time."Payroll Number", eyetest_to_order."Payroll Number", pie."Payroll Number", gr."Payroll Number")
     full outer join warranties war 
-    on war."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", frame_only."Branch", quality_rejected."Branch", customer_issue."Branch", discounts."Branch", insurance_conversion."Branch",aprvl_upd_eff."Branch", optom_conversion."Branch", staff_conversion."Branch", eyetest_time."Branch", eyetest_to_order."Branch", pie."Branch", gr."Branch", ad."Branch")
-    and war."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", frame_only."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number", insurance_conversion."Payroll Number", aprvl_upd_eff."Payroll Number", optom_conversion."Payroll Number", staff_conversion."Payroll Number", eyetest_time."Payroll Number", eyetest_to_order."Payroll Number", pie."Payroll Number", gr."Payroll Number", ad."Payroll Number")
+    on war."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", quality_rejected."Branch", customer_issue."Branch", discounts."Branch", insurance_conversion."Branch",aprvl_upd_eff."Branch", optom_conversion."Branch", staff_conversion."Branch", eyetest_time."Branch", eyetest_to_order."Branch", pie."Branch", gr."Branch", ad."Branch")
+    and war."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number", insurance_conversion."Payroll Number", aprvl_upd_eff."Payroll Number", optom_conversion."Payroll Number", staff_conversion."Payroll Number", eyetest_time."Payroll Number", eyetest_to_order."Payroll Number", pie."Payroll Number", gr."Payroll Number", ad."Payroll Number")
     full outer join client_concated cl 
-    on cl."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", frame_only."Branch", quality_rejected."Branch", customer_issue."Branch", discounts."Branch", insurance_conversion."Branch",aprvl_upd_eff."Branch", optom_conversion."Branch", staff_conversion."Branch", eyetest_time."Branch", eyetest_to_order."Branch", pie."Branch", gr."Branch", ad."Branch", war."Branch")
-    and cl."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", frame_only."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number", insurance_conversion."Payroll Number", aprvl_upd_eff."Payroll Number", optom_conversion."Payroll Number", staff_conversion."Payroll Number", eyetest_time."Payroll Number", eyetest_to_order."Payroll Number", pie."Payroll Number", gr."Payroll Number", ad."Payroll Number", war."Payroll Number")
+    on cl."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", quality_rejected."Branch", customer_issue."Branch", discounts."Branch", insurance_conversion."Branch",aprvl_upd_eff."Branch", optom_conversion."Branch", staff_conversion."Branch", eyetest_time."Branch", eyetest_to_order."Branch", pie."Branch", gr."Branch", ad."Branch", war."Branch")
+    and cl."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number", insurance_conversion."Payroll Number", aprvl_upd_eff."Payroll Number", optom_conversion."Payroll Number", staff_conversion."Payroll Number", eyetest_time."Payroll Number", eyetest_to_order."Payroll Number", pie."Payroll Number", gr."Payroll Number", ad."Payroll Number", war."Payroll Number")
     full outer join error_deductable ed 
-    on ed."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", frame_only."Branch", quality_rejected."Branch", customer_issue."Branch", discounts."Branch", insurance_conversion."Branch",aprvl_upd_eff."Branch", optom_conversion."Branch", staff_conversion."Branch", eyetest_time."Branch", eyetest_to_order."Branch", pie."Branch", gr."Branch", ad."Branch", war."Branch", cl."Branch")
-    and ed."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", frame_only."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number", insurance_conversion."Payroll Number", aprvl_upd_eff."Payroll Number", optom_conversion."Payroll Number", staff_conversion."Payroll Number", eyetest_time."Payroll Number", eyetest_to_order."Payroll Number", pie."Payroll Number", gr."Payroll Number", ad."Payroll Number", war."Payroll Number", cl."Payroll Number")
+    on ed."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", quality_rejected."Branch", customer_issue."Branch", discounts."Branch", insurance_conversion."Branch",aprvl_upd_eff."Branch", optom_conversion."Branch", staff_conversion."Branch", eyetest_time."Branch", eyetest_to_order."Branch", pie."Branch", gr."Branch", ad."Branch", war."Branch", cl."Branch")
+    and ed."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number", insurance_conversion."Payroll Number", aprvl_upd_eff."Payroll Number", optom_conversion."Payroll Number", staff_conversion."Payroll Number", eyetest_time."Payroll Number", eyetest_to_order."Payroll Number", pie."Payroll Number", gr."Payroll Number", ad."Payroll Number", war."Payroll Number", cl."Payroll Number")
     full outer join corrected_forms cf 
-    on cf."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", frame_only."Branch", quality_rejected."Branch", customer_issue."Branch", discounts."Branch", insurance_conversion."Branch",aprvl_upd_eff."Branch", optom_conversion."Branch", staff_conversion."Branch", eyetest_time."Branch", eyetest_to_order."Branch", pie."Branch", gr."Branch", ad."Branch", war."Branch", cl."Branch", ed."Branch")
-    and cf."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", frame_only."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number", insurance_conversion."Payroll Number", aprvl_upd_eff."Payroll Number", optom_conversion."Payroll Number", staff_conversion."Payroll Number", eyetest_time."Payroll Number", eyetest_to_order."Payroll Number", pie."Payroll Number", gr."Payroll Number", ad."Payroll Number", war."Payroll Number", cl."Payroll Number", ed."Payroll Number")
-    full outer join old_eyetest_view oev 
-    on oev."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", frame_only."Branch", quality_rejected."Branch", customer_issue."Branch", discounts."Branch", insurance_conversion."Branch",aprvl_upd_eff."Branch", optom_conversion."Branch", staff_conversion."Branch", eyetest_time."Branch", eyetest_to_order."Branch", pie."Branch", gr."Branch", ad."Branch", war."Branch", cl."Branch", ed."Branch", cf."Branch")
-    and oev."Payroll Number" =  coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", frame_only."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number", insurance_conversion."Payroll Number", aprvl_upd_eff."Payroll Number", optom_conversion."Payroll Number", staff_conversion."Payroll Number", eyetest_time."Payroll Number", eyetest_to_order."Payroll Number", pie."Payroll Number", gr."Payroll Number", ad."Payroll Number", war."Payroll Number", cl."Payroll Number", ed."Payroll Number", cf."Payroll Number")
+    on cf."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", quality_rejected."Branch", customer_issue."Branch", discounts."Branch", insurance_conversion."Branch",aprvl_upd_eff."Branch", optom_conversion."Branch", staff_conversion."Branch", eyetest_time."Branch", eyetest_to_order."Branch", pie."Branch", gr."Branch", ad."Branch", war."Branch", cl."Branch", ed."Branch")
+    and cf."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number", insurance_conversion."Payroll Number", aprvl_upd_eff."Payroll Number", optom_conversion."Payroll Number", staff_conversion."Payroll Number", eyetest_time."Payroll Number", eyetest_to_order."Payroll Number", pie."Payroll Number", gr."Payroll Number", ad."Payroll Number", war."Payroll Number", cl."Payroll Number", ed."Payroll Number")
+    full outer join smart_forwarded sff 
+    on sff."Branch" = coalesce(nps."Branch", opening_time."Branch", sops."Branch", quality_rejected."Branch", customer_issue."Branch", discounts."Branch", insurance_conversion."Branch",aprvl_upd_eff."Branch", optom_conversion."Branch", staff_conversion."Branch", eyetest_time."Branch", eyetest_to_order."Branch", pie."Branch", gr."Branch", ad."Branch", war."Branch", cl."Branch", ed."Branch", cf."Branch")
+    and sff."Payroll Number" = coalesce(nps."Payroll Number", opening_time."Payroll Number", sops."Payroll Number", quality_rejected."Payroll Number", customer_issue."Payroll Number", discounts."Payroll Number", insurance_conversion."Payroll Number", aprvl_upd_eff."Payroll Number", optom_conversion."Payroll Number", staff_conversion."Payroll Number", eyetest_time."Payroll Number", eyetest_to_order."Payroll Number", pie."Payroll Number", gr."Payroll Number", ad."Payroll Number", war."Payroll Number", cl."Payroll Number", ed."Payroll Number", cf."Payroll Number")
     )
     select 
     bd.branch_code as "Branch",
@@ -410,12 +395,11 @@ def fetch_biweekly_kpis(start_date, end_date, engine, database, view):
     overall."Warranties Not Returned",
     overall."NPS Score(Target = 90)",
     overall."Average Rating" as "Google Reviews Average Rating",
-    overall."Frame Only Orders",
     overall."Optom Low RX Conversion (Target = 65)",
     overall."EWC Low RX Conversion (Target = 65)",
-    overall."Viewed Eyetest Older than 30 Days Conversion",
     overall."Error Deductable",
     overall."Eye Test to Order Efficiency (Target = 90%% in 45 minutes)",
+    overall."Approval Received to SMART Forwarded Efficiency",
     overall."Printing Identifier Efficiency (Target = 5 Mins)",
     overall."CorrectedFormsResentEfficiency",
     overall."Average Eye Test Time",
@@ -445,12 +429,19 @@ class KPIsData:
         self.view = view
         self.database = database
 
+
+
+        """
+        Private Class Method
+        """
     def _validate_dates(self, start_date: str, end_date: str) -> None:
         try:
             pd.to_datetime(start_date)
             pd.to_datetime(end_date)
         except ValueError:
-            raise ValueError("start_date and end_date must be in a valid date format (YYYY-MM-DD).")
+            raise ValueError(
+                "start_date and end_date must be in a valid date format (YYYY-MM-DD)."
+            )
 
     def _execute_query(self, query: str) -> pd.DataFrame:
         try:
@@ -458,23 +449,25 @@ class KPIsData:
         except Exception as e:
             print(f"An error occured: {e}")
             return pd.DataFrame()
-        
-    def _get_max_date(self, table:str, date_column: str) -> datetime:
+
+    def _get_max_date(self, table: str, date_column: str) -> datetime:
         query = f"SELECT MAX({date_column}) AS max_date FROM {table}"
         result = self._execute_query(query)
-        if not result.empty and result['max_date'].iloc[0]:
-            return pd.to_datetime(result['max_date']).iloc[0]
+        if not result.empty and result["max_date"].iloc[0]:
+            return pd.to_datetime(result["max_date"]).iloc[0]
         return None
 
     def fetch_opening_time(self) -> pd.DataFrame:
         query = f"""
         select sot.date as "Date",
-        sot.branch as "Branch",
+        shb.branch_code as "Branch",
         sot.opening_time as "Opening Time",
         sot.time_opened as "Time Opened",
         sot.lost_time as "Lost Time",
         ' ' as "Comments"
         from {self.database}.source_opening_time sot 
+        left join {self.database}.source_hrms_branch shb
+        on shb.branch_name::text = sot.branch::text
         where sot.date::date between '{self.start_date}' and '{self.end_date}'
         and sot.lost_time > 0
         """
@@ -506,6 +499,7 @@ class KPIsData:
         and a.optom is not null 
         and a.create_date::date between '{self.start_date}' and '{self.end_date}'
         and (a.days is null or a.days > 7)
+        and "RX" = 'Low Rx'
         """
 
         return self._execute_query(query)
@@ -637,23 +631,62 @@ class KPIsData:
 
         return self._execute_query(query)
 
+    def fetch_anomalous_eyetest_times(self) -> pd.DataFrame:
+        query = f"""
+        select eqt.visit_id as "Visit Id",
+        eqt.outlet_id as "Branch",
+        eqt.cust_id as "Customer Code",
+        eqt.optom_name as "Optom Name",
+        to_char(eqt.added_to_queue2,'YYYY-MM-DD HH24:MI') as "Added to Queue",
+        to_char(eqt.et_start, 'YYYY-MM-DD HH24:MI') as "ET Start Time",
+        to_char(eqt.eyetest_complete, 'YYYY-MM-DD HH24:MI') as "ET End Time",
+        eye_testtime as "Eye Test Time"
+        from {self.view}.eyetest_queue_time eqt 
+        where (eqt.eye_testtime > 12 or eqt.eye_testtime < 5)
+        and eqt.added_to_queue2::date between '{self.start_date}' and '{self.end_date}'
+        """
+
+        return self._execute_query(query)
+
     def fetch_conversion_trend(self):
         query = f"""
-        SELECT 
-        TRIM(a.branch_code) AS "Branch",
-        TO_CHAR(DATE_TRUNC('week', a.create_date::timestamp), 'YYYY-MM-DD') AS "Week Start",
-        ROUND((SUM(CASE WHEN a.days <= 7 THEN 1 ELSE 0 END)::DECIMAL / COUNT(a.code) * 100), 0)::DECIMAL 
-        AS "Overall Conversion"
-        FROM (SELECT ROW_NUMBER() OVER(PARTITION BY cust_code, create_date, code ORDER BY days, rx_type, code DESC) AS r, *
-        FROM {self.view}.et_conv
-        WHERE status NOT IN ('Cancel', 'Unstable', 'CanceledEyeTest', 'Hold')
-        AND (patient_to_ophth NOT IN ('Yes') OR patient_to_ophth IS NULL)) AS a 
-        WHERE a.r = 1
-        AND a.optom IS NOT NULL
-        AND a.create_date::date BETWEEN DATE_TRUNC('week', CURRENT_DATE) - INTERVAL '12 weeks' 
-        AND DATE_TRUNC('week', CURRENT_DATE) - INTERVAL '1 day'
-        GROUP BY 1, 2
-        ORDER BY 2 asc;
+        select 
+        trim(a.branch_code) as "branch",
+        to_char(date_trunc('week', a.create_date::timestamp), 'yyyy-mm-dd') as "week start",
+        round((sum(case when a.days <= 7 then 1 else 0 end)::decimal / count(a.code) * 100), 0)::decimal 
+        as "overall conversion"
+        from (select row_number() over(partition by cust_code, create_date, code order by days, rx_type, code desc) as r, *
+        from {self.view}.et_conv
+        where status not in ('cancel', 'unstable', 'canceledeyetest', 'hold')
+        and (patient_to_ophth not in ('yes') or patient_to_ophth is null)) as a 
+        where a.r = 1
+        and a.optom is not null
+        and a.create_date::date between date_trunc('week', current_date) - interval '12 weeks' 
+        and date_trunc('week', current_date) - interval '1 day'
+        group by 1, 2
+        order by 2 asc;
+        """
+        return self._execute_query(query)
+    
+
+    def fetch_lowrx_conversion_trend(self):
+        query = f"""
+        select 
+        trim(a.branch_code) as "Branch",
+        to_char(date_trunc('week', a.create_date::timestamp), 'yyyy-mm-dd') as "week start",
+        round((sum(case when a.days <= 7 then 1 else 0 end)::decimal / count(a.code) * 100), 0)::decimal 
+        as "Overall Conversion"
+        from (select row_number() over(partition by cust_code, create_date, code order by days, rx_type, code desc) as r, *
+        from {self.view}.et_conv
+        where status not in ('cancel', 'unstable', 'canceledeyetest', 'hold')
+        and (patient_to_ophth not in ('yes') or patient_to_ophth is null)) as a 
+        where a.r = 1
+        and a.optom is not null
+        and a.create_date::date between date_trunc('week', current_date) - interval '12 weeks' 
+        and date_trunc('week', current_date) - interval '1 day'
+        and "RX" = 'low rx'
+        group by 1, 2
+        order by 2 asc;
         """
         return self._execute_query(query)
 
@@ -679,7 +712,7 @@ class KPIsData:
             max_date = self._get_max_date(table, date_column)
             if max_date is None or max_date.date() < yesterday:
                 not_up_to_date_tables.append(table)
-        
+
         if not_up_to_date_tables:
             return False, f"Tables not up to date: {', '.join(not_up_to_date_tables)}"
         return True, "All tables are up to date"

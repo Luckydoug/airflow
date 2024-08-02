@@ -8,6 +8,7 @@ from sub_tasks.libraries.utils import (
     fourth_week_start,
     assert_integrity,
 )
+
 from reports.draft_to_upload.smtp.smtp import (
     send_draft_upload_report,
     send_to_branches,
@@ -67,6 +68,7 @@ database = "voler_staging"
 engine = create_rwanda_engine()
 engine2 = createe_engine()
 selection = get_report_frequency()
+selection = "Daily"    
 start_date = return_report_daterange(selection=selection)
 
 start_date = pd.to_datetime(start_date, format="%Y-%m-%d").date()
@@ -424,14 +426,14 @@ def build_direct_conversion():
 
 def desk_before() -> pd.DataFrame:
     desk_before = fetch_eff_bef_feed_desk(
-        start_date=start_date, engine=engine, view="voler_mviews"
+        start_date=start_date, engine=engine, view="voler_mviews", database="voler_staging"
     )
     return desk_before
 
 
 def no_desk_before() -> pd.DataFrame:
     no_desk_before = fetch_eff_bef_feed_nodesk(
-        start_date=start_date, engine=engine, view="voler_mviews"
+        start_date=start_date, engine=engine, view="voler_mviews", database="voler_staging"
     )
 
     return no_desk_before
@@ -446,6 +448,7 @@ def build_efficiency_before_feedback() -> None:
 
 
 def trigger_rwanda_smtp():
+    return
     if not assert_integrity(engine=engine,database="voler_staging"):
         print("We run into an error. Ensure all the tables are updated in data warehouse and try again.")
         return

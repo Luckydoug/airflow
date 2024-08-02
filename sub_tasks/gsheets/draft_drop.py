@@ -21,7 +21,8 @@ def fetch_draft_drop():
         'Order Creator': 'order_creator',
         'Reason for the Delay': 'delay_reason',
         'Was the Issue Resolved?': 'issue_resolved',
-        'Additional Remarks': 'additional_remarks'
+        'Additional Remarks': 'additional_remarks',
+        'Glazing':'glazing'
     }, inplace=True)
 
     sh = sh.set_index(['order_number'])

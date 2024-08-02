@@ -100,3 +100,4 @@ def fetch_rwanda_working_hours():
            create_table=False
     )
 
+# fetch_kenya_working_hours()

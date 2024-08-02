@@ -21,7 +21,7 @@ from sqlalchemy import create_engine, text, VARCHAR
 from pandas.io.json._normalize import nested_to_record 
 
 from sub_tasks.data.connect_voler import (pg_execute, pg_fetch_all, engine)  
-from sub_tasks.api_login.api_login import(login_rwanda)
+# from sub_tasks.api_login.api_login import(login_rwanda)
 from sub_tasks.libraries.utils import return_session_id
 
 # FromDate = '2023/05/01'

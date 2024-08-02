@@ -56,10 +56,21 @@ def refresh_order_contents():
 
     query = """
     refresh materialized view voler_mviews.order_contents;
+    refresh materialized view voler_mviews.eyetest_queue_time;
     """
 
     query = pg_execute(query)
+  
 
+def refresh_optom_queue_no_et():
 
+    query = """
+    refresh materialized view voler_mviews.optom_queue_no_et;
+    refresh materialized view voler_mviews.old_eyetest_viewed_conversion;
+    refresh materialized view voler_mviews.optoms_older_than_30days_eyetest_viewed_conversion;
+    refresh materialized view voler_mviews.salespersons_older_than_30days_eyetest_viewed_conversion;
+    """
+
+    query = pg_execute(query) 
 
 

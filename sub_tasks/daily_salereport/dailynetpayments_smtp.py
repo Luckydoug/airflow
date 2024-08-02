@@ -174,10 +174,10 @@ def daily_netsales_email():
         )
 
     to_date = get_todate()
-    # to_date = '2024-05-31'
+    # to_date = '2024-07-31'
 
     sender_email = os.getenv("wairimu_email")
-    # receiver_email = 'wairimu@optica.africa'
+    receiver_email = 'wairimu@optica.africa'
     receiver_email = ['wairimu@optica.africa','yuri@optica.africa','kush@optica.africa','giri@optica.africa','wazeem@optica.africa']
     email_message = MIMEMultipart()
     email_message["From"] = sender_email
