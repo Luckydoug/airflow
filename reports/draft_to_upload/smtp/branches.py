@@ -75,11 +75,11 @@ def send_branches_efficiency(path, target, branch_data, log_file, selection, cou
                 all_mtd = mtd_report.parse("mtd-update", index_col=False)
                 branch_mtd = all_mtd[all_mtd["Outlet"] == branch]
 
-                sales_style = sales_report.style.hide_index().applymap(
+                sales_style = sales_report.style.hide(axis='index').applymap(
                     highlight_efficiency, subset=[f"% Efficiency (Target: {target} mins)"]
                 ).set_properties(**properties).set_table_styles(ug_styles)
 
-                branch_style = branch_report.style.hide_index().applymap(
+                branch_style = branch_report.style.hide(axis='index').applymap(
                     highlight_efficiency, subset=[f"% Efficiency (Target: {target} mins)"]
                 ).set_properties(**properties).set_table_styles(ug_styles)
 
